@@ -9,7 +9,20 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const COUNTRIES = [
-    "Perú", "Chile", "Colombia", "México", "Argentina", "España", "Estados Unidos", "Ecuador", "Bolivia", "Venezuela", "Otro"
+    "Perú", "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", "Argelia", "Argentina", "Armenia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bangladés", "Barbados", "Baréin", "Bélgica", "Belice", "Benín", "Bielorrusia", "Birmania", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Bután", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Catar", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Granada", "Grecia", "Guatemala", "Guyana", "Guinea", "Guinea ecuatorial", "Guinea-Bisáu", "Haití", "Honduras", "Hungría", "India", "Indonesia", "Irak", "Irán", "Irlanda", "Islandia", "Islas Marshall", "Islas Salomón", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajistán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesoto", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Madagascar", "Malasia", "Malaui", "Maldivas", "Malí", "Malta", "Marruecos", "Mauricio", "Mauritania", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montenegro", "Mozambique", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palaos", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Polonia", "Portugal", "Reino Unido", "República Centroafricana", "República Checa", "República del Congo", "República Democrática del Congo", "República Dominicana", "Ruanda", "Rumanía", "Rusia", "Samoa", "San Cristóbal y Nieves", "San Marino", "San Vicente y las Granadinas", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Sudán del Sur", "Suecia", "Suiza", "Surinam", "Tailandia", "Tanzania", "Tayikistán", "Timor Oriental", "Togo", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Yibuti", "Zambia", "Zimbabue"
+];
+
+const POPULAR_LOCATIONS = [
+    // Lima Metropolitana
+    "Lima", "San Juan de Lurigancho", "San Martín de Porres", "Ate", "Comas", "Villa El Salvador", "Villa María del Triunfo", "San Juan de Miraflores", "Santiago de Surco", "Los Olivos", "Puente Piedra", "Carabayllo", "Chorrillos", "Independencia", "El Agustino", "San Miguel", "La Victoria", "La Molina", "Santa Anita", "Rímac", "Lince", "San Borja", "Miraflores", "San Isidro", "Breña", "Pueblo Libre", "Jesús María", "Magdalena del Mar", "Barranco", "Lurigancho-Chosica", "Pachacámac", "Ancón", "Chaclacayo", "Cieneguilla", "Lurín", "Pucusana", "Santa Rosa",
+    // Callao
+    "Callao", "Ventanilla", "Bellavista", "La Perla", "Carmen de la Legua", "Mi Perú",
+    // Provincias Lima
+    "Huacho", "Huaral", "Cañete", "Barranca", "Mala", "Chilca", "Asia",
+    // Ciudades Principales Perú
+    "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Iquitos", "Huancayo", "Tacna", "Pucallpa", "Ica", "Juliaca", "Ayacucho", "Cajamarca", "Huánuco", "Sullana", "Chimbote", "Tarapoto", "Chincha", "Pisco", "Huaraz", "Jaén", "Moyobamba", "Tumbes", "Moquegua", "Pasco", "Huancavelica", "Abancay", "Puerto Maldonado", "Chachapoyas",
+    // Internacional (Mencionados por usuario)
+    "Madrid, España", "Barcelona, España", "Miami, USA", "New Jersey, USA", "New York, USA", "California, USA", "Santiago, Chile", "Buenos Aires, Argentina", "Bogotá, Colombia", "Medellín, Colombia", "Quito, Ecuador", "Sao Paulo, Brasil", "Rio de Janeiro, Brasil", "Ciudad de México, México", "Toronto, Canadá", "Montreal, Canadá", "Tokio, Japón", "Roma, Italia", "Milán, Italia"
 ];
 
 export default function PublicAppointmentForm() {
@@ -23,10 +36,10 @@ export default function PublicAppointmentForm() {
         dni: '',
         name: '',
         age: '',
-        ageUnit: 'Años', // Nuevo: Años o Meses
+        ageUnit: 'Años',
         sex: '',
         occupation: '',
-        country: 'Perú', // Nuevo: País
+        country: 'Perú',
         district: '',
         phone: '',
         email: '',
@@ -91,10 +104,10 @@ export default function PublicAppointmentForm() {
                     status: 'pending',
                     // Nuevos campos
                     patient_dni: formData.dni,
-                    patient_age: `${formData.age} ${formData.ageUnit}`, // Guardamos edad con unidad
+                    patient_age: `${formData.age} ${formData.ageUnit}`,
                     patient_sex: formData.sex,
                     patient_occupation: formData.occupation,
-                    patient_district: `${formData.country} - ${formData.district}`, // Guardamos País - Distrito
+                    patient_district: `${formData.country} - ${formData.district}`,
                     patient_email: formData.email,
                     patient_dob: formData.dob,
                     chronic_illnesses: formData.chronic_illnesses,
@@ -263,7 +276,7 @@ export default function PublicAppointmentForm() {
                                 </p>
                             </div>
 
-                            {/* PROCEDENCIA CON PAÍS */}
+                            {/* PROCEDENCIA CON PAÍS Y DATALIST */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia *</label>
                                 <div className="space-y-2">
@@ -274,14 +287,21 @@ export default function PublicAppointmentForm() {
                                     >
                                         {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
+
                                     <input
                                         type="text"
                                         required
-                                        placeholder="Ciudad / Distrito"
+                                        list="locations-list"
+                                        placeholder="Ciudad / Distrito (Escriba o seleccione)"
                                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         value={formData.district}
                                         onChange={e => setFormData({ ...formData, district: e.target.value })}
                                     />
+                                    <datalist id="locations-list">
+                                        {POPULAR_LOCATIONS.map((loc, idx) => (
+                                            <option key={idx} value={loc} />
+                                        ))}
+                                    </datalist>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1">
                                     ¿Dónde estuvo los últimos 3 meses? Importante para determinar clima, contaminación o polvo.
