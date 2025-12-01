@@ -1415,8 +1415,8 @@ margin: 0;
               <h1 className="text-xl font-bold tracking-tight">DrListo</h1>
             </div>
             <div className="mt-2">
-              <p className="text-xs text-blue-200 font-medium">¡Hola, {user.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
-              <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{user.email}</p>
+              <p className="text-sm text-blue-100 font-medium">¡Hola, {user.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
+              <p className="text-xs text-slate-400 break-words">{user.email}</p>
             </div>
           </div>
           {/* Botón cerrar en móvil */}
