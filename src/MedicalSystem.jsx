@@ -737,7 +737,30 @@ export default function MedicalSystem({ user, onLogout }) {
       const { error } = await supabase
         .from('appointments')
         .upsert(updates.map(u => ({ id: u.id, queue_order: u.queue_order })));
+      const [editingAppointment, setEditingAppointment] = useState(null); // { id, date, time }
 
+      const handleSaveTime = async () => {
+        if (!editingAppointment) return;
+
+        // Combine date and time
+        const newDateTime = `${editingAppointment.date}T${editingAppointment.time}:00`;
+
+        // Optimistic update
+        setDailyList(prev => prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p));
+        setEditingAppointment(null);
+
+        try {
+          const { error } = await supabase
+            .from('appointments')
+            .update({ appointment_date: newDateTime })
+            .eq('id', editingAppointment.id);
+
+          if (error) throw error;
+        } catch (error) {
+          console.error("Error updating time:", error);
+          fetchDailyAppointments(); // Revert
+        }
+      };
       if (error) throw error;
     } catch (error) {
       console.error("Error reordering:", error);
@@ -1612,11 +1635,49 @@ margin: 0;
                           </div>
                         </td>
                         <td className="p-4 text-sm font-mono font-bold text-blue-900">
-                          {new Date(p.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {editingAppointment?.id === p.id ? (
+                            <div className="flex flex-col gap-1">
+                              <input
+                                type="date"
+                                value={editingAppointment.date}
+                                onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                                className="text-xs border rounded p-1"
+                              />
+                              <input
+                                type="time"
+                                value={editingAppointment.time}
+                                onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
+                                className="text-xs border rounded p-1"
+                              />
+                              <div className="flex gap-1 mt-1">
+                                <button onClick={handleSaveTime} className="bg-green-100 text-green-700 p-1 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                                <button onClick={() => setEditingAppointment(null)} className="bg-red-100 text-red-700 p-1 rounded hover:bg-red-200"><X className="w-3 h-3" /></button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 group">
+                              <span>{new Date(p.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <button
+                                onClick={() => {
+                                  const d = new Date(p.appointment_date);
+                                  setEditingAppointment({
+                                    id: p.id,
+                                    date: d.toISOString().split('T')[0],
+                                    time: d.toTimeString().slice(0, 5)
+                                  });
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="font-bold text-gray-800">{p.patient_name}</div>
-                          <div className="text-xs text-gray-500">DNI: {p.patient_dni} | {p.patient_age}</div>
+                          <div className="text-xs text-gray-500">
+                            DNI: {p.patient_dni} | {p.patient_age} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}
+                          </div>
                           {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
                         </td>
                         <td className="p-4">
