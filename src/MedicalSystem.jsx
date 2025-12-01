@@ -540,7 +540,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (profileError) throw profileError;
 
-      alert(`Usuario ${newMember.name} creado exitosamente.`);
+      alert(`¡Genial! Hemos enviado un correo de invitación a ${newMember.email}.\n\nPor favor, avísale a ${newMember.name} que revise su bandeja de entrada (y Spam) para confirmar su cuenta y crear su contraseña.`);
       setIsTeamModalOpen(false);
       setNewMember({ name: '', email: '', password: '', role: 'doctor' });
 
