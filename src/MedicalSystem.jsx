@@ -1308,7 +1308,7 @@ margin: 0;
               <h1 className="text-xl font-bold tracking-tight">MedicalSys</h1>
             </div>
             <p className="text-xs text-slate-400">{user.email}</p>
-            <span className="text-[10px] text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded-full mt-1 inline-block">v3.1 Actualizado</span>
+            <span className="text-[10px] text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded-full mt-1 inline-block">v10.0 Actualizado</span>
           </div>
           {/* Botón cerrar en móvil */}
           <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white">
@@ -1429,7 +1429,7 @@ margin: 0;
             </h1>
           </header>
 
-        </header>
+        </div>
 
         <div className="p-4 md:p-8">
           {/* VISTA LISTA */}
