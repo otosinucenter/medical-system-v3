@@ -11,6 +11,14 @@ import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 
 
+
+// --- UTILS ---
+const getNowDate = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
+
 // --- DATOS DEL DOCTOR (Para Impresión) ---
 const DOCTOR_INFO = {
   nombre: "Dr. Walter J. Florez Guerra",
@@ -739,11 +747,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // localStorage effect removed
 
-  const getNowDate = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 16);
-  };
+
 
   const [formData, setFormData] = useState({
     id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
