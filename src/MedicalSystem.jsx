@@ -653,27 +653,38 @@ export default function MedicalSystem({ user, onLogout }) {
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
   const [dailyList, setDailyList] = useState([]);
   const [listDate, setListDate] = useState(getNowDate());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const fetchDailyAppointments = async () => {
     if (!user.clinicId) return;
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // Use selectedDate instead of always today
+      const dateToQuery = selectedDate;
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
         .eq('clinic_id', user.clinicId)
-        .gte('appointment_date', `${today}T00:00:00`)
-        .lte('appointment_date', `${today}T23:59:59`)
-        .order('queue_order', { ascending: true })
-        .order('appointment_date', { ascending: true });
+        .gte('appointment_date', `${dateToQuery}T00:00:00`)
+        .lte('appointment_date', `${dateToQuery}T23:59:59`)
+        .order('appointment_date', { ascending: true }) // Sort by time automatically
+        .order('queue_order', { ascending: true });
 
       if (error) throw error;
       setDailyList(data || []);
-      setListDate(new Date().toLocaleDateString());
+      // Format date for display
+      const [y, m, d] = dateToQuery.split('-');
+      setListDate(`${d}/${m}/${y}`);
     } catch (error) {
       console.error("Error fetching daily list:", error);
     }
   };
+
+  // Re-fetch when selectedDate changes
+  useEffect(() => {
+    if (view === 'triage') {
+      fetchDailyAppointments();
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     if (view === 'triage') {
@@ -1607,8 +1618,14 @@ margin: 0;
 
               <div className="bg-white rounded-xl shadow overflow-hidden">
                 {listDate && (
-                  <div className="bg-blue-50 p-3 border-b border-blue-100 text-center">
-                    <h4 className="font-bold text-blue-800 text-lg">LISTA DEL DÍA: {listDate}</h4>
+                  <div className="bg-blue-50 p-3 border-b border-blue-100 flex justify-center items-center gap-4">
+                    <h4 className="font-bold text-blue-800 text-lg">LISTA DEL DÍA:</h4>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-white border border-blue-300 text-blue-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 font-bold"
+                    />
                   </div>
                 )}
                 <table className="w-full text-left">
@@ -1639,12 +1656,14 @@ margin: 0;
                                 type="date"
                                 value={editingAppointment.date}
                                 onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
                                 className="text-xs border rounded p-1"
                               />
                               <input
                                 type="time"
                                 value={editingAppointment.time}
                                 onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
                                 className="text-xs border rounded p-1"
                               />
                               <div className="flex gap-1 mt-1">
@@ -2366,8 +2385,8 @@ margin: 0;
                     <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px] relative group">
                       {editingAppointment?.id === apt.id ? (
                         <div className="flex flex-col gap-1">
-                          <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} />
-                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} />
+                          <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
+                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
                           <div className="flex justify-center gap-1">
                             <button onClick={handleSaveTime} className="text-green-600 hover:bg-green-100 rounded p-1"><Save className="w-3 h-3" /></button>
                             <button onClick={() => setEditingAppointment(null)} className="text-red-600 hover:bg-red-100 rounded p-1"><X className="w-3 h-3" /></button>
