@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stethoscope, Check, Shield, Globe, Users, ArrowRight } from 'lucide-react';
+import { Stethoscope, Check, Shield, Globe, Users, ArrowRight, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
@@ -10,10 +10,10 @@ export default function Landing() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-2">
-                            <div className="bg-blue-600 p-2 rounded-lg">
-                                <Stethoscope className="w-6 h-6 text-white" />
+                            <div className="bg-blue-600 p-2 rounded-lg flex items-center justify-center">
+                                <Activity className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-bold text-slate-900">iDocFlow</span>
+                            <span className="text-xl font-bold text-slate-900">DrListo</span>
                         </div>
                         <div className="hidden md:flex items-center gap-8">
                             <a href="#features" className="text-slate-600 hover:text-blue-600 font-medium">Características</a>
@@ -81,7 +81,7 @@ export default function Landing() {
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold text-slate-900 mb-4">Todo lo que necesitas</h2>
                         <p className="text-slate-600 max-w-2xl mx-auto">
-                            Olvídate del papel y los Excel complicados. iDocFlow está optimizado para tu flujo de trabajo diario.
+                            Olvídate del papel y los Excel complicados. DrListo está optimizado para tu flujo de trabajo diario.
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -118,26 +118,26 @@ export default function Landing() {
             <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl font-bold text-slate-900 mb-4">Planes Simples</h2>
-                    <p className="text-slate-600">Empieza gratis y crece con tu consultorio.</p>
+                    <p className="text-slate-600">Elige el plan perfecto para tu consultorio.</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    {/* Free Plan */}
-                    <div className="bg-white p-8 rounded-3xl border border-slate-200 relative overflow-hidden">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Plan Inicial</h3>
-                        <div className="text-4xl font-extrabold text-slate-900 mb-6">$0 <span className="text-lg font-normal text-slate-500">/mes</span></div>
-                        <ul className="space-y-4 mb-8">
+                <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    {/* Plan Básico */}
+                    <div className="bg-white p-8 rounded-3xl border border-slate-200 relative overflow-hidden flex flex-col">
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Básico</h3>
+                        <div className="text-4xl font-extrabold text-slate-900 mb-6">S/ 0 <span className="text-lg font-normal text-slate-500">/mes</span></div>
+                        <ul className="space-y-4 mb-8 flex-1">
                             <li className="flex items-center gap-3 text-slate-600">
                                 <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                1 Doctor
+                                1 Médico
                             </li>
                             <li className="flex items-center gap-3 text-slate-600">
                                 <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                Hasta 100 Pacientes
+                                Hasta 50 Pacientes
                             </li>
                             <li className="flex items-center gap-3 text-slate-600">
                                 <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                Recetas A5 PDF
+                                Recetas Digitales
                             </li>
                         </ul>
                         <Link to="/app" className="block w-full py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold rounded-xl text-center transition-colors">
@@ -145,15 +145,15 @@ export default function Landing() {
                         </Link>
                     </div>
 
-                    {/* Pro Plan */}
-                    <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden text-white shadow-2xl">
+                    {/* Plan Profesional */}
+                    <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden text-white shadow-2xl flex flex-col transform md:-translate-y-4">
                         <div className="absolute top-0 right-0 bg-blue-600 text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
-                        <h3 className="text-xl font-bold mb-2">Plan Clínica</h3>
-                        <div className="text-4xl font-extrabold mb-6">$29 <span className="text-lg font-normal text-slate-400">/mes</span></div>
-                        <ul className="space-y-4 mb-8">
+                        <h3 className="text-xl font-bold mb-2">Profesional</h3>
+                        <div className="text-4xl font-extrabold mb-6">S/ 89 <span className="text-lg font-normal text-slate-400">/mes</span></div>
+                        <ul className="space-y-4 mb-8 flex-1">
                             <li className="flex items-center gap-3 text-slate-300">
                                 <Check className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                                Doctores Ilimitados
+                                Médicos Ilimitados
                             </li>
                             <li className="flex items-center gap-3 text-slate-300">
                                 <Check className="w-5 h-5 text-blue-400 flex-shrink-0" />
@@ -165,11 +165,38 @@ export default function Landing() {
                             </li>
                             <li className="flex items-center gap-3 text-slate-300">
                                 <Check className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                                Soporte Prioritario
+                                Recordatorios WhatsApp (Pronto)
                             </li>
                         </ul>
                         <Link to="/app" className="block w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-center transition-colors shadow-lg shadow-blue-900/50">
                             Prueba de 14 días
+                        </Link>
+                    </div>
+
+                    {/* Plan Clínica */}
+                    <div className="bg-white p-8 rounded-3xl border border-blue-100 relative overflow-hidden flex flex-col">
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Clínica</h3>
+                        <div className="text-4xl font-extrabold text-slate-900 mb-6">S/ 199 <span className="text-lg font-normal text-slate-500">/mes</span></div>
+                        <ul className="space-y-4 mb-8 flex-1">
+                            <li className="flex items-center gap-3 text-slate-600">
+                                <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                Todo lo del Profesional
+                            </li>
+                            <li className="flex items-center gap-3 text-slate-600">
+                                <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                Soporte Prioritario 24/7
+                            </li>
+                            <li className="flex items-center gap-3 text-slate-600">
+                                <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                Reportes Avanzados
+                            </li>
+                            <li className="flex items-center gap-3 text-slate-600">
+                                <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                Migración de Datos Gratis
+                            </li>
+                        </ul>
+                        <Link to="/app" className="block w-full py-3 px-6 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold rounded-xl text-center transition-colors">
+                            Contactar Ventas
                         </Link>
                     </div>
                 </div>
@@ -178,7 +205,7 @@ export default function Landing() {
             {/* Footer */}
             <footer className="bg-slate-50 py-12 border-t border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
-                    <p className="mb-4">&copy; {new Date().getFullYear()} iDocFlow. Todos los derechos reservados.</p>
+                    <p className="mb-4">&copy; {new Date().getFullYear()} DrListo. Todos los derechos reservados.</p>
                     <div className="flex justify-center gap-6">
                         <a href="#" className="hover:text-slate-900">Términos</a>
                         <a href="#" className="hover:text-slate-900">Privacidad</a>
