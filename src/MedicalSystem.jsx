@@ -737,30 +737,6 @@ export default function MedicalSystem({ user, onLogout }) {
       const { error } = await supabase
         .from('appointments')
         .upsert(updates.map(u => ({ id: u.id, queue_order: u.queue_order })));
-      const [editingAppointment, setEditingAppointment] = useState(null); // { id, date, time }
-
-      const handleSaveTime = async () => {
-        if (!editingAppointment) return;
-
-        // Combine date and time
-        const newDateTime = `${editingAppointment.date}T${editingAppointment.time}:00`;
-
-        // Optimistic update
-        setDailyList(prev => prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p));
-        setEditingAppointment(null);
-
-        try {
-          const { error } = await supabase
-            .from('appointments')
-            .update({ appointment_date: newDateTime })
-            .eq('id', editingAppointment.id);
-
-          if (error) throw error;
-        } catch (error) {
-          console.error("Error updating time:", error);
-          fetchDailyAppointments(); // Revert
-        }
-      };
       if (error) throw error;
     } catch (error) {
       console.error("Error reordering:", error);
@@ -768,10 +744,30 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
+  const [editingAppointment, setEditingAppointment] = useState(null); // { id, date, time }
 
-  // localStorage effect removed
+  const handleSaveTime = async () => {
+    if (!editingAppointment) return;
 
+    // Combine date and time
+    const newDateTime = `${editingAppointment.date}T${editingAppointment.time}:00`;
 
+    // Optimistic update
+    setDailyList(prev => prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p));
+    setEditingAppointment(null);
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ appointment_date: newDateTime })
+        .eq('id', editingAppointment.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating time:", error);
+      fetchDailyAppointments(); // Revert
+    }
+  };
 
   const [formData, setFormData] = useState({
     id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
