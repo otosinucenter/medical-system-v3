@@ -1665,6 +1665,7 @@ margin: 0;
                                 onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
                                 className="text-xs border rounded p-1"
+                                step="300"
                               />
                               <div className="flex gap-1 mt-1">
                                 <button onClick={handleSaveTime} className="bg-green-100 text-green-700 p-1 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
@@ -1673,7 +1674,7 @@ margin: 0;
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 group">
-                              <span>{new Date(p.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span>{new Date(p.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                               <button
                                 onClick={() => {
                                   const d = new Date(p.appointment_date);
@@ -2386,7 +2387,7 @@ margin: 0;
                       {editingAppointment?.id === apt.id ? (
                         <div className="flex flex-col gap-1">
                           <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
-                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
+                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} step="300" />
                           <div className="flex justify-center gap-1">
                             <button onClick={handleSaveTime} className="text-green-600 hover:bg-green-100 rounded p-1"><Save className="w-3 h-3" /></button>
                             <button onClick={() => setEditingAppointment(null)} className="text-red-600 hover:bg-red-100 rounded p-1"><X className="w-3 h-3" /></button>
@@ -2415,7 +2416,7 @@ margin: 0;
                             {new Date(apt.appointment_date).getDate()}
                           </span>
                           <span className="block text-xs text-slate-500">
-                            {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                         </>
                       )}
