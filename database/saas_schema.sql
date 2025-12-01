@@ -70,3 +70,33 @@ create policy "Clinic members can delete patients" on patients
   for delete using (
     clinic_id in (select clinic_id from profiles where id = auth.uid())
   );
+
+-- 7. TABLA DE CITAS (Appointments)
+create table appointments (
+  id uuid default gen_random_uuid() primary key,
+  clinic_id uuid references clinics(id) on delete cascade,
+  patient_name text not null,
+  patient_phone text,
+  symptoms text,
+  appointment_date timestamp with time zone,
+  status text default 'pending', -- 'pending', 'confirmed', 'completed', 'cancelled'
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table appointments enable row level security;
+
+-- Políticas para Citas
+-- PÚBLICO: Cualquiera puede CREAR una cita (para el formulario público)
+create policy "Public can insert appointments" on appointments
+  for insert with check (true);
+
+-- MIEMBROS DEL EQUIPO: Pueden VER y EDITAR citas de su consultorio
+create policy "Clinic members can view appointments" on appointments
+  for select using (
+    clinic_id in (select clinic_id from profiles where id = auth.uid())
+  );
+
+create policy "Clinic members can update appointments" on appointments
+  for update using (
+    clinic_id in (select clinic_id from profiles where id = auth.uid())
+  );

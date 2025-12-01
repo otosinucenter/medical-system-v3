@@ -5,7 +5,7 @@ import {
   ChevronRight, User, Clipboard, ArrowDownCircle, Stethoscope, Plus,
   Trash2, ListPlus, Pill, Ear, Smile, Mic2, Printer, Baby, Info,
   HelpCircle, Download, AlertCircle, History, Clock, Eye, MapPin,
-  Briefcase, Mail, AlertTriangle, CalendarDays, FileSignature, Edit3, X, LogOut
+  Briefcase, Mail, AlertTriangle, CalendarDays, FileSignature, Edit3, X, LogOut, MessageCircle, Link
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
@@ -500,6 +500,8 @@ export default function MedicalSystem({ user, onLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [newMember, setNewMember] = useState({ name: '', email: '', password: '', role: 'doctor' });
 
   const handleCreateTeamMember = async (e) => {
@@ -550,6 +552,44 @@ export default function MedicalSystem({ user, onLogout }) {
     } finally {
       setTeamLoading(false);
     }
+  };
+
+  // --- AGENDA LOGIC ---
+  const fetchAppointments = async () => {
+    if (!user.clinicId) return;
+    setLoadingAppointments(true);
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('clinic_id', user.clinicId)
+        .order('appointment_date', { ascending: true });
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === 'agenda') {
+      fetchAppointments();
+    }
+  }, [view]);
+
+  const handleConvertToPatient = (apt) => {
+    // Pre-fill form with appointment data
+    setFormData({
+      ...formData,
+      nombre: apt.patient_name,
+      celular: apt.patient_phone || '',
+      // Add symptoms to history or notes if needed
+    });
+    setView('form');
+    setIsNewPatient(true);
   };
 
   // Cargar pacientes al inicio
@@ -1407,6 +1447,11 @@ margin: 0;
           )}
 
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
+            <button onClick={() => { setView('agenda'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <CalendarDays className="w-5 h-5 mr-3" />
+              <span className="font-medium">Agenda</span>
+            </button>
+
             {(user.role === 'admin') && (
               <button onClick={() => setIsTeamModalOpen(true)} className="w-full flex items-center p-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
                 <UserPlus className="w-5 h-5 mr-3" />
@@ -1439,6 +1484,7 @@ margin: 0;
             <span className="font-bold text-slate-800">
               {view === 'list' && 'Pacientes'}
               {view === 'triage' && 'Triaje'}
+              {view === 'agenda' && 'Agenda'}
               {view === 'form' && 'Ficha de Ingreso'}
               {view === 'detail' && 'Historia Clínica'}
             </span>
@@ -2125,7 +2171,112 @@ margin: 0;
           </div>
         )
       }
-      {/* MODAL GESTIONAR EQUIPO */}
+      {/* VISTA AGENDA */}
+      {view === 'agenda' && (
+        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">Agenda de Citas</h2>
+              <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const link = `${window.location.origin}/citas/${user.clinicId}`;
+                  navigator.clipboard.writeText(link);
+                  alert("Link de citas copiado al portapapeles");
+                }}
+                className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
+              >
+                <Link className="w-4 h-4" />
+                Copiar Link Público
+              </button>
+              <button
+                onClick={fetchAppointments}
+                className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Actualizar
+              </button>
+            </div>
+          </div>
+
+          {loadingAppointments ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-slate-500">Cargando agenda...</p>
+            </div>
+          ) : appointments.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CalendarDays className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
+              <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {appointments.map((apt) => (
+                <div key={apt.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px]">
+                      <span className="block text-xs font-bold text-blue-600 uppercase">
+                        {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
+                      </span>
+                      <span className="block text-2xl font-bold text-slate-900">
+                        {new Date(apt.appointment_date).getDate()}
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
+                      <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                        {apt.patient_phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {apt.patient_phone}
+                          </span>
+                        )}
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                        </span>
+                      </div>
+                      {apt.symptoms && (
+                        <p className="text-slate-600 text-sm mt-2 bg-slate-50 p-2 rounded border border-slate-100">
+                          "{apt.symptoms}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
+                    <button
+                      onClick={() => handleConvertToPatient(apt)}
+                      className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Crear Ficha
+                    </button>
+                    <a
+                      href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL DE GESTIÓN DE EQUIPO */}
       {isTeamModalOpen && (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">

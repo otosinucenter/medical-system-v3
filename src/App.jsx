@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
 import MedicalSystem from './MedicalSystem';
 import Landing from './Landing';
+import PublicAppointmentForm from './PublicAppointmentForm';
 import ErrorBoundary from './ErrorBoundary';
 
 function AppContent() {
@@ -49,6 +50,7 @@ function AppContent() {
                     )
                 }
             />
+            <Route path="/citas/:clinicId" element={<PublicAppointmentForm />} />
             {/* Redirigir cualquier otra ruta a la landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
