@@ -654,6 +654,8 @@ export default function MedicalSystem({ user, onLogout }) {
   const [appointments, setAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [newMember, setNewMember] = useState({ name: '', email: '', password: '', role: 'doctor' });
+  const [isAgendaImportOpen, setIsAgendaImportOpen] = useState(false); // New state for Agenda Import
+  const [agendaPasteText, setAgendaPasteText] = useState(""); // New state for paste text
 
   const handleCreateTeamMember = async (e) => {
     e.preventDefault();
@@ -1399,6 +1401,89 @@ export default function MedicalSystem({ user, onLogout }) {
       setPasteText("");
     }
   };
+
+  const handleAgendaImport = async () => {
+    if (!agendaPasteText.trim()) return;
+
+    const rows = agendaPasteText.trim().split('\n');
+    const parsedAppointments = [];
+
+    rows.forEach(rowStr => {
+      const cols = rowStr.split('\t').map(c => c.trim());
+
+      // Smart Parse Strategy: Find the DNI (8 digits)
+      const dniIndex = cols.findIndex(c => /^\d{8}$/.test(c));
+
+      if (dniIndex !== -1) {
+        // Found anchor!
+        const dateStr = cols[0]; // First col is date
+        // Everything between date and DNI is symptoms/notes
+        const symptoms = cols.slice(1, dniIndex).filter(Boolean).join(' - ');
+
+        const dni = cols[dniIndex];
+        const name = cols[dniIndex + 1] || 'Sin Nombre';
+        const age = cols[dniIndex + 2] || '';
+        const sex = cols[dniIndex + 3] || '';
+        // Skip occupation (index + 4) if needed or map it
+        const occupation = cols[dniIndex + 4] || '';
+        const district = cols[dniIndex + 5] || '';
+        const phone = cols[dniIndex + 6] || '';
+        const email = cols[dniIndex + 7] || '';
+        const dob = cols[dniIndex + 8] || '';
+
+        // Parse Date (DD/MM/YYYY) to ISO
+        let isoDate = new Date().toISOString();
+        try {
+          const [d, m, y] = dateStr.split('/');
+          if (d && m && y) {
+            // Set time to default or current time if needed, here we just set date
+            // Ideally we'd want to preserve the time if it was in the input, but user example just has date
+            // Let's default to 8:00 AM for imported appointments or keep it as is
+            const dateObj = new Date(`${y}-${m}-${d}T08:00:00`);
+            if (!isNaN(dateObj)) isoDate = dateObj.toISOString();
+          }
+        } catch (e) {
+          console.warn("Invalid date:", dateStr);
+        }
+
+        parsedAppointments.push({
+          clinic_id: user.clinicId,
+          patient_name: name,
+          patient_dni: dni,
+          patient_age: age,
+          patient_sex: sex,
+          patient_occupation: occupation,
+          patient_district: district,
+          patient_phone: phone,
+          patient_email: email,
+          patient_dob: dob,
+          symptoms: symptoms,
+          appointment_date: isoDate,
+          status: 'pending'
+        });
+      }
+    });
+
+    if (parsedAppointments.length === 0) {
+      alert("No se pudieron detectar citas válidas. Asegúrate de que haya una columna con DNI (8 dígitos).");
+      return;
+    }
+
+    if (window.confirm(`Se detectaron ${parsedAppointments.length} citas. ¿Importar a la Agenda?`)) {
+      try {
+        const { error } = await supabase.from('appointments').insert(parsedAppointments);
+        if (error) throw error;
+        alert("Citas importadas correctamente.");
+        setIsAgendaImportOpen(false);
+        setAgendaPasteText("");
+        fetchAppointments();
+      } catch (error) {
+        console.error("Error importing appointments:", error);
+        alert("Error al importar citas.");
+      }
+    }
+  };
+
 
   // --- LÓGICA DE GESTIÓN DE DATOS ---
 
@@ -2601,6 +2686,13 @@ margin: 0;
                 Copiar Link Público
               </button>
               <button
+                onClick={() => setIsAgendaImportOpen(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <Clipboard className="w-4 h-4" />
+                Importar (Pegar)
+              </button>
+              <button
                 onClick={fetchAppointments}
                 className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -2776,6 +2868,30 @@ margin: 0;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL IMPORTACIÓN AGENDA */}
+      {isAgendaImportOpen && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
+            </p>
+            <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
+              <strong>Formato esperado:</strong> Fecha | (Notas/Síntomas) | <strong>DNI</strong> | Nombre | Edad | Sexo | ...
+            </div>
+            <textarea
+              className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
+              placeholder="Pega aquí las filas de Excel..."
+              value={agendaPasteText}
+              onChange={(e) => setAgendaPasteText(e.target.value)}
+            ></textarea>
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
+            </div>
           </div>
         </div>
       )}
