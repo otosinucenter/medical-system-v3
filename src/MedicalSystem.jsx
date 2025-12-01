@@ -652,8 +652,8 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
   const [dailyList, setDailyList] = useState([]);
-  const [listDate, setListDate] = useState(getNowDate());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
 
   const fetchDailyAppointments = async () => {
     if (!user.clinicId) return;
@@ -763,9 +763,24 @@ export default function MedicalSystem({ user, onLogout }) {
     // Combine date and time
     const newDateTime = `${editingAppointment.date}T${editingAppointment.time}:00`;
 
-    // Optimistic update
-    setDailyList(prev => prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p));
-    setAppointments(prev => prev.map(a => a.id === editingAppointment.id ? { ...a, appointment_date: newDateTime } : a));
+    // Optimistic update for Daily List (Triage)
+    setDailyList(prev => {
+      // If the new date is different from the currently viewed date, remove it from the list
+      if (editingAppointment.date !== selectedDate) {
+        return prev.filter(p => p.id !== editingAppointment.id);
+      }
+
+      // Otherwise, update and re-sort
+      const updatedList = prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p);
+      return updatedList.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date));
+    });
+
+    // Optimistic update for Agenda
+    setAppointments(prev => {
+      const updatedList = prev.map(a => a.id === editingAppointment.id ? { ...a, appointment_date: newDateTime } : a);
+      return updatedList.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date));
+    });
+
     setEditingAppointment(null);
 
     try {
@@ -775,6 +790,9 @@ export default function MedicalSystem({ user, onLogout }) {
         .eq('id', editingAppointment.id);
 
       if (error) throw error;
+
+      // Re-fetch to ensure consistency (optional but safer)
+      // fetchDailyAppointments(); 
     } catch (error) {
       console.error("Error updating time:", error);
       fetchDailyAppointments(); // Revert
