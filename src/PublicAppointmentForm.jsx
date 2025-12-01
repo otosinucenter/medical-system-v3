@@ -144,9 +144,9 @@ export default function PublicAppointmentForm() {
                 <div className="bg-blue-600 p-6 text-center">
                     <h1 className="text-2xl font-bold text-white">Ficha de Pre-Admisión Médica</h1>
                     <p className="text-blue-100 mt-2 text-sm px-4">
-                        Por favor, complete este formulario antes de su visita para agilizar su atención y mantener su historia clínica actualizada.
+                        El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
-                    <p className="text-white font-medium mt-1">{clinicName || "Consultorio Médico Dr. Walter Florez Guerra"}</p>
+                    <p className="text-white font-medium mt-1">Consultorio Dr. Walter Florez Guerra</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
