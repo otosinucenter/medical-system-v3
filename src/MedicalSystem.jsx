@@ -2541,6 +2541,13 @@ margin: 0;
                       <MessageCircle className="w-4 h-4" />
                       WhatsApp
                     </a>
+                    <button
+                      onClick={() => deleteAppointment(apt.id)}
+                      className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
+                      title="Eliminar Solicitud"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
