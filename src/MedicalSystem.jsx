@@ -747,7 +747,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
   const [formData, setFormData] = useState({
     id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
-    celular: '', email: '', fechaNacimiento: '',
+    celular: '', email: '', fechaNacimiento: '', fur: '', // Added fur
     referencia: '', enfermedades: '', medicamentos: '', alergias: '', cirugias: '',
     fechaCita: getNowDate(), resumen: '',
     examenOido: '', examenNariz: '', examenGarganta: '',
@@ -1651,6 +1651,17 @@ margin: 0;
                       <div><label className="text-xs font-bold">Celular</label><input name="celular" value={formData.celular} onChange={handleChange} className="w-full border p-2 rounded" /></div>
                       <div><label className="text-xs font-bold">Ocupación</label><input name="ocupacion" value={formData.ocupacion} onChange={handleChange} className="w-full border p-2 rounded" /></div>
                       <div><label className="text-xs font-bold">Procedencia</label><input name="procedencia" value={formData.procedencia} onChange={handleChange} className="w-full border p-2 rounded" /></div>
+                      <div>
+                        <label className="text-xs font-bold">Sexo</label>
+                        <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full border p-2 rounded bg-white">
+                          <option value="Mujer">Mujer</option>
+                          <option value="Hombre">Hombre</option>
+                          <option value="Otro">Otro</option>
+                        </select>
+                      </div>
+                      {formData.sexo === 'Mujer' && (
+                        <div><label className="text-xs font-bold text-pink-600">F.U.R (Última Regla)</label><input type="date" name="fur" value={formData.fur} onChange={handleChange} className="w-full border p-2 rounded border-pink-200 bg-pink-50" /></div>
+                      )}
                       <div className="col-span-2"><label className="text-xs font-bold text-blue-800">Referencia</label><input name="referencia" value={formData.referencia} onChange={handleChange} className="w-full border p-2 rounded" placeholder="¿Cómo nos encontró?" /></div>
                     </div>
                   </div>

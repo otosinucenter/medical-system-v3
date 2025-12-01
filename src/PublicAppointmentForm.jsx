@@ -237,18 +237,18 @@ export default function PublicAppointmentForm() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Sexo <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
                             <div className="flex gap-4 mt-1">
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Mujer" required checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <input type="radio" name="sex" value="Mujer" checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
                                     <span>Mujer</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Hombre" required checked={formData.sex === 'Hombre'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <input type="radio" name="sex" value="Hombre" checked={formData.sex === 'Hombre'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
                                     <span>Hombre</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Otro" required checked={formData.sex === 'Otro'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <input type="radio" name="sex" value="Otro" checked={formData.sex === 'Otro'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
                                     <span>Otro</span>
                                 </label>
                             </div>
