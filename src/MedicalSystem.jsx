@@ -586,7 +586,20 @@ export default function MedicalSystem({ user, onLogout }) {
       ...formData,
       nombre: apt.patient_name,
       celular: apt.patient_phone || '',
-      // Add symptoms to history or notes if needed
+      dni: apt.patient_dni || '',
+      edad: apt.patient_age || '',
+      sexo: apt.patient_sex || '',
+      ocupacion: apt.patient_occupation || '',
+      procedencia: apt.patient_district || '',
+      email: apt.patient_email || '',
+      fechaNacimiento: apt.patient_dob || '',
+      // Map medical history to initial notes or history field if available
+      antecedentes: `
+        Enfermedades: ${apt.chronic_illnesses || 'Niega'}
+        Medicamentos: ${apt.medications || 'Niega'}
+        Alergias: ${apt.allergies || 'Niega'}
+        Cirugías: ${apt.surgeries || 'Niega'}
+      `.trim()
     });
     setView('form');
     setIsNewPatient(true);
@@ -2233,21 +2246,34 @@ margin: 0;
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
                         {apt.patient_phone && (
                           <span className="flex items-center gap-1">
                             <Phone className="w-3 h-3" /> {apt.patient_phone}
+                          </span>
+                        )}
+                        {apt.patient_age && (
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" /> {apt.patient_age} años
                           </span>
                         )}
                         <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                           {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
                         </span>
                       </div>
-                      {apt.symptoms && (
-                        <p className="text-slate-600 text-sm mt-2 bg-slate-50 p-2 rounded border border-slate-100">
-                          "{apt.symptoms}"
-                        </p>
-                      )}
+
+                      <div className="mt-2 space-y-1">
+                        {apt.symptoms && (
+                          <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
+                            <strong>Motivo:</strong> {apt.symptoms}
+                          </p>
+                        )}
+                        {(apt.chronic_illnesses || apt.medications) && (
+                          <p className="text-slate-500 text-xs">
+                            <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
 

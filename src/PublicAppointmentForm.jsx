@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle } from 'lucide-react';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -11,19 +11,36 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export default function PublicAppointmentForm() {
     const { clinicId } = useParams();
     const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        symptoms: '',
+        // Cita
         date: '',
-        time: ''
+        time: '',
+        symptoms: '',
+        // Datos Personales
+        dni: '',
+        name: '',
+        age: '',
+        sex: '',
+        occupation: '',
+        district: '',
+        phone: '',
+        email: '',
+        dob: '',
+        // Antecedentes
+        chronic_illnesses: '',
+        medications: '',
+        allergies: '',
+        surgeries: '',
+        // Referencia
+        referral_source: [],
+        referral_detail: ''
     });
+
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState('');
     const [clinicName, setClinicName] = useState('');
 
     useEffect(() => {
-        // Opcional: Obtener nombre de la clínica para mostrarlo
         const fetchClinic = async () => {
             if (!clinicId) return;
             const { data, error } = await supabase
@@ -36,6 +53,15 @@ export default function PublicAppointmentForm() {
         };
         fetchClinic();
     }, [clinicId]);
+
+    const handleCheckboxChange = (value) => {
+        const current = formData.referral_source;
+        if (current.includes(value)) {
+            setFormData({ ...formData, referral_source: current.filter(item => item !== value) });
+        } else {
+            setFormData({ ...formData, referral_source: [...current, value] });
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -56,7 +82,21 @@ export default function PublicAppointmentForm() {
                     patient_phone: formData.phone,
                     symptoms: formData.symptoms,
                     appointment_date: appointmentDate.toISOString(),
-                    status: 'pending'
+                    status: 'pending',
+                    // Nuevos campos
+                    patient_dni: formData.dni,
+                    patient_age: formData.age,
+                    patient_sex: formData.sex,
+                    patient_occupation: formData.occupation,
+                    patient_district: formData.district,
+                    patient_email: formData.email,
+                    patient_dob: formData.dob,
+                    chronic_illnesses: formData.chronic_illnesses,
+                    medications: formData.medications,
+                    allergies: formData.allergies,
+                    surgeries: formData.surgeries,
+                    referral_source: formData.referral_source.join(', '),
+                    referral_detail: formData.referral_detail
                 }]);
 
             if (insertError) throw insertError;
@@ -82,7 +122,7 @@ export default function PublicAppointmentForm() {
                         Hemos recibido tus datos correctamente. El consultorio {clinicName && <strong>{clinicName}</strong>} se pondrá en contacto contigo pronto para confirmar tu cita.
                     </p>
                     <button
-                        onClick={() => setSubmitted(false)}
+                        onClick={() => window.location.reload()}
                         className="text-blue-600 font-medium hover:underline"
                     >
                         Enviar otra solicitud
@@ -93,14 +133,17 @@ export default function PublicAppointmentForm() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-            <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
+            <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-blue-600 p-6 text-center">
-                    <h1 className="text-2xl font-bold text-white">Agendar Cita</h1>
-                    {clinicName && <p className="text-blue-100 mt-1">{clinicName}</p>}
+                    <h1 className="text-2xl font-bold text-white">Pre-Registro de Cita</h1>
+                    <p className="text-blue-100 mt-2 text-sm">
+                        Por favor complete este formulario para agilizar su atención el día de la consulta.
+                    </p>
+                    {clinicName && <p className="text-white font-medium mt-1">{clinicName}</p>}
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
                     {error && (
                         <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm flex items-center gap-2">
                             <AlertCircle className="w-4 h-4" />
@@ -108,96 +151,150 @@ export default function PublicAppointmentForm() {
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <User className="h-5 w-5 text-slate-400" />
+                    {/* SECCIÓN 1: CITA */}
+                    <section className="space-y-4">
+                        <h3 className="text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-blue-600" />
+                            Datos de la Cita
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Propuesta</label>
+                                <input type="date" required className="w-full p-2 border rounded-lg" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                             </div>
-                            <input
-                                type="text"
-                                required
-                                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Ej. Juan Pérez"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono / WhatsApp</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Phone className="h-5 w-5 text-slate-400" />
-                            </div>
-                            <input
-                                type="tel"
-                                required
-                                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Ej. 999 999 999"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Preferida</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Calendar className="h-5 w-5 text-slate-400" />
-                                </div>
-                                <input
-                                    type="date"
-                                    required
-                                    className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                />
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Hora Propuesta</label>
+                                <input type="time" required className="w-full p-2 border rounded-lg" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Hora Preferida</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Clock className="h-5 w-5 text-slate-400" />
-                                </div>
-                                <input
-                                    type="time"
-                                    required
-                                    className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                    value={formData.time}
-                                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                />
-                            </div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Resumen de Enfermedad / Síntomas</label>
+                            <textarea required rows={3} className="w-full p-2 border rounded-lg" placeholder="Describa brevemente sus síntomas actuales..." value={formData.symptoms} onChange={e => setFormData({ ...formData, symptoms: e.target.value })} />
                         </div>
-                    </div>
+                    </section>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Síntomas / Motivo</label>
-                        <div className="relative">
-                            <div className="absolute top-3 left-3 pointer-events-none">
-                                <FileText className="h-5 w-5 text-slate-400" />
+                    {/* SECCIÓN 2: DATOS PERSONALES */}
+                    <section className="space-y-4">
+                        <h3 className="text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                            <User className="w-5 h-5 text-blue-600" />
+                            Datos Personales
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">DNI / Documento *</label>
+                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.dni} onChange={e => setFormData({ ...formData, dni: e.target.value })} />
                             </div>
-                            <textarea
-                                required
-                                rows={3}
-                                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Describe brevemente tus síntomas..."
-                                value={formData.symptoms}
-                                onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-                            />
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellido *</label>
+                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Edad *</label>
+                                <input type="number" required className="w-full p-2 border rounded-lg" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento</label>
+                                <input type="date" className="w-full p-2 border rounded-lg" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+                            </div>
                         </div>
-                    </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Sexo *</label>
+                            <div className="flex gap-4 mt-1">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="sex" value="Mujer" required checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <span>Mujer</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="sex" value="Hombre" required checked={formData.sex === 'Hombre'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <span>Hombre</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Ocupación *</label>
+                                <input type="text" required className="w-full p-2 border rounded-lg" placeholder="Importante para evaluar exposición a ruido/químicos" value={formData.occupation} onChange={e => setFormData({ ...formData, occupation: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia (Distrito) *</label>
+                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.district} onChange={e => setFormData({ ...formData, district: e.target.value })} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp *</label>
+                                <input type="tel" required className="w-full p-2 border rounded-lg" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                                <input type="email" required className="w-full p-2 border rounded-lg" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECCIÓN 3: ANTECEDENTES MÉDICOS */}
+                    <section className="space-y-4">
+                        <h3 className="text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-blue-600" />
+                            Antecedentes Médicos
+                        </h3>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Enfermedades Crónicas</label>
+                            <textarea rows={2} className="w-full p-2 border rounded-lg" placeholder="Hipertensión, diabetes, asma, etc." value={formData.chronic_illnesses} onChange={e => setFormData({ ...formData, chronic_illnesses: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Medicamentos usados frecuentemente</label>
+                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.medications} onChange={e => setFormData({ ...formData, medications: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Alergias a medicamentos</label>
+                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.allergies} onChange={e => setFormData({ ...formData, allergies: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Cirugías en Cabeza y/o Cuello</label>
+                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.surgeries} onChange={e => setFormData({ ...formData, surgeries: e.target.value })} />
+                        </div>
+                    </section>
+
+                    {/* SECCIÓN 4: REFERENCIA */}
+                    <section className="space-y-4">
+                        <h3 className="text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                            <HelpCircle className="w-5 h-5 text-blue-600" />
+                            Información Adicional
+                        </h3>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">¿Cómo nos encontró?</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['Google', 'Doctoralia', 'Facebook', 'Instagram', 'Recomendación', 'Grupo de Whatsapp', 'IA (ChatGPT, etc)'].map(opt => (
+                                    <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.referral_source.includes(opt)}
+                                            onChange={() => handleCheckboxChange(opt)}
+                                        />
+                                        <span className="text-sm">{opt}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Si fue recomendado, ¿por quién?</label>
+                            <input type="text" className="w-full p-2 border rounded-lg" placeholder="Nombre del médico o paciente" value={formData.referral_detail} onChange={e => setFormData({ ...formData, referral_detail: e.target.value })} />
+                        </div>
+                    </section>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all transform hover:scale-[1.01]"
                     >
-                        {loading ? 'Enviando...' : 'Solicitar Cita'}
+                        {loading ? 'Enviando Solicitud...' : 'Confirmar y Enviar Solicitud'}
                     </button>
                 </form>
             </div>
