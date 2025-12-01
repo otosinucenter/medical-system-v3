@@ -420,8 +420,8 @@ const CATALOGO_MEDICO = {
 };
 
 export default function MedicalSystem({ user, onLogout }) {
-  const [view, setView] = useState('list');
-  const [searchTerm, setSearchTerm] = useState('');
+  console.log("MedicalSystem user prop:", user);
+  const [view, setView] = useState('triage'); // triage, patients, history, agendarchTerm, setSearchTerm = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [importText, setImportText] = useState('');
   const [diagInput, setDiagInput] = useState({ code: '', desc: '' });
@@ -1496,8 +1496,8 @@ margin: 0;
               <h1 className="text-xl font-bold tracking-tight">DrListo</h1>
             </div>
             <div className="mt-2">
-              <p className="text-sm text-blue-100 font-medium">¡Hola, {user.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
-              <p className="text-xs text-slate-400 break-words">{user.email}</p>
+              <p className="text-sm text-blue-100 font-medium">¡Hola, {user.user?.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
+              <p className="text-xs text-slate-400 break-words">{user.user?.email}</p>
             </div>
           </div>
           {/* Botón cerrar en móvil */}
@@ -1662,6 +1662,29 @@ margin: 0;
               </div>
 
               <div className="bg-white rounded-xl shadow overflow-hidden">
+                {/* IMPORTACIÓN RÁPIDA (RESTAURADA) */}
+                <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-gray-500 flex items-center">
+                      <Clipboard className="w-3 h-3 mr-1" /> Importación Rápida (Pegar desde Excel con Encabezados)
+                    </label>
+                    <div className="flex gap-2">
+                      <textarea
+                        className="flex-1 text-xs border p-2 rounded h-16 font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
+                        placeholder="Pegue aquí las filas de Excel..."
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                      ></textarea>
+                      <button
+                        onClick={handleBulkPaste}
+                        className="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-sm whitespace-nowrap self-start"
+                      >
+                        Procesar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {listDate && (
                   <div className="bg-blue-50 p-3 border-b border-blue-100 flex justify-center items-center gap-4">
                     <h4 className="font-bold text-blue-800 text-lg">LISTA DEL DÍA:</h4>
