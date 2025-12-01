@@ -586,20 +586,19 @@ export default function MedicalSystem({ user, onLogout }) {
       ...formData,
       nombre: apt.patient_name,
       celular: apt.patient_phone || '',
-      dni: apt.patient_dni || '',
+      id: apt.patient_dni || '',
       edad: apt.patient_age || '',
       sexo: apt.patient_sex || '',
       ocupacion: apt.patient_occupation || '',
       procedencia: apt.patient_district || '',
       email: apt.patient_email || '',
       fechaNacimiento: apt.patient_dob || '',
-      // Map medical history to initial notes or history field if available
-      antecedentes: `
-        Enfermedades: ${apt.chronic_illnesses || 'Niega'}
-        Medicamentos: ${apt.medications || 'Niega'}
-        Alergias: ${apt.allergies || 'Niega'}
-        Cirugías: ${apt.surgeries || 'Niega'}
-      `.trim()
+      referencia: `${apt.referral_source || ''} ${apt.referral_detail ? `(${apt.referral_detail})` : ''}`.trim(),
+      // Map medical history to individual fields
+      enfermedades: apt.chronic_illnesses || '',
+      medicamentos: apt.medications || '',
+      alergias: apt.allergies || '',
+      cirugias: apt.surgeries || ''
     });
     setView('form');
     setIsNewPatient(true);
