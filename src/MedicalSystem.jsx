@@ -1372,23 +1372,7 @@ margin: 0;
 
         <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-180px)]">
 
-          {/* CÓDIGO DE INVITACIÓN (Solo si tiene clinicId) */}
-          {user.clinicId && (
-            <div className="mb-6 p-3 bg-slate-800 rounded-lg border border-slate-700">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">CÓDIGO DE INVITACIÓN</p>
-              <div className="flex items-center justify-between bg-slate-900 p-2 rounded border border-slate-700">
-                <code className="text-xs text-blue-400 font-mono truncate select-all">{user.clinicId}</code>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(user.clinicId); alert("Código copiado!"); }}
-                  className="text-slate-500 hover:text-white ml-2"
-                  title="Copiar código"
-                >
-                  <Clipboard className="w-3 h-3" />
-                </button>
-              </div>
 
-            </div>
-          )}
 
           <button onClick={() => { setView('list'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'list' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
             <Users className="w-5 h-5 mr-3" />
