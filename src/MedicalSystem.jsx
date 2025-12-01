@@ -2079,29 +2079,6 @@ margin: 0;
               </div>
 
               <div className="bg-white rounded-xl shadow overflow-hidden">
-                {/* IMPORTACIÓN RÁPIDA (RESTAURADA) */}
-                <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-500 flex items-center">
-                      <Clipboard className="w-3 h-3 mr-1" /> Importación Rápida (Pegar desde Excel con Encabezados)
-                    </label>
-                    <div className="flex gap-2">
-                      <textarea
-                        className="flex-1 text-xs border p-2 rounded h-16 font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
-                        placeholder="Pegue aquí las filas de Excel..."
-                        value={pasteText}
-                        onChange={(e) => setPasteText(e.target.value)}
-                      ></textarea>
-                      <button
-                        onClick={handleBulkPaste}
-                        className="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-sm whitespace-nowrap self-start"
-                      >
-                        Procesar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 {listDate && (
                   <div className="bg-blue-50 p-3 border-b border-blue-100 flex justify-center items-center gap-4">
                     <h4 className="font-bold text-blue-800 text-lg">LISTA DEL DÍA:</h4>
@@ -2128,12 +2105,8 @@ margin: 0;
                     {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
                     {dailyList.map((p, index) => (
                       <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
-                        <td className="p-4">
-                          <div className="flex flex-col gap-1">
-                            <button onClick={() => deleteAppointment(p.id)} className="text-gray-300 hover:text-red-500 mb-2" title="Eliminar Cita"><Trash2 className="w-3 h-3" /></button>
-                            <button onClick={() => handleMoveOrder(p.id, 'up')} disabled={index === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
-                            <button onClick={() => handleMoveOrder(p.id, 'down')} disabled={index === dailyList.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
-                          </div>
+                        <td className="p-4 font-bold text-slate-400 text-center">
+                          {index + 1}
                         </td>
                         <td className="p-4 text-sm font-mono font-bold text-blue-900">
                           {editingAppointment?.id === p.id ? (
