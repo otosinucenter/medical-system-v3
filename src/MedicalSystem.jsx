@@ -421,7 +421,8 @@ const CATALOGO_MEDICO = {
 
 export default function MedicalSystem({ user, onLogout }) {
   console.log("MedicalSystem user prop:", user);
-  const [view, setView] = useState('triage'); // triage, patients, history, agendarchTerm, setSearchTerm = useState('');
+  const [view, setView] = useState('triage'); // triage, patients, history, agenda
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [importText, setImportText] = useState('');
   const [diagInput, setDiagInput] = useState({ code: '', desc: '' });
