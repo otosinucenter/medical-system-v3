@@ -9,20 +9,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const COUNTRIES = [
-    "Perú", "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", "Argelia", "Argentina", "Armenia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bangladés", "Barbados", "Baréin", "Bélgica", "Belice", "Benín", "Bielorrusia", "Birmania", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Bután", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Catar", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Granada", "Grecia", "Guatemala", "Guyana", "Guinea", "Guinea ecuatorial", "Guinea-Bisáu", "Haití", "Honduras", "Hungría", "India", "Indonesia", "Irak", "Irán", "Irlanda", "Islandia", "Islas Marshall", "Islas Salomón", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajistán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesoto", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Madagascar", "Malasia", "Malaui", "Maldivas", "Malí", "Malta", "Marruecos", "Mauricio", "Mauritania", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montenegro", "Mozambique", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palaos", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Polonia", "Portugal", "Reino Unido", "República Centroafricana", "República Checa", "República del Congo", "República Democrática del Congo", "República Dominicana", "Ruanda", "Rumanía", "Rusia", "Samoa", "San Cristóbal y Nieves", "San Marino", "San Vicente y las Granadinas", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Sudán del Sur", "Suecia", "Suiza", "Surinam", "Tailandia", "Tanzania", "Tayikistán", "Timor Oriental", "Togo", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Yibuti", "Zambia", "Zimbabue"
-];
-
-const POPULAR_LOCATIONS = [
-    // Lima Metropolitana (Distritos)
-    "Lima", "San Juan de Lurigancho", "San Martín de Porres", "Ate", "Comas", "Villa El Salvador", "Villa María del Triunfo", "San Juan de Miraflores", "Santiago de Surco", "Los Olivos", "Puente Piedra", "Carabayllo", "Chorrillos", "Independencia", "El Agustino", "San Miguel", "La Victoria", "La Molina", "Santa Anita", "Rímac", "Lince", "San Borja", "Miraflores", "San Isidro", "Breña", "Pueblo Libre", "Jesús María", "Magdalena del Mar", "Barranco", "Lurigancho-Chosica", "Pachacámac", "Ancón", "Chaclacayo", "Cieneguilla", "Lurín", "Pucusana", "Santa Rosa",
-    // Callao
-    "Callao", "Ventanilla", "Bellavista", "La Perla", "Carmen de la Legua", "Mi Perú",
-    // Provincias de Lima
-    "Huacho", "Huaral", "Cañete", "Barranca", "Mala", "Chilca", "Asia",
-    // Ciudades Principales del Perú
-    "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Iquitos", "Huancayo", "Tacna", "Pucallpa", "Ica", "Juliaca", "Ayacucho", "Cajamarca", "Huánuco", "Sullana", "Chimbote", "Tarapoto", "Chincha", "Pisco", "Huaraz", "Jaén", "Moyobamba", "Tumbes", "Moquegua", "Pasco", "Huancavelica", "Abancay", "Puerto Maldonado", "Chachapoyas",
-    // Ciudades Internacionales Frecuentes
-    "Madrid", "Barcelona", "Miami", "New York", "New Jersey", "Santiago de Chile", "Buenos Aires", "Bogotá", "Medellín", "Quito", "Sao Paulo", "Rio de Janeiro", "Ciudad de México", "Toronto", "Montreal", "Tokio", "Roma", "Milán", "Londres", "París"
+    "Perú", "Chile", "Colombia", "México", "Argentina", "España", "Estados Unidos", "Ecuador", "Bolivia", "Venezuela", "Otro"
 ];
 
 export default function PublicAppointmentForm() {
@@ -36,10 +23,10 @@ export default function PublicAppointmentForm() {
         dni: '',
         name: '',
         age: '',
-        ageUnit: 'Años',
+        ageUnit: 'Años', // Nuevo: Años o Meses
         sex: '',
         occupation: '',
-        country: 'Perú',
+        country: 'Perú', // Nuevo: País
         district: '',
         phone: '',
         email: '',
@@ -104,10 +91,10 @@ export default function PublicAppointmentForm() {
                     status: 'pending',
                     // Nuevos campos
                     patient_dni: formData.dni,
-                    patient_age: `${formData.age} ${formData.ageUnit}`,
+                    patient_age: `${formData.age} ${formData.ageUnit}`, // Guardamos edad con unidad
                     patient_sex: formData.sex,
                     patient_occupation: formData.occupation,
-                    patient_district: `${formData.country} - ${formData.district}`,
+                    patient_district: `${formData.country} - ${formData.district}`, // Guardamos País - Distrito
                     patient_email: formData.email,
                     patient_dob: formData.dob,
                     chronic_illnesses: formData.chronic_illnesses,
@@ -156,8 +143,8 @@ export default function PublicAppointmentForm() {
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-blue-600 p-6 text-center">
                     <h1 className="text-2xl font-bold text-white">Pre-Registro de Cita</h1>
-                    <p className="text-blue-100 mt-2 text-sm">
-                        Por favor complete este formulario para agilizar su atención el día de la consulta.
+                    <p className="text-blue-100 mt-2 text-sm px-4">
+                        El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
                     {clinicName && <p className="text-white font-medium mt-1">{clinicName}</p>}
                 </div>
@@ -213,17 +200,17 @@ export default function PublicAppointmentForm() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">DNI / Documento *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">DNI / Documento <span className="text-red-500">*</span></label>
                                 <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.dni} onChange={e => setFormData({ ...formData, dni: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellido *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellido <span className="text-red-500">*</span></label>
                                 <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
 
                             {/* EDAD CON SELECTOR DE UNIDAD */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Edad *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Edad <span className="text-red-500">*</span></label>
                                 <div className="flex gap-2">
                                     <input
                                         type="number"
@@ -250,7 +237,7 @@ export default function PublicAppointmentForm() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Sexo *</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Sexo <span className="text-red-500">*</span></label>
                             <div className="flex gap-4 mt-1">
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
                                     <input type="radio" name="sex" value="Mujer" required checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
@@ -269,16 +256,16 @@ export default function PublicAppointmentForm() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Ocupación *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Ocupación <span className="text-red-500">*</span></label>
                                 <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.occupation} onChange={e => setFormData({ ...formData, occupation: e.target.value })} />
                                 <p className="text-xs text-slate-500 mt-1">
                                     Importante para determinar si tiene exposición a sonidos fuertes, aire acondicionado o hace uso exagerado de la voz.
                                 </p>
                             </div>
 
-                            {/* PROCEDENCIA CON PAÍS Y DATALIST */}
+                            {/* PROCEDENCIA CON PAÍS */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia <span className="text-red-500">*</span></label>
                                 <div className="space-y-2">
                                     <select
                                         className="w-full p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
@@ -287,21 +274,14 @@ export default function PublicAppointmentForm() {
                                     >
                                         {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-
                                     <input
                                         type="text"
                                         required
-                                        list="locations-list"
-                                        placeholder="Ciudad / Distrito (Escriba o seleccione)"
+                                        placeholder="Ciudad / Distrito"
                                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         value={formData.district}
                                         onChange={e => setFormData({ ...formData, district: e.target.value })}
                                     />
-                                    <datalist id="locations-list">
-                                        {POPULAR_LOCATIONS.map((loc, idx) => (
-                                            <option key={idx} value={loc} />
-                                        ))}
-                                    </datalist>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1">
                                     ¿Dónde estuvo los últimos 3 meses? Importante para determinar clima, contaminación o polvo.
@@ -311,11 +291,11 @@ export default function PublicAppointmentForm() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp <span className="text-red-500">*</span></label>
                                 <input type="tel" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email <span className="text-red-500">*</span></label>
                                 <input type="email" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                             </div>
                         </div>
