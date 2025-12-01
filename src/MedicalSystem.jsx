@@ -806,6 +806,27 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
+  const deleteAppointment = async (id) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
+
+    // Optimistic update
+    setDailyList(prev => prev.filter(p => p.id !== id));
+    setAppointments(prev => prev.filter(a => a.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      fetchDailyAppointments(); // Revert
+      fetchAppointments(); // Revert
+    }
+  };
+
   const [formData, setFormData] = useState({
     id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
     celular: '', email: '', fechaNacimiento: '', fur: '', // Added fur
@@ -1666,9 +1687,10 @@ margin: 0;
                   <tbody className="divide-y">
                     {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
                     {dailyList.map((p, index) => (
-                      <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-gray-100 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-green-50' : ''}`}>
+                      <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
                         <td className="p-4">
                           <div className="flex flex-col gap-1">
+                            <button onClick={() => deleteAppointment(p.id)} className="text-gray-300 hover:text-red-500 mb-2" title="Eliminar Cita"><Trash2 className="w-3 h-3" /></button>
                             <button onClick={() => handleMoveOrder(p.id, 'up')} disabled={index === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
                             <button onClick={() => handleMoveOrder(p.id, 'down')} disabled={index === dailyList.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                           </div>
@@ -1733,13 +1755,13 @@ margin: 0;
                               </button>
                               <button
                                 onClick={() => updateTriageStatus(p.id, 'arrived')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
                               >
                                 Llegó
                               </button>
                               <button
                                 onClick={() => updateTriageStatus(p.id, 'attended')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-gray-200 text-gray-700 border-gray-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-green-200 text-green-800 border-green-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
                               >
                                 Atendido
                               </button>
