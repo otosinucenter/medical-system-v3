@@ -2096,6 +2096,7 @@ margin: 0;
                       <th className="p-4 w-16">Orden</th>
                       <th className="p-4">Hora</th>
                       <th className="p-4">Paciente</th>
+                      <th className="p-4">Notas</th>
                       <th className="p-4">Estado / Flujo</th>
                       <th className="p-4">Gestión (Pagos / Exámenes)</th>
                       <th className="p-4 text-right">Acción</th>
@@ -2156,6 +2157,14 @@ margin: 0;
                             DNI: {p.patient_dni} | {p.patient_age} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}
                           </div>
                           {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
+                        </td>
+                        <td className="p-4">
+                          <textarea
+                            defaultValue={p.notes || ''}
+                            onBlur={(e) => updateAppointmentField(p.id, 'notes', e.target.value)}
+                            className="w-full h-16 text-xs border border-gray-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none bg-yellow-50/30"
+                            placeholder="Agregar nota..."
+                          ></textarea>
                         </td>
                         <td className="p-4">
                           <div className="flex flex-col gap-2">
