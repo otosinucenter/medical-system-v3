@@ -13,16 +13,16 @@ const COUNTRIES = [
 ];
 
 const POPULAR_LOCATIONS = [
-    // Lima Metropolitana
+    // Lima Metropolitana (Distritos)
     "Lima", "San Juan de Lurigancho", "San Martín de Porres", "Ate", "Comas", "Villa El Salvador", "Villa María del Triunfo", "San Juan de Miraflores", "Santiago de Surco", "Los Olivos", "Puente Piedra", "Carabayllo", "Chorrillos", "Independencia", "El Agustino", "San Miguel", "La Victoria", "La Molina", "Santa Anita", "Rímac", "Lince", "San Borja", "Miraflores", "San Isidro", "Breña", "Pueblo Libre", "Jesús María", "Magdalena del Mar", "Barranco", "Lurigancho-Chosica", "Pachacámac", "Ancón", "Chaclacayo", "Cieneguilla", "Lurín", "Pucusana", "Santa Rosa",
     // Callao
     "Callao", "Ventanilla", "Bellavista", "La Perla", "Carmen de la Legua", "Mi Perú",
-    // Provincias Lima
+    // Provincias de Lima
     "Huacho", "Huaral", "Cañete", "Barranca", "Mala", "Chilca", "Asia",
-    // Ciudades Principales Perú
+    // Ciudades Principales del Perú
     "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Iquitos", "Huancayo", "Tacna", "Pucallpa", "Ica", "Juliaca", "Ayacucho", "Cajamarca", "Huánuco", "Sullana", "Chimbote", "Tarapoto", "Chincha", "Pisco", "Huaraz", "Jaén", "Moyobamba", "Tumbes", "Moquegua", "Pasco", "Huancavelica", "Abancay", "Puerto Maldonado", "Chachapoyas",
-    // Internacional (Mencionados por usuario)
-    "Madrid, España", "Barcelona, España", "Miami, USA", "New Jersey, USA", "New York, USA", "California, USA", "Santiago, Chile", "Buenos Aires, Argentina", "Bogotá, Colombia", "Medellín, Colombia", "Quito, Ecuador", "Sao Paulo, Brasil", "Rio de Janeiro, Brasil", "Ciudad de México, México", "Toronto, Canadá", "Montreal, Canadá", "Tokio, Japón", "Roma, Italia", "Milán, Italia"
+    // Ciudades Internacionales Frecuentes
+    "Madrid", "Barcelona", "Miami", "New York", "New Jersey", "Santiago de Chile", "Buenos Aires", "Bogotá", "Medellín", "Quito", "Sao Paulo", "Rio de Janeiro", "Ciudad de México", "Toronto", "Montreal", "Tokio", "Roma", "Milán", "Londres", "París"
 ];
 
 export default function PublicAppointmentForm() {
