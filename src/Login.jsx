@@ -164,7 +164,7 @@ export default function Login({ onLogin }) {
           <div className="mx-auto bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
             <Stethoscope className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Sistema Médico (SaaS)</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">DrListo</h1>
           <p className="text-blue-100">
             {isLogin ? 'Ingrese a su Consultorio Virtual' : 'Únase o Cree su Consultorio'}
           </p>
