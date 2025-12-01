@@ -641,101 +641,101 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-  // --- TRIAJE / LISTA DEL DÍA ---
+  // --- TRIAJE LOGIC (DB INTEGRATED) ---
   const [dailyList, setDailyList] = useState([]);
-  const [triageInput, setTriageInput] = useState("");
-  const [listDate, setListDate] = useState("");
+  const [listDate, setListDate] = useState(getNowDate());
 
-  const handleTriagePaste = () => {
-    if (!triageInput) return;
-    const rows = triageInput.split(/\r?\n/);
+  const fetchDailyAppointments = async () => {
+    if (!user.clinicId) return;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('clinic_id', user.clinicId)
+        .gte('appointment_date', `${today}T00:00:00`)
+        .lte('appointment_date', `${today}T23:59:59`)
+        .order('queue_order', { ascending: true })
+        .order('appointment_date', { ascending: true });
 
-    // Intentar extraer fecha del primer registro (Columna 0: Timestamp)
-    if (rows.length > 0) {
-      const firstCols = rows[0].split(/\t/);
-      if (firstCols[0] && firstCols[0].includes('/')) {
-        setListDate(firstCols[0].split(' ')[0]); // "20/11/2025"
-      } else {
-        setListDate(new Date().toLocaleDateString());
-      }
-    }
-
-    const parsed = rows.map((row, i) => {
-      const cols = row.split(/\t/);
-      if (cols.length < 2) return null;
-
-      // Formato Específico 19 columnas:
-      // 0: Timestamp, 1: Detalles, 2: Hora, 3: Resumen, 4: DNI, 5: Nombre, 6: Edad, 7: Sexo, 
-      // 8: Ocupacion, 9: Procedencia, 10: Celular, 11: Email, 12: Fecha Nac, 13: Enfermedad, 
-      // 14: Medicamentos, 15: Alergias, 16: Cirugias, 17: Como nos encontro, 18: Recomendado por
-
-      return {
-        id: Date.now() + i,
-        hora: cols[2] || '', // Usamos col 2 como Hora
-        nombre: cols[5] || cols[0],
-        dni: cols[4] || '',
-        edad: cols[6] || '',
-        sexo: cols[7] || 'Mujer',
-        ocupacion: cols[8] || '',
-        procedencia: cols[9] || '',
-        celular: cols[10] || '',
-        email: cols[11] || '',
-        fechaNacimiento: cols[12] || '',
-        enfermedades: cols[13] || '',
-        medicamentos: cols[14] || '',
-        alergias: cols[15] || '',
-        cirugias: cols[16] || '',
-        referencia: (cols[17] || '') + (cols[18] ? ` - ${cols[18]}` : ''),
-        resumen: cols[3] || '',
-        estado: 'pendiente'
-      };
-    }).filter(Boolean);
-
-    setDailyList(prev => [...prev, ...parsed]);
-    setTriageInput("");
-  };
-
-  const updateTriageStatus = (id, status) => {
-    setDailyList(prev => prev.map(p => p.id === id ? { ...p, estado: status } : p));
-  };
-
-  const startConsultationFromTriage = (patient) => {
-    // Buscar si ya existe
-    const existing = patients.find(p => p.id === patient.dni || p.nombre === patient.nombre);
-
-    if (existing) {
-      prepareFormForNewConsultation(existing);
-    } else {
-      // Nuevo paciente pre-llenado
-      setIsNewPatient(true);
-      setEditingConsultationIndex(null);
-      setFormData({
-        id: patient.dni || '',
-        nombre: patient.nombre || '',
-        edad: patient.edad || '',
-        sexo: patient.sexo || 'Mujer',
-        ocupacion: patient.ocupacion || '',
-        procedencia: patient.procedencia || '',
-        celular: patient.celular || '',
-        email: patient.email || '',
-        fechaNacimiento: patient.fechaNacimiento || '',
-        fechaCita: getNowDate(),
-        resumen: patient.resumen || '',
-        enfermedades: patient.enfermedades || '',
-        medicamentos: patient.medicamentos || '',
-        alergias: patient.alergias || '',
-        cirugias: patient.cirugias || '',
-        referencia: patient.referencia || '',
-        examenOido: '',
-        examenNariz: '',
-        examenGarganta: '',
-        diagnosticos: [],
-        receta: [],
-        indicaciones: ''
-      });
-      setView('form');
+      if (error) throw error;
+      setDailyList(data || []);
+      setListDate(new Date().toLocaleDateString());
+    } catch (error) {
+      console.error("Error fetching daily list:", error);
     }
   };
+
+  useEffect(() => {
+    if (view === 'triage') {
+      fetchDailyAppointments();
+    }
+  }, [view]);
+
+  const updateTriageStatus = async (id, status) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ triage_status: status })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchDailyAppointments(); // Refresh list
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+
+  const updateAppointmentField = async (id, field, value) => {
+    // Optimistic update
+    setDailyList(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ [field]: value })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      fetchDailyAppointments(); // Revert on error
+    }
+  };
+
+  const handleMoveOrder = async (id, direction) => {
+    const currentIndex = dailyList.findIndex(p => p.id === id);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= dailyList.length) return;
+
+    // Swap in local state for immediate feedback
+    const newList = [...dailyList];
+    const item = newList[currentIndex];
+    newList.splice(currentIndex, 1);
+    newList.splice(newIndex, 0, item);
+    setDailyList(newList);
+
+    // Update DB (simple approach: update all orders)
+    // In a real app with huge lists, this should be optimized.
+    try {
+      const updates = newList.map((p, idx) => ({
+        id: p.id,
+        queue_order: idx
+      }));
+
+      const { error } = await supabase
+        .from('appointments')
+        .upsert(updates.map(u => ({ id: u.id, queue_order: u.queue_order })));
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error reordering:", error);
+      fetchDailyAppointments(); // Revert
+    }
+  };
+
 
   // localStorage effect removed
 
@@ -1569,18 +1569,14 @@ margin: 0;
           {/* VISTA TRIAJE */}
           {view === 'triage' && (
             <div className="max-w-5xl mx-auto space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow border border-blue-100">
-                <h3 className="font-bold text-blue-800 mb-4 flex items-center"><Clipboard className="w-5 h-5 mr-2" /> Pegar Lista del Día (Excel/Sheets)</h3>
-                <p className="text-xs text-gray-500 mb-2">Formato ideal: Hora | Nombre | DNI | Edad (Copiar celdas y pegar aquí)</p>
-                <div className="flex gap-2">
-                  <textarea
-                    value={triageInput}
-                    onChange={e => setTriageInput(e.target.value)}
-                    placeholder="Pegar aquí..."
-                    className="flex-1 border p-2 rounded text-sm h-24"
-                  />
-                  <button onClick={handleTriagePaste} className="bg-blue-600 text-white px-4 rounded font-bold hover:bg-blue-700">Cargar Lista</button>
+              <div className="bg-white p-6 rounded-xl shadow border border-blue-100 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-blue-800 flex items-center"><Clipboard className="w-5 h-5 mr-2" /> Lista de Pacientes del Día</h3>
+                  <p className="text-xs text-gray-500 mt-1">Gestiona el flujo de pacientes, pagos y exámenes.</p>
                 </div>
+                <button onClick={fetchDailyAppointments} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-200 flex items-center">
+                  <RefreshCw className="w-4 h-4 mr-2" /> Actualizar Lista
+                </button>
               </div>
 
               <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -1592,32 +1588,87 @@ margin: 0;
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
                     <tr>
+                      <th className="p-4 w-16">Orden</th>
                       <th className="p-4">Hora</th>
                       <th className="p-4">Paciente</th>
-                      <th className="p-4">Estado</th>
+                      <th className="p-4">Estado / Flujo</th>
+                      <th className="p-4">Gestión (Pagos / Exámenes)</th>
                       <th className="p-4 text-right">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {dailyList.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-gray-400">No hay pacientes en lista hoy.</td></tr>}
-                    {dailyList.map((p) => (
-                      <tr key={p.id} className={`hover:bg-gray-50 ${p.estado === 'atendido' ? 'bg-gray-100 opacity-60' : ''} ${p.estado === 'llegado' ? 'bg-green-50' : ''}`}>
-                        <td className="p-4 text-sm font-mono">{p.hora}</td>
+                    {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
+                    {dailyList.map((p, index) => (
+                      <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-gray-100 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-green-50' : ''}`}>
                         <td className="p-4">
-                          <div className="font-bold text-gray-800">{p.nombre}</div>
-                          <div className="text-xs text-gray-500">DNI: {p.dni} | {p.edad} años</div>
+                          <div className="flex flex-col gap-1">
+                            <button onClick={() => handleMoveOrder(p.id, 'up')} disabled={index === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                            <button onClick={() => handleMoveOrder(p.id, 'down')} disabled={index === dailyList.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm font-mono font-bold text-blue-900">
+                          {new Date(p.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => updateTriageStatus(p.id, 'pendiente')} className={`px-2 py-1 rounded text-xs border ${p.estado === 'pendiente' ? 'bg-gray-200 font-bold' : 'bg-white'}`}>Pendiente</button>
-                            <button onClick={() => updateTriageStatus(p.id, 'llegado')} className={`px-2 py-1 rounded text-xs border ${p.estado === 'llegado' ? 'bg-green-200 text-green-800 font-bold border-green-300' : 'bg-white hover:bg-green-50'}`}>Llegó</button>
-                            <button onClick={() => updateTriageStatus(p.id, 'atendido')} className={`px-2 py-1 rounded text-xs border ${p.estado === 'atendido' ? 'bg-blue-200 text-blue-800 font-bold border-blue-300' : 'bg-white hover:bg-blue-50'}`}>Atendido</button>
+                          <div className="font-bold text-gray-800">{p.patient_name}</div>
+                          <div className="text-xs text-gray-500">DNI: {p.patient_dni} | {p.patient_age}</div>
+                          {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => updateTriageStatus(p.id, 'confirmed')}
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'confirmed' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                              >
+                                Confirmó
+                              </button>
+                              <button
+                                onClick={() => updateTriageStatus(p.id, 'arrived')}
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                              >
+                                Llegó
+                              </button>
+                              <button
+                                onClick={() => updateTriageStatus(p.id, 'attended')}
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-gray-200 text-gray-700 border-gray-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                              >
+                                Atendido
+                              </button>
+                            </div>
+                            <div className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-wider">
+                              {p.triage_status === 'pending' ? 'Pendiente' :
+                                p.triage_status === 'confirmed' ? 'Confirmado' :
+                                  p.triage_status === 'arrived' ? 'En Sala' : 'Finalizado'}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={p.payment_status === 'paid'}
+                                onChange={(e) => updateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
+                                className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                              />
+                              <span className={`text-xs font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-gray-400'}`}>
+                                {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente Pago'}
+                              </span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Exámenes compl..."
+                              value={p.complementary_exams || ''}
+                              onChange={(e) => updateAppointmentField(p.id, 'complementary_exams', e.target.value)}
+                              className="w-full text-xs border border-gray-200 rounded p-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                            />
                           </div>
                         </td>
                         <td className="p-4 text-right">
-                          {p.estado !== 'atendido' && (user.role === 'doctor' || user.role === 'admin') && (
-                            <button onClick={() => { updateTriageStatus(p.id, 'atendido'); startConsultationFromTriage(p); }} className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700 shadow-sm">
-                              Atender
+                          {p.triage_status !== 'attended' && (user.role === 'doctor' || user.role === 'admin') && (
+                            <button onClick={() => { updateTriageStatus(p.id, 'attended'); handleConvertToPatient(p); }} className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700 shadow-sm flex items-center ml-auto">
+                              Atender <ArrowRight className="w-3 h-3 ml-1" />
                             </button>
                           )}
                         </td>
