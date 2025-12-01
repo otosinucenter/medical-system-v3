@@ -1552,8 +1552,8 @@ export default function MedicalSystem({ user, onLogout }) {
     rows.forEach(rowStr => {
       const cols = rowStr.split('\t').map(c => c.trim());
 
-      // Smart Parse Strategy: Find the DNI (8 digits)
-      const dniIndex = cols.findIndex(c => /^\d{8}$/.test(c));
+      // Smart Parse Strategy: Find the DNI/Passport (8-20 alphanumeric chars, no spaces)
+      const dniIndex = cols.findIndex(c => /^[A-Z0-9-]{8,20}$/i.test(c));
 
       if (dniIndex !== -1) {
         // Found anchor!
