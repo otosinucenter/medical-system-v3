@@ -660,12 +660,17 @@ export default function MedicalSystem({ user, onLogout }) {
     try {
       // Use selectedDate instead of always today
       const dateToQuery = selectedDate;
+
+      // Calculate start and end of day in UTC
+      const startOfDay = new Date(`${dateToQuery}T00:00:00`);
+      const endOfDay = new Date(`${dateToQuery}T23:59:59.999`);
+
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
         .eq('clinic_id', user.clinicId)
-        .gte('appointment_date', `${dateToQuery}T00:00:00`)
-        .lte('appointment_date', `${dateToQuery}T23:59:59`)
+        .gte('appointment_date', startOfDay.toISOString())
+        .lte('appointment_date', endOfDay.toISOString())
         .order('appointment_date', { ascending: true }) // Sort by time automatically
         .order('queue_order', { ascending: true });
 
@@ -760,8 +765,9 @@ export default function MedicalSystem({ user, onLogout }) {
   const handleSaveTime = async () => {
     if (!editingAppointment) return;
 
-    // Combine date and time
-    const newDateTime = `${editingAppointment.date}T${editingAppointment.time}:00`;
+    // Combine date and time and convert to ISO (UTC)
+    const localDate = new Date(`${editingAppointment.date}T${editingAppointment.time}:00`);
+    const newDateTime = localDate.toISOString();
 
     // Optimistic update for Daily List (Triage)
     setDailyList(prev => {
