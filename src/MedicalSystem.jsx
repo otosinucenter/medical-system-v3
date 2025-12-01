@@ -1407,6 +1407,39 @@ export default function MedicalSystem({ user, onLogout }) {
 
     const rows = agendaPasteText.trim().split('\n');
     const parsedAppointments = [];
+    let lastValidDate = null; // To carry over date if missing
+
+    // Helper to parse time like "11.2" -> "11:20", "1" -> "13:00"
+    const parseSpecialTime = (timeStr) => {
+      if (!timeStr) return null;
+      let t = timeStr.toString().trim().replace(',', '.');
+
+      let hours = 0;
+      let minutes = 0;
+
+      if (t.includes('.')) {
+        const parts = t.split('.');
+        hours = parseInt(parts[0]);
+        // .2 => 20 min, .4 => 40 min, .5 => 30 min (standard decimal? or specific?)
+        // User example: 11.2 -> 11:20. It seems .2 is 20 minutes.
+        // Let's assume it's a direct mapping: .1=10, .2=20, .3=30, .4=40, .5=50?
+        // Or is it decimal hours? 0.2 hours = 12 mins. 
+        // Given "11.2" usually means "11:20" in some contexts, let's treat digit after dot as tens of minutes.
+        let decimalPart = parts[1];
+        if (decimalPart.length === 1) minutes = parseInt(decimalPart) * 10;
+        else minutes = parseInt(decimalPart); // 11.25 -> 11:25
+      } else {
+        hours = parseInt(t);
+      }
+
+      // PM Logic: If 1, 2, 3, 4, 5, 6 -> Add 12 (13:00, 14:00...)
+      // But 11, 12 stay as is. 8, 9, 10 stay as is.
+      if (hours >= 1 && hours <= 6) {
+        hours += 12;
+      }
+
+      return { h: hours, m: minutes };
+    };
 
     rows.forEach(rowStr => {
       const cols = rowStr.split('\t').map(c => c.trim());
@@ -1416,34 +1449,55 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (dniIndex !== -1) {
         // Found anchor!
-        const dateStr = cols[0]; // First col is date
-        // Everything between date and DNI is symptoms/notes
-        const symptoms = cols.slice(1, dniIndex).filter(Boolean).join(' - ');
+
+        // 1. Date Logic
+        let dateStr = cols[0];
+        if (!dateStr && lastValidDate) {
+          dateStr = lastValidDate; // Carry over
+        } else if (dateStr) {
+          lastValidDate = dateStr; // Update last valid
+        }
+
+        // 2. Time Logic (Column before Symptoms, which is before DNI)
+        // Structure: Date | Time | Symptoms | DNI
+        // DNI is at dniIndex.
+        // Symptoms is at dniIndex - 1.
+        // Time is at dniIndex - 2.
+        const timeStr = cols[dniIndex - 2];
+        const timeObj = parseSpecialTime(timeStr);
+
+        // 3. Symptoms
+        const symptoms = cols[dniIndex - 1] || '';
 
         const dni = cols[dniIndex];
         const name = cols[dniIndex + 1] || 'Sin Nombre';
         const age = cols[dniIndex + 2] || '';
         const sex = cols[dniIndex + 3] || '';
-        // Skip occupation (index + 4) if needed or map it
         const occupation = cols[dniIndex + 4] || '';
         const district = cols[dniIndex + 5] || '';
         const phone = cols[dniIndex + 6] || '';
         const email = cols[dniIndex + 7] || '';
         const dob = cols[dniIndex + 8] || '';
 
-        // Parse Date (DD/MM/YYYY) to ISO
+        // Parse Date (DD/MM/YYYY) + Time to ISO
         let isoDate = new Date().toISOString();
         try {
-          const [d, m, y] = dateStr.split('/');
-          if (d && m && y) {
-            // Set time to default or current time if needed, here we just set date
-            // Ideally we'd want to preserve the time if it was in the input, but user example just has date
-            // Let's default to 8:00 AM for imported appointments or keep it as is
-            const dateObj = new Date(`${y}-${m}-${d}T08:00:00`);
-            if (!isNaN(dateObj)) isoDate = dateObj.toISOString();
+          if (dateStr) {
+            const [d, m, y] = dateStr.split('/');
+            if (d && m && y) {
+              // Default to 8:00 AM if no time found
+              let h = 8, min = 0;
+              if (timeObj) {
+                h = timeObj.h;
+                min = timeObj.m;
+              }
+
+              const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), h, min);
+              if (!isNaN(dateObj.getTime())) isoDate = dateObj.toISOString();
+            }
           }
         } catch (e) {
-          console.warn("Invalid date:", dateStr);
+          console.warn("Invalid date/time:", dateStr, timeStr);
         }
 
         parsedAppointments.push({
@@ -2880,7 +2934,7 @@ margin: 0;
               Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
             </p>
             <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
-              <strong>Formato esperado:</strong> Fecha | (Notas/Síntomas) | <strong>DNI</strong> | Nombre | Edad | Sexo | ...
+              <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
             </div>
             <textarea
               className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
