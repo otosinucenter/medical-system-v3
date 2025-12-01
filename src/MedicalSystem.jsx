@@ -1466,7 +1466,7 @@ margin: 0;
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out shadow-2xl
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:static md:shadow-none
+        md:translate-x-0 md:sticky md:top-0 md:h-screen md:shadow-none
       `}>
         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
           <div>
@@ -2455,7 +2455,7 @@ margin: 0;
                         )}
                         {apt.patient_age && (
                           <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" /> {apt.patient_age} años
+                            <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
                           </span>
                         )}
                         <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
