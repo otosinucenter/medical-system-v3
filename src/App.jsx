@@ -11,7 +11,12 @@ function AppContent() {
     useEffect(() => {
         const savedUser = localStorage.getItem('medical_system_user');
         if (savedUser) {
-            setUser(JSON.parse(savedUser));
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (error) {
+                console.error("Error parsing user from localStorage:", error);
+                localStorage.removeItem('medical_system_user'); // Clear corrupted data
+            }
         }
         setLoading(false);
     }, []);
