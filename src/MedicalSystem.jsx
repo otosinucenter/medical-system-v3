@@ -498,6 +498,8 @@ export default function MedicalSystem({ user, onLogout }) {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [teamLoading, setTeamLoading] = useState(false);
 
   // Cargar pacientes al inicio
   useEffect(() => {
