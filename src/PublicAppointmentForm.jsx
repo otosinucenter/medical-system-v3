@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle } from 'lucide-react';
+import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe } from 'lucide-react';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const COUNTRIES = [
+    "Perú", "Chile", "Colombia", "México", "Argentina", "España", "Estados Unidos", "Ecuador", "Bolivia", "Venezuela", "Otro"
+];
 
 export default function PublicAppointmentForm() {
     const { clinicId } = useParams();
@@ -19,8 +23,10 @@ export default function PublicAppointmentForm() {
         dni: '',
         name: '',
         age: '',
+        ageUnit: 'Años', // Nuevo: Años o Meses
         sex: '',
         occupation: '',
+        country: 'Perú', // Nuevo: País
         district: '',
         phone: '',
         email: '',
@@ -85,10 +91,10 @@ export default function PublicAppointmentForm() {
                     status: 'pending',
                     // Nuevos campos
                     patient_dni: formData.dni,
-                    patient_age: formData.age,
+                    patient_age: `${formData.age} ${formData.ageUnit}`, // Guardamos edad con unidad
                     patient_sex: formData.sex,
                     patient_occupation: formData.occupation,
-                    patient_district: formData.district,
+                    patient_district: `${formData.country} - ${formData.district}`, // Guardamos País - Distrito
                     patient_email: formData.email,
                     patient_dob: formData.dob,
                     chronic_illnesses: formData.chronic_illnesses,
@@ -160,16 +166,28 @@ export default function PublicAppointmentForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Propuesta</label>
-                                <input type="date" required className="w-full p-2 border rounded-lg" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                                <input
+                                    type="date"
+                                    required
+                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    value={formData.date}
+                                    onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Hora Propuesta</label>
-                                <input type="time" required className="w-full p-2 border rounded-lg" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
+                                <input
+                                    type="time"
+                                    required
+                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    value={formData.time}
+                                    onChange={e => setFormData({ ...formData, time: e.target.value })}
+                                />
                             </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Resumen de Enfermedad / Síntomas</label>
-                            <textarea required rows={3} className="w-full p-2 border rounded-lg" placeholder="Describa brevemente sus síntomas actuales..." value={formData.symptoms} onChange={e => setFormData({ ...formData, symptoms: e.target.value })} />
+                            <textarea required rows={3} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Describa brevemente sus síntomas actuales..." value={formData.symptoms} onChange={e => setFormData({ ...formData, symptoms: e.target.value })} />
                         </div>
                     </section>
 
@@ -183,32 +201,55 @@ export default function PublicAppointmentForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">DNI / Documento *</label>
-                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.dni} onChange={e => setFormData({ ...formData, dni: e.target.value })} />
+                                <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.dni} onChange={e => setFormData({ ...formData, dni: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellido *</label>
-                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
+
+                            {/* EDAD CON SELECTOR DE UNIDAD */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Edad *</label>
-                                <input type="number" required className="w-full p-2 border rounded-lg" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        required
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        value={formData.age}
+                                        onChange={e => setFormData({ ...formData, age: e.target.value })}
+                                    />
+                                    <select
+                                        className="p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
+                                        value={formData.ageUnit}
+                                        onChange={e => setFormData({ ...formData, ageUnit: e.target.value })}
+                                    >
+                                        <option value="Años">Años</option>
+                                        <option value="Meses">Meses</option>
+                                    </select>
+                                </div>
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento</label>
-                                <input type="date" className="w-full p-2 border rounded-lg" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+                                <input type="date" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Sexo *</label>
                             <div className="flex gap-4 mt-1">
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
                                     <input type="radio" name="sex" value="Mujer" required checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
                                     <span>Mujer</span>
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
                                     <input type="radio" name="sex" value="Hombre" required checked={formData.sex === 'Hombre'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
                                     <span>Hombre</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
+                                    <input type="radio" name="sex" value="Otro" required checked={formData.sex === 'Otro'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <span>Otro</span>
                                 </label>
                             </div>
                         </div>
@@ -216,22 +257,46 @@ export default function PublicAppointmentForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Ocupación *</label>
-                                <input type="text" required className="w-full p-2 border rounded-lg" placeholder="Importante para evaluar exposición a ruido/químicos" value={formData.occupation} onChange={e => setFormData({ ...formData, occupation: e.target.value })} />
+                                <input type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.occupation} onChange={e => setFormData({ ...formData, occupation: e.target.value })} />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Importante para determinar si tiene exposición a sonidos fuertes, aire acondicionado o hace uso exagerado de la voz.
+                                </p>
                             </div>
+
+                            {/* PROCEDENCIA CON PAÍS */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia (Distrito) *</label>
-                                <input type="text" required className="w-full p-2 border rounded-lg" value={formData.district} onChange={e => setFormData({ ...formData, district: e.target.value })} />
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Procedencia *</label>
+                                <div className="space-y-2">
+                                    <select
+                                        className="w-full p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
+                                        value={formData.country}
+                                        onChange={e => setFormData({ ...formData, country: e.target.value })}
+                                    >
+                                        {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Ciudad / Distrito"
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        value={formData.district}
+                                        onChange={e => setFormData({ ...formData, district: e.target.value })}
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    ¿Dónde estuvo los últimos 3 meses? Importante para determinar clima, contaminación o polvo.
+                                </p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp *</label>
-                                <input type="tel" required className="w-full p-2 border rounded-lg" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                <input type="tel" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                                <input type="email" required className="w-full p-2 border rounded-lg" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                <input type="email" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                             </div>
                         </div>
                     </section>
@@ -245,19 +310,22 @@ export default function PublicAppointmentForm() {
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Enfermedades Crónicas</label>
-                            <textarea rows={2} className="w-full p-2 border rounded-lg" placeholder="Hipertensión, diabetes, asma, etc." value={formData.chronic_illnesses} onChange={e => setFormData({ ...formData, chronic_illnesses: e.target.value })} />
+                            <textarea rows={2} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ej: Hipertensión, diabetes, asma, cáncer..." value={formData.chronic_illnesses} onChange={e => setFormData({ ...formData, chronic_illnesses: e.target.value })} />
+                            <p className="text-xs text-slate-500 mt-1">
+                                ¿Padece alguna enfermedad crónica? Especifique si es hipertensión, diabetes, asma, cáncer u otra.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Medicamentos usados frecuentemente</label>
-                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.medications} onChange={e => setFormData({ ...formData, medications: e.target.value })} />
+                            <textarea rows={2} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.medications} onChange={e => setFormData({ ...formData, medications: e.target.value })} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Alergias a medicamentos</label>
-                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.allergies} onChange={e => setFormData({ ...formData, allergies: e.target.value })} />
+                            <textarea rows={2} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.allergies} onChange={e => setFormData({ ...formData, allergies: e.target.value })} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Cirugías en Cabeza y/o Cuello</label>
-                            <textarea rows={2} className="w-full p-2 border rounded-lg" value={formData.surgeries} onChange={e => setFormData({ ...formData, surgeries: e.target.value })} />
+                            <textarea rows={2} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.surgeries} onChange={e => setFormData({ ...formData, surgeries: e.target.value })} />
                         </div>
                     </section>
 
@@ -272,11 +340,12 @@ export default function PublicAppointmentForm() {
                             <label className="block text-sm font-medium text-slate-700 mb-2">¿Cómo nos encontró?</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['Google', 'Doctoralia', 'Facebook', 'Instagram', 'Recomendación', 'Grupo de Whatsapp', 'IA (ChatGPT, etc)'].map(opt => (
-                                    <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                    <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50">
                                         <input
                                             type="checkbox"
                                             checked={formData.referral_source.includes(opt)}
                                             onChange={() => handleCheckboxChange(opt)}
+                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                                         />
                                         <span className="text-sm">{opt}</span>
                                     </label>
@@ -285,7 +354,7 @@ export default function PublicAppointmentForm() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Si fue recomendado, ¿por quién?</label>
-                            <input type="text" className="w-full p-2 border rounded-lg" placeholder="Nombre del médico o paciente" value={formData.referral_detail} onChange={e => setFormData({ ...formData, referral_detail: e.target.value })} />
+                            <input type="text" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Nombre del médico o paciente" value={formData.referral_detail} onChange={e => setFormData({ ...formData, referral_detail: e.target.value })} />
                         </div>
                     </section>
 
