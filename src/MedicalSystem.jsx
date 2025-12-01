@@ -1414,8 +1414,10 @@ margin: 0;
               <Activity className="w-6 h-6 text-blue-400" />
               <h1 className="text-xl font-bold tracking-tight">DrListo</h1>
             </div>
-            <p className="text-xs text-slate-400">{user.email}</p>
-            <span className="text-[10px] text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded-full mt-1 inline-block">v10.0 Actualizado</span>
+            <div className="mt-2">
+              <p className="text-xs text-blue-200 font-medium">¡Hola, {user.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
+              <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{user.email}</p>
+            </div>
           </div>
           {/* Botón cerrar en móvil */}
           <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white">
@@ -1479,10 +1481,13 @@ margin: 0;
         </nav>
 
         <div className="absolute bottom-0 left-0 w-full p-4 bg-slate-900 border-t border-slate-800">
-          <button onClick={onLogout} className="flex items-center text-slate-400 hover:text-red-400 transition-colors text-sm font-medium w-full">
+          <button onClick={onLogout} className="flex items-center text-slate-400 hover:text-red-400 transition-colors text-sm font-medium w-full mb-3">
             <LogOut className="w-5 h-5 mr-3" />
             Cerrar Sesión
           </button>
+          <div className="text-center">
+            <span className="text-[10px] text-slate-600 font-medium">v10.0.1 (Stable)</span>
+          </div>
         </div>
       </aside>
 
