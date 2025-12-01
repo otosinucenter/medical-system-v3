@@ -421,8 +421,7 @@ const CATALOGO_MEDICO = {
 
 export default function MedicalSystem({ user, onLogout }) {
   console.log("MedicalSystem user prop:", user);
-  const [view, setView] = useState('triage'); // triage, patients, history, agenda
-  const [searchTerm, setSearchTerm] = useState('');
+  const [view, setView] = useState('triage'); // triage, patients, history, agendarchTerm, setSearchTerm = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [importText, setImportText] = useState('');
   const [diagInput, setDiagInput] = useState({ code: '', desc: '' });
@@ -1172,30 +1171,26 @@ export default function MedicalSystem({ user, onLogout }) {
     if (!pasteText.trim()) return;
 
     const rows = pasteText.trim().split('\n');
-    if (rows.length < 1) return;
+    if (rows.length < 2) {
+      alert("Por favor pegue al menos una fila de encabezados y una fila de datos.");
+      return;
+    }
 
-    // Detectar si la primera fila tiene encabezados (buscando palabras clave)
-    const firstRow = rows[0].split('\t');
-    const hasHeaders = firstRow.some(cell =>
-      ['nombre', 'dni', 'paciente', 'edad', 'sexo', 'celular'].some(keyword => cell.toLowerCase().includes(keyword))
-    );
+    const headers = rows[0].split('\t').map(h => h.trim());
+    const dataRows = rows.slice(1);
 
-    let newPatients = [];
-
-    if (hasHeaders) {
-      // LÓGICA CON ENCABEZADOS (Original)
-      const headers = rows[0].split('\t').map(h => h.trim());
-      const dataRows = rows.slice(1);
-
-      newPatients = dataRows.map(rowStr => {
+    if (window.confirm(`Se detectaron ${dataRows.length} filas. ¿Procesar importación?`)) {
+      const newPatients = dataRows.map(rowStr => {
         const rowVals = rowStr.split('\t');
         const rowObj = {};
         headers.forEach((h, i) => {
           rowObj[h] = rowVals[i]?.trim();
         });
 
+        // Función auxiliar para buscar valor insensible a mayúsculas
         const getVal = (keys) => {
           for (const k of keys) {
+            // Buscamos coincidencia exacta en el objeto fila construido
             const keyLower = k.toLowerCase();
             const foundKey = Object.keys(rowObj).find(rk => rk.toLowerCase() === keyLower);
             if (foundKey && rowObj[foundKey]) return rowObj[foundKey];
@@ -1221,39 +1216,13 @@ export default function MedicalSystem({ user, onLogout }) {
           cirugias: getVal(['Cirugias en Cabeza y/o cuello?', 'Cirugias']) || '',
           referencia: (getVal(['¿Como nos encontró?', 'Referencia']) || '') + ' ' + (getVal(['Si fue recomendado por otro medico o paciente atendido previamente podria escribir su nombre']) || ''),
           examenOido: '', examenNariz: '', examenGarganta: '',
-          diagnosticos: [], receta: [], indicaciones: '', consultas: []
+          diagnosticos: [],
+          receta: [],
+          indicaciones: '',
+          consultas: []
         };
       });
-    } else {
-      // LÓGICA SIN ENCABEZADOS (Por posición de columnas - Legacy)
-      // Asumimos el orden del Excel del usuario:
-      // 0:Fecha, 1:?, 2:Hora/Orden, 3:Resumen, 4:DNI, 5:Nombre, 6:Edad, 7:Sexo, 8:Ocup, 9:Proc, 10:Cel, 11:Email, 12:Nac, 13:Enf, 14:Med, 15:Alerg, 16:Cir, 17:Ref
-      newPatients = rows.map(rowStr => {
-        const cols = rowStr.split('\t');
-        return {
-          fechaCita: cols[2] ? cols[2].replace(' ', 'T') : getNowDate(),
-          resumen: cols[3] || '',
-          id: cols[4] || String(Date.now() + Math.random()),
-          nombre: cols[5] || 'Sin Nombre',
-          edad: cols[6] || '',
-          sexo: cols[7] || 'Mujer',
-          ocupacion: cols[8] || '',
-          procedencia: cols[9] || '',
-          celular: cols[10] || '',
-          email: cols[11] || '',
-          fechaNacimiento: parseDate(cols[12]),
-          enfermedades: cols[13] || '',
-          medicamentos: cols[14] || '',
-          alergias: cols[15] || '',
-          cirugias: cols[16] || '',
-          referencia: (cols[17] || '') + (cols[18] ? ` (${cols[18]})` : ''),
-          examenOido: '', examenNariz: '', examenGarganta: '',
-          diagnosticos: [], receta: [], indicaciones: '', consultas: []
-        };
-      });
-    }
 
-    if (window.confirm(`Se detectaron ${newPatients.length} filas (${hasHeaders ? 'Con Encabezados' : 'Sin Encabezados'}). ¿Procesar importación?`)) {
       setPatients(prev => {
         const existingIds = new Set(prev.map(p => p.id));
         const uniqueNewPatients = newPatients.filter(p => !existingIds.has(p.id));
