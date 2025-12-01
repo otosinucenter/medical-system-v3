@@ -500,6 +500,57 @@ export default function MedicalSystem({ user, onLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
+  const [newMember, setNewMember] = useState({ name: '', email: '', password: '', role: 'doctor' });
+
+  const handleCreateTeamMember = async (e) => {
+    e.preventDefault();
+    setTeamLoading(true);
+
+    try {
+      // 1. Crear cliente temporal para no perder la sesión actual
+      const tempSupabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+      );
+
+      // 2. Crear usuario
+      const { data: authData, error: authError } = await tempSupabase.auth.signUp({
+        email: newMember.email,
+        password: newMember.password,
+        options: {
+          data: {
+            role: newMember.role,
+            username: newMember.name
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No se pudo crear el usuario");
+
+      // 3. Crear Perfil vinculado
+      const { error: profileError } = await tempSupabase
+        .from('profiles')
+        .insert([{
+          id: authData.user.id,
+          clinic_id: user.clinicId,
+          role: newMember.role,
+          full_name: newMember.name
+        }]);
+
+      if (profileError) throw profileError;
+
+      alert(`Usuario ${newMember.name} creado exitosamente.`);
+      setIsTeamModalOpen(false);
+      setNewMember({ name: '', email: '', password: '', role: 'doctor' });
+
+    } catch (error) {
+      console.error("Error creando miembro:", error);
+      alert("Error: " + error.message);
+    } finally {
+      setTeamLoading(false);
+    }
+  };
 
   // Cargar pacientes al inicio
   useEffect(() => {
