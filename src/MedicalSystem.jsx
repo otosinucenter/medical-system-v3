@@ -1286,85 +1286,133 @@ margin: 0;
 }
 `}</style>
 
-      {/* Sidebar */}
-      <div className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20 no-print">
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center gap-3 mb-1">
-            <Activity className="w-8 h-8 text-blue-400" />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-              MedicalSys
-            </h1>
+      {/* OVERLAY MÓVIL (Fondo oscuro cuando el menú está abierto) */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR (Navegación) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out shadow-2xl
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:static md:shadow-none
+      `}>
+        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="w-6 h-6 text-blue-400" />
+              <h1 className="text-xl font-bold tracking-tight">MedicalSys</h1>
+            </div>
+            <p className="text-xs text-slate-400">{user.email}</p>
           </div>
-          <p className="text-xs text-slate-400 font-medium tracking-wide">{user?.username || 'Dr. Florez'}</p>
-          {/* Invite Code - Solo visible para ADMIN */}
-          {user.role === 'admin' && user.clinicId && (
-            <div className="mt-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">
-                Código de Invitación
-              </p>
-              <div className="flex items-center gap-2 bg-slate-900 rounded p-2">
-                <code className="text-xs text-blue-400 font-mono flex-1 truncate select-all">
-                  {user.clinicId}
-                </code>
+          {/* Botón cerrar en móvil */}
+          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-180px)]">
+
+          {/* CÓDIGO DE INVITACIÓN (Solo si tiene clinicId) */}
+          {user.clinicId && (
+            <div className="mb-6 p-3 bg-slate-800 rounded-lg border border-slate-700">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">CÓDIGO DE INVITACIÓN</p>
+              <div className="flex items-center justify-between bg-slate-900 p-2 rounded border border-slate-700">
+                <code className="text-xs text-blue-400 font-mono truncate select-all">{user.clinicId}</code>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(user.clinicId);
-                    alert("Código copiado al portapapeles");
-                  }}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  onClick={() => { navigator.clipboard.writeText(user.clinicId); alert("Código copiado!"); }}
+                  className="text-slate-500 hover:text-white ml-2"
                   title="Copiar código"
                 >
                   <Clipboard className="w-3 h-3" />
                 </button>
               </div>
-              <p className="text-[10px] text-slate-500 mt-2 leading-tight">
-                Comparte este código con otros médicos o asistentes para que se unan a tu clínica.
-              </p>
+              <p className="text-[10px] text-slate-500 mt-1 leading-tight">Comparte este código con otros médicos o asistentes para que se unan a tu clínica.</p>
             </div>
           )}
+
+          <button onClick={() => { setView('list'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'list' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+            <Users className="w-5 h-5 mr-3" />
+            <span className="font-medium">Pacientes</span>
+          </button>
+
+          <button onClick={() => { setView('triage'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'triage' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+            <Clipboard className="w-5 h-5 mr-3" />
+            <span className="font-medium">Triaje / Lista</span>
+          </button>
+
+          {(user.role === 'doctor' || user.role === 'admin') && (
+            <button onClick={() => {
+              setIsNewPatient(true);
+              setEditingConsultationIndex(null);
+              setFormData({
+                id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
+                celular: '', email: '', fechaNacimiento: '',
+                referencia: '', enfermedades: '', medicamentos: '', alergias: '', cirugias: '',
+                fechaCita: getNowDate(), resumen: '',
+                examenOido: '', examenNariz: '', examenGarganta: '',
+                diagnosticos: [],
+                receta: [],
+                indicaciones: ''
+              });
+              setView('form');
+              setIsMobileMenuOpen(false);
+            }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'form' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 hover:text-blue-300 border border-blue-900/50'}`}>
+              <UserPlus className="w-5 h-5 mr-3" />
+              <span className="font-medium">Nuevo Paciente</span>
+            </button>
+          )}
+
+          <div className="pt-4 mt-4 border-t border-slate-800">
+            <button onClick={() => setIsDataModalOpen(true)} className="w-full flex items-center p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+              <Briefcase className="w-5 h-5 mr-3" />
+              <span className="font-medium text-sm">Gestión de Datos</span>
+            </button>
+          </div>
+        </nav>
+
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-slate-900 border-t border-slate-800">
+          <button onClick={onLogout} className="flex items-center text-slate-400 hover:text-red-400 transition-colors text-sm font-medium w-full">
+            <LogOut className="w-5 h-5 mr-3" />
+            Cerrar Sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 h-screen overflow-y-auto bg-slate-50 relative w-full">
+        {/* HEADER MÓVIL */}
+        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-600 hover:text-blue-600">
+              <ListPlus className="w-6 h-6" />
+            </button>
+            <span className="font-bold text-slate-800">
+              {view === 'list' && 'Pacientes'}
+              {view === 'triage' && 'Triaje'}
+              {view === 'form' && 'Ficha de Ingreso'}
+              {view === 'detail' && 'Historia Clínica'}
+            </span>
+          </div>
+          <div className="w-8"></div> {/* Espaciador para centrar */}
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <button onClick={() => setView('list')} className={`w-full flex items-center p-4 hover:bg-blue-800 transition-colors ${view === 'list' ? 'bg-blue-800' : ''}`}>
-            <Users className="w-6 h-6 mr-3" /> <span>Pacientes</span>
-          </button>
-          <button onClick={() => setView('triage')} className={`w-full flex items-center p-4 hover:bg-blue-800 transition-colors ${view === 'triage' ? 'bg-blue-800' : ''}`}>
-            <Clipboard className="w-6 h-6 mr-3" /> <span>Triaje / Lista</span>
-          </button>
-          <button onClick={() => {
-            setIsNewPatient(true);
-            setFormData({
-              id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
-              celular: '', email: '', fechaNacimiento: '', fechaCita: getNowDate(), resumen: '',
-              enfermedades: '', medicamentos: '', alergias: '', cirugias: '', referencia: '',
-              examenOido: '', examenNariz: '', examenGarganta: '', diagnosticos: [],
-              receta: [],
-              indicaciones: ''
-            });
-            setEditingConsultationIndex(null);
-            setView('form');
-          }} className={`w-full flex items-center p-4 hover:bg-blue-800 transition-colors ${view === 'form' ? 'bg-blue-800' : ''}`}>
-            <UserPlus className="w-6 h-6 md:mr-3" /> <span className="hidden md:block">Nuevo Ingreso</span>
-          </button>
-        </nav>
-        <button onClick={onLogout} className="w-full flex items-center p-4 hover:bg-red-800 transition-colors mt-auto text-red-200">
-          <LogOut className="w-6 h-6 md:mr-3" /> <span className="hidden md:block">Salir</span>
-        </button>
-        <div className="p-4 text-xs text-blue-300 hidden md:block">v9.6 Auth</div>
-      </div>
+        <div className="p-4 md:p-8 pb-24">
+          <header className="bg-white shadow-sm p-4 md:p-6 sticky top-0 z-10 flex justify-between items-center no-print">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {view === 'list' && 'Base de Datos de Pacientes'}
+              {view === 'form' && (isNewPatient ? 'Ficha de Ingreso' : (editingConsultationIndex !== null ? 'Editar Consulta' : 'Nueva Consulta Médica'))}
+              {view === 'detail' && 'Historia Clínica Digital'}
+              {view === 'triage' && 'Triaje y Lista de Espera'}
+            </h1>
+          </header>
 
-      {/* Contenido */}
-      <div className="flex-1 overflow-auto relative">
-        <header className="bg-white shadow-sm p-4 md:p-6 sticky top-0 z-10 flex justify-between items-center no-print">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {view === 'list' && 'Base de Datos de Pacientes'}
-            {view === 'form' && (isNewPatient ? 'Ficha de Ingreso' : (editingConsultationIndex !== null ? 'Editar Consulta' : 'Nueva Consulta Médica'))}
-            {view === 'detail' && 'Historia Clínica Digital'}
-            {view === 'triage' && 'Triaje y Lista de Espera'}
-          </h1>
         </header>
 
-        <main className="p-4 md:p-8">
+        <div className="p-4 md:p-8">
           {/* VISTA LISTA */}
           {view === 'list' && (
             <div className="space-y-6">
@@ -1860,8 +1908,8 @@ margin: 0;
               </div>
             </div>
           )}
-        </main>
-      </div >
+        </div>
+      </main>
 
       {/* MODAL IMPORTACIÓN MASIVA (PEGAR) */}
       {
