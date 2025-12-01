@@ -5,7 +5,8 @@ import {
   ChevronRight, User, Clipboard, ArrowDownCircle, Stethoscope, Plus,
   Trash2, ListPlus, Pill, Ear, Smile, Mic2, Printer, Baby, Info,
   HelpCircle, Download, AlertCircle, History, Clock, Eye, MapPin,
-  Briefcase, Mail, AlertTriangle, CalendarDays, FileSignature, Edit3, X, LogOut, MessageCircle, Link
+  Briefcase, Mail, AlertTriangle, CalendarDays, FileSignature, Edit3, X, LogOut, MessageCircle, Link,
+  RefreshCw, ChevronUp, ChevronDown, ArrowRight
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
