@@ -754,6 +754,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
     // Optimistic update
     setDailyList(prev => prev.map(p => p.id === editingAppointment.id ? { ...p, appointment_date: newDateTime } : p));
+    setAppointments(prev => prev.map(a => a.id === editingAppointment.id ? { ...a, appointment_date: newDateTime } : a));
     setEditingAppointment(null);
 
     try {
@@ -766,6 +767,7 @@ export default function MedicalSystem({ user, onLogout }) {
     } catch (error) {
       console.error("Error updating time:", error);
       fetchDailyAppointments(); // Revert
+      fetchAppointments(); // Revert
     }
   };
 
@@ -2361,16 +2363,43 @@ margin: 0;
               {appointments.map((apt) => (
                 <div key={apt.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4">
-                    <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px]">
-                      <span className="block text-xs font-bold text-blue-600 uppercase">
-                        {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
-                      </span>
-                      <span className="block text-2xl font-bold text-slate-900">
-                        {new Date(apt.appointment_date).getDate()}
-                      </span>
-                      <span className="block text-xs text-slate-500">
-                        {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                    <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px] relative group">
+                      {editingAppointment?.id === apt.id ? (
+                        <div className="flex flex-col gap-1">
+                          <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} />
+                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} />
+                          <div className="flex justify-center gap-1">
+                            <button onClick={handleSaveTime} className="text-green-600 hover:bg-green-100 rounded p-1"><Save className="w-3 h-3" /></button>
+                            <button onClick={() => setEditingAppointment(null)} className="text-red-600 hover:bg-red-100 rounded p-1"><X className="w-3 h-3" /></button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              const d = new Date(apt.appointment_date);
+                              setEditingAppointment({
+                                id: apt.id,
+                                date: d.toISOString().split('T')[0],
+                                time: d.toTimeString().slice(0, 5)
+                              });
+                            }}
+                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-all bg-white rounded-full p-1 shadow-sm border"
+                            title="Editar fecha/hora"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <span className="block text-xs font-bold text-blue-600 uppercase">
+                            {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
+                          </span>
+                          <span className="block text-2xl font-bold text-slate-900">
+                            {new Date(apt.appointment_date).getDate()}
+                          </span>
+                          <span className="block text-xs text-slate-500">
+                            {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
