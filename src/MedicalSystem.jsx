@@ -1330,7 +1330,18 @@ margin: 0;
                   <Clipboard className="w-3 h-3" />
                 </button>
               </div>
-              <p className="text-[10px] text-slate-500 mt-1 leading-tight">Comparte este código con otros médicos o asistentes para que se unan a tu clínica.</p>
+              <button
+                onClick={() => {
+                  const link = `${window.location.origin}/app?invite=${user.clinicId}`;
+                  navigator.clipboard.writeText(link);
+                  alert("¡Enlace de invitación copiado! Envíalo a tu colega.");
+                }}
+                className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 transition-colors"
+              >
+                <UserPlus className="w-3 h-3" />
+                Copiar Link de Invitación
+              </button>
+              <p className="text-[10px] text-slate-500 mt-2 leading-tight">Comparte este enlace para que se registren automáticamente.</p>
             </div>
           )}
 

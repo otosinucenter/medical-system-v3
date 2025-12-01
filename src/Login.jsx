@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Lock, Stethoscope, Calendar, Building } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -11,6 +11,17 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Auto-fill from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteCode = params.get('invite');
+    if (inviteCode) {
+      setIsLogin(false);
+      setRole('doctor');
+      setClinicCode(inviteCode);
+    }
+  }, []);
 
   const getEmail = (user) => {
     return user.includes('@') ? user : `${user}@medsys.local`;
