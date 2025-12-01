@@ -497,6 +497,7 @@ export default function MedicalSystem({ user, onLogout }) {
   // --- BASE DE DATOS (SUPABASE) ---
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Cargar pacientes al inicio
   useEffect(() => {
