@@ -25,6 +25,16 @@ export default function Landing() {
                                 Ingresar
                             </Link>
                         </div>
+
+                        {/* Botón Móvil */}
+                        <div className="md:hidden">
+                            <Link
+                                to="/app"
+                                className="bg-blue-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-md"
+                            >
+                                Ingresar
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </nav>
