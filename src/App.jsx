@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
 import MedicalSystem from './MedicalSystem';
 import Landing from './Landing';
+import ErrorBoundary from './ErrorBoundary';
 
 function AppContent() {
     const [user, setUser] = useState(null);
@@ -42,7 +43,9 @@ function AppContent() {
                     !user ? (
                         <Login onLogin={handleLogin} />
                     ) : (
-                        <MedicalSystem user={user} onLogout={handleLogout} />
+                        <ErrorBoundary>
+                            <MedicalSystem user={user} onLogout={handleLogout} />
+                        </ErrorBoundary>
                     )
                 }
             />
