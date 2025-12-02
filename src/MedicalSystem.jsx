@@ -896,33 +896,54 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   const confirmAppointment = async (apt) => {
-    if (!apt.appointment_date || !apt.appointment_time) {
+    // Check if we are currently editing this appointment
+    const isEditing = editingAppointment?.id === apt.id;
+    const dateToUse = isEditing ? editingAppointment.date : apt.appointment_date;
+    const timeToUse = isEditing ? editingAppointment.time : apt.appointment_time;
+
+    if (!dateToUse || !timeToUse) {
       alert("Por favor, asigna una fecha y hora antes de confirmar.");
-      // Activar modo edición para este cita
-      const d = new Date(apt.appointment_date || new Date());
-      setEditingAppointment({
-        id: apt.id,
-        date: d.toISOString().split('T')[0],
-        time: d.toTimeString().slice(0, 5)
-      });
+      // Activar modo edición para este cita si no lo está
+      if (!isEditing) {
+        const d = new Date(apt.appointment_date || new Date());
+        setEditingAppointment({
+          id: apt.id,
+          date: d.toISOString().split('T')[0],
+          time: d.toTimeString().slice(0, 5)
+        });
+      }
       return;
     }
 
-    if (!confirm(`¿Confirmar cita para ${apt.patient_name} el ${new Date(apt.appointment_date).toLocaleDateString()} a las ${new Date(apt.appointment_date).toLocaleTimeString()}? \n\nPasará a la lista de Triaje del día correspondiente.`)) return;
+    // Construct full date object for confirmation message
+    const fullDate = new Date(`${dateToUse}T${timeToUse}:00`);
+
+    if (!confirm(`¿Confirmar cita para ${apt.patient_name} el ${fullDate.toLocaleDateString()} a las ${timeToUse}? \n\nPasará a la lista de Triaje del día correspondiente.`)) return;
 
     try {
+      // If editing, we need to update date/time AND status
+      const updates = {
+        status: 'confirmed',
+        triage_status: 'pending'
+      };
+
+      if (isEditing) {
+        updates.appointment_date = fullDate.toISOString();
+      }
+
       const { error } = await supabase
         .from('appointments')
-        .update({
-          status: 'confirmed',
-          triage_status: 'pending' // Ready for triage
-        })
+        .update(updates)
         .eq('id', apt.id);
 
       if (error) throw error;
 
       // Update local state
-      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status: 'confirmed', triage_status: 'pending' } : a));
+      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, ...updates } : a));
+
+      // If we were editing, clear edit state
+      if (isEditing) setEditingAppointment(null);
+
       alert("Cita confirmada y movida a Triaje.");
     } catch (error) {
       console.error("Error confirming appointment:", error);
@@ -3072,7 +3093,7 @@ margin: 0;
           <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">Agenda de Citas</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Solicitud de Citas</h2>
                 <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
               </div>
               <div className="flex gap-2">
