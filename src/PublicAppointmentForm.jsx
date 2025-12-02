@@ -116,6 +116,26 @@ export default function PublicAppointmentForm() {
         }
     };
 
+    const calculateDobFromAge = (age, unit) => {
+        if (!age) return '';
+        const today = new Date();
+        let birthDate = new Date();
+
+        if (unit === 'Años') {
+            birthDate.setFullYear(today.getFullYear() - parseInt(age));
+        } else {
+            birthDate.setMonth(today.getMonth() - parseInt(age));
+        }
+
+        // Return YYYY-MM-DD
+        return birthDate.toISOString().split('T')[0];
+    };
+
+    const handleAgeChange = (val, unit) => {
+        const newDob = calculateDobFromAge(val, unit);
+        setFormData({ ...formData, age: val, ageUnit: unit, dob: newDob });
+    };
+
     if (submitted) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -142,7 +162,7 @@ export default function PublicAppointmentForm() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-blue-600 p-6 text-center">
-                    <h1 className="text-2xl font-bold text-white">Ficha de Pre-Admisión Médica</h1>
+                    <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-blue-100 mt-2 text-sm px-4">
                         El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
@@ -217,12 +237,12 @@ export default function PublicAppointmentForm() {
                                         required
                                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         value={formData.age}
-                                        onChange={e => setFormData({ ...formData, age: e.target.value })}
+                                        onChange={e => handleAgeChange(e.target.value, formData.ageUnit)}
                                     />
                                     <select
                                         className="p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
                                         value={formData.ageUnit}
-                                        onChange={e => setFormData({ ...formData, ageUnit: e.target.value })}
+                                        onChange={e => handleAgeChange(formData.age, e.target.value)}
                                     >
                                         <option value="Años">Años</option>
                                         <option value="Meses">Meses</option>
@@ -231,8 +251,9 @@ export default function PublicAppointmentForm() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento</label>
-                                <input type="date" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento (Aprox)</label>
+                                <input type="date" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-slate-100" value={formData.dob} readOnly />
+                                <p className="text-xs text-slate-500 mt-1">Calculada automáticamente según edad.</p>
                             </div>
                         </div>
 
@@ -240,16 +261,12 @@ export default function PublicAppointmentForm() {
                             <label className="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
                             <div className="flex gap-4 mt-1">
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Mujer" checked={formData.sex === 'Mujer'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
-                                    <span>Mujer</span>
+                                    <input type="radio" name="sex" value="Femenino" checked={formData.sex === 'Femenino'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <span>Femenino</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Hombre" checked={formData.sex === 'Hombre'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
-                                    <span>Hombre</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer p-2 border rounded-lg hover:bg-slate-50 w-full justify-center">
-                                    <input type="radio" name="sex" value="Otro" checked={formData.sex === 'Otro'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
-                                    <span>Otro</span>
+                                    <input type="radio" name="sex" value="Masculino" checked={formData.sex === 'Masculino'} onChange={e => setFormData({ ...formData, sex: e.target.value })} />
+                                    <span>Masculino</span>
                                 </label>
                             </div>
                         </div>
