@@ -129,12 +129,18 @@ export default function PublicAppointmentFormV2() {
         const fetchBookedSlots = async () => {
             if (!clinicId || !formData.date) return;
 
+            // Crear rango de búsqueda en UTC para cubrir todo el día local
+            // Ejemplo: 00:00 local -> 05:00 UTC
+            // 23:59 local -> 04:59 UTC (del día siguiente)
+            const startOfDay = new Date(`${formData.date}T00:00:00`);
+            const endOfDay = new Date(`${formData.date}T23:59:59`);
+
             const { data, error } = await supabase
                 .from('appointments')
                 .select('appointment_date')
                 .eq('clinic_id', clinicId)
-                .gte('appointment_date', `${formData.date}T00:00:00`)
-                .lte('appointment_date', `${formData.date}T23:59:59`)
+                .gte('appointment_date', startOfDay.toISOString())
+                .lte('appointment_date', endOfDay.toISOString())
                 .neq('status', 'cancelled'); // Asumimos que canceladas liberan cupo
 
             if (data) {
