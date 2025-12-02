@@ -3189,8 +3189,8 @@ margin: 0;
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table className="w-full text-left border-collapse">
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
                       <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                           <th className="p-4 w-48">Fecha / Hora</th>
@@ -3203,50 +3203,52 @@ margin: 0;
                       <tbody className="divide-y divide-slate-100">
                         {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
                           <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
-                            {/* FECHA Y HORA EDITABLE */}
+                            {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
                             <td className="p-4 align-top">
-                              {editingAppointment?.id === apt.id ? (
-                                <div className="flex flex-col gap-2 bg-white p-2 rounded shadow-sm border border-blue-200 z-10 relative">
-                                  <input
-                                    type="date"
-                                    className="text-xs font-bold border rounded p-1 w-full"
-                                    value={editingAppointment.date}
-                                    onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
-                                  />
-                                  <input
-                                    type="time"
-                                    className="text-xs font-bold border rounded p-1 w-full"
-                                    value={editingAppointment.time}
-                                    onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
-                                    step="300"
-                                  />
-                                  <div className="flex gap-1 justify-end mt-1">
-                                    <button onClick={() => setEditingAppointment(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
-                                    <button onClick={handleSaveTime} className="p-1 text-green-600 hover:text-green-700 bg-green-50 rounded"><Save className="w-4 h-4" /></button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => {
-                                    const d = new Date(apt.appointment_date);
-                                    setEditingAppointment({
-                                      id: apt.id,
-                                      date: d.toISOString().split('T')[0],
-                                      time: d.toTimeString().slice(0, 5)
-                                    });
+                              <div className="flex flex-col gap-2">
+                                <input
+                                  key={`date-${apt.id}-${apt.appointment_date}`}
+                                  type="date"
+                                  className="text-xs font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none"
+                                  defaultValue={new Date(apt.appointment_date).toISOString().split('T')[0]}
+                                  onBlur={(e) => {
+                                    const newDate = e.target.value;
+                                    if (newDate && newDate !== new Date(apt.appointment_date).toISOString().split('T')[0]) {
+                                      const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
+
+                                      // Optimistic update
+                                      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+
+                                      supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                        if (error) { console.error(error); fetchAppointments(); }
+                                      });
+                                    }
                                   }}
-                                  className="cursor-pointer group-hover:bg-white p-2 rounded border border-transparent group-hover:border-blue-100 transition-all"
-                                  title="Clic para editar"
-                                >
-                                  <div className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                    <Calendar className="w-3 h-3 text-slate-400" />
-                                    {new Date(apt.appointment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                                  </div>
-                                  <div className="font-mono text-lg font-bold text-blue-600">
-                                    {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                  </div>
-                                </div>
-                              )}
+                                />
+                                <input
+                                  key={`time-${apt.id}-${apt.appointment_date}`}
+                                  type="time"
+                                  className="text-lg font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none text-slate-800"
+                                  defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
+                                  onBlur={(e) => {
+                                    const newTime = e.target.value;
+                                    const currentDate = new Date(apt.appointment_date).toISOString().split('T')[0];
+                                    const currentTime = new Date(apt.appointment_date).toTimeString().slice(0, 5);
+
+                                    if (newTime && newTime !== currentTime) {
+                                      const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
+
+                                      // Optimistic update
+                                      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+
+                                      supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                        if (error) { console.error(error); fetchAppointments(); }
+                                      });
+                                    }
+                                  }}
+                                  step="300"
+                                />
+                              </div>
                             </td>
 
                             {/* DATOS PACIENTE */}
@@ -3302,29 +3304,15 @@ margin: 0;
                                   </button>
                                 )}
 
-                                {editingAppointment?.id === apt.id && editingAppointment.date && editingAppointment.time && (
-                                  <a
-                                    href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(editingAppointment.date + 'T' + editingAppointment.time).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${editingAppointment.time}. ¿Confirma?`)}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                                    title="Enviar propuesta por WhatsApp"
-                                  >
-                                    <MessageCircle className="w-5 h-5" />
-                                  </a>
-                                )}
-
-                                {!editingAppointment && (
-                                  <a
-                                    href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
-                                    title="Abrir WhatsApp"
-                                  >
-                                    <MessageCircle className="w-5 h-5" />
-                                  </a>
-                                )}
+                                <a
+                                  href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(apt.appointment_date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${new Date(apt.appointment_date).toTimeString().slice(0, 5)}. ¿Confirma?`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                                  title="Enviar propuesta por WhatsApp (con fecha/hora actual)"
+                                >
+                                  <MessageCircle className="w-5 h-5" />
+                                </a>
 
                                 <button
                                   onClick={() => deleteAppointment(apt.id)}
