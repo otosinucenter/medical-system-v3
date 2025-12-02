@@ -319,15 +319,7 @@ export default function PublicAppointmentFormV2() {
                                             ))}
                                         </div>
 
-                                        {!showAllSlots && availableSlots.length > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowAllSlots(true)}
-                                                className="w-full py-2 text-sm text-indigo-600 font-bold hover:bg-indigo-50 rounded-lg transition-colors border border-dashed border-indigo-200"
-                                            >
-                                                Ver más horarios disponibles...
-                                            </button>
-                                        )}
+
 
                                         <button
                                             type="button"
