@@ -235,6 +235,7 @@ export default function PublicAppointmentFormV2() {
                     medications: formData.medications,
                     allergies: formData.allergies,
                     surgeries: formData.surgeries,
+                    patient_reason: formData.symptoms, // Save reason
                     symptoms: details,
                     appointment_date: appointmentDate.toISOString(),
                     status: 'pending'

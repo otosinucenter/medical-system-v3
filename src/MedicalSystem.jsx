@@ -977,6 +977,7 @@ export default function MedicalSystem({ user, onLogout }) {
           medications: meds,          // Mapped
           allergies: allergies,       // Mapped
           surgeries: surgeries,       // Mapped
+          patient_reason: reason,     // Mapped (Motivo)
           symptoms: details,
           appointment_date: appointmentDate,
           status: 'pending'
@@ -1130,7 +1131,7 @@ export default function MedicalSystem({ user, onLogout }) {
       // NEW PATIENT (or overwrite)
       setFormData({
         // Explicitly reset medical fields to avoid carrying over data from previous patient
-        resumen: '',
+        resumen: apt.patient_reason || '', // Load reason if available
         examenOido: '',
         examenNariz: '',
         examenGarganta: '',
