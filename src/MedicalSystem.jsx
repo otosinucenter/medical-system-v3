@@ -2760,7 +2760,7 @@ margin: 0;
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold flex items-center mb-1"><Clipboard className="w-3 h-3 mr-1" /> 3. Anamnesis / Motivo</label>
+                      <label className="text-xs font-bold flex items-center mb-1"><Clipboard className="w-3 h-3 mr-1" /> 3. Motivo de Consulta</label>
                       <textarea name="resumen" value={formData.resumen} onChange={handleChange} rows={3} className="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="Relato del paciente..."></textarea>
                     </div>
 

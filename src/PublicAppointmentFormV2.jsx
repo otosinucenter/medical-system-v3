@@ -521,7 +521,7 @@ export default function PublicAppointmentFormV2() {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Resumen de Enfermedad / Síntomas</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Motivo de Consulta</label>
                             <textarea required rows={3} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Describa brevemente sus síntomas actuales..." value={formData.symptoms} onChange={e => setFormData({ ...formData, symptoms: e.target.value })} />
                         </div>
                     </section>
