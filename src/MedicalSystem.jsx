@@ -1222,6 +1222,44 @@ export default function MedicalSystem({ user, onLogout }) {
     const localDate = new Date(`${editingAppointment.date}T${editingAppointment.time}:00`);
     const newDateTime = localDate.toISOString();
 
+    // Find the original appointment to check status
+    const originalApt = dailyList.find(p => p.id === editingAppointment.id) || appointments.find(a => a.id === editingAppointment.id);
+
+    // IF APPOINTMENT WAS ALREADY ATTENDED, WE DUPLICATE IT INSTEAD OF MOVING IT
+    if (originalApt && originalApt.triage_status === 'attended') {
+      if (!confirm(`Este paciente ya fue atendido. ¿Desea crear una NUEVA CITA para el ${editingAppointment.date} a las ${editingAppointment.time}? (Se mantendrá el registro anterior como historial)`)) {
+        return;
+      }
+
+      // Create NEW appointment
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert([{
+            ...originalApt,
+            id: undefined, // Let DB generate new ID
+            appointment_date: newDateTime,
+            status: 'confirmed', // New appointment starts as confirmed (since we are setting date)
+            triage_status: 'pending', // Pending triage
+            created_at: new Date().toISOString(),
+            queue_order: 999 // Put at end
+          }])
+          .select();
+
+        if (error) throw error;
+
+        alert("Nueva cita creada exitosamente.");
+        setEditingAppointment(null);
+        fetchDailyAppointments(); // Refresh lists
+        fetchAppointments();
+      } catch (error) {
+        console.error("Error duplicating appointment:", error);
+        alert("Error al crear nueva cita.");
+      }
+      return;
+    }
+
+    // NORMAL UPDATE (Move existing appointment)
     // Optimistic update for Daily List (Triage)
     setDailyList(prev => {
       // If the new date is different from the currently viewed date, remove it from the list
@@ -2215,7 +2253,7 @@ margin: 0;
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
             <button onClick={() => { navigate('agenda'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
               <CalendarDays className="w-5 h-5 mr-3" />
-              <span className="font-medium">Agenda</span>
+              <span className="font-medium">Solicitud Citas</span>
             </button>
 
             {(user.role === 'admin') && (
@@ -2253,7 +2291,7 @@ margin: 0;
             <span className="font-bold text-slate-800">
               {view === 'list' && 'Pacientes'}
               {view === 'triage' && 'Triaje'}
-              {view === 'agenda' && 'Agenda'}
+              {view === 'agenda' && 'Solicitud Citas'}
               {view === 'form' && 'Ficha de Ingreso'}
               {view === 'detail' && 'Historia Clínica'}
             </span>
@@ -2909,446 +2947,444 @@ margin: 0;
               </div>
             </div>
           )}
-        </div>
-      </main >
 
-      {/* MODAL IMPORTACIÓN MASIVA (PEGAR) */}
-      {
-        isPasteModalOpen && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Importación Masiva (Copiar y Pegar)</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                1. Abra su Excel.<br />
-                2. Seleccione las filas que desea importar <strong>incluyendo los encabezados</strong>.<br />
-                3. Copie (Ctrl+C) y pegue (Ctrl+V) en el cuadro de abajo.
-              </p>
-              <textarea
-                className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                placeholder="Pegue aquí los datos de Excel..."
-                value={pasteText}
-                onChange={(e) => setPasteText(e.target.value)}
-              ></textarea>
-              <div className="flex justify-end gap-3 mt-4">
-                <button onClick={() => setIsPasteModalOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
-                <button onClick={handleBulkPaste} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Procesar Importación</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* MODAL GESTIÓN DE DATOS (NUEVO) */}
-      {
-        isDataModalOpen && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-            <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
-                <h3 className="font-bold text-lg flex items-center"><Briefcase className="w-5 h-5 mr-2" /> Gestión de Datos y Respaldos</h3>
-                <button onClick={() => setIsDataModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
-              </div>
-
-              <div className="flex border-b">
-                <button onClick={() => setDataModalTab('backup')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'backup' ? 'border-b-4 border-blue-600 text-blue-800 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  COPIA DE SEGURIDAD
-                </button>
-                <button onClick={() => setDataModalTab('import')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'import' ? 'border-b-4 border-green-600 text-green-800 bg-green-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  IMPORTAR DATOS (EXCEL)
-                </button>
-                <button onClick={() => setDataModalTab('trash')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'trash' ? 'border-b-4 border-red-600 text-red-800 bg-red-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  PAPELERA
-                </button>
-              </div>
-
-              <div className="p-6 overflow-y-auto flex-1">
-                {dataModalTab === 'backup' && (
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                      <h4 className="font-bold text-blue-900 mb-2 flex items-center"><Save className="w-4 h-4 mr-2" /> Exportar / Guardar Backup</h4>
-                      <p className="text-sm text-gray-600 mb-4">Descarga una copia completa de tu base de datos en formato JSON. Guarda este archivo en un lugar seguro (USB, Drive).</p>
-                      <div className="flex gap-3">
-                        <button onClick={exportToJSON} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center">
-                          <Download className="w-4 h-4 mr-2" /> Descargar Backup (.json)
-                        </button>
-                        {directoryHandle ? (
-                          <button onClick={saveToFolder} className="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 shadow flex items-center">
-                            <Save className="w-4 h-4 mr-2" /> Guardar en Carpeta Conectada
-                          </button>
-                        ) : (
-                          <button onClick={handleConnectFolder} className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 shadow flex items-center">
-                            <Briefcase className="w-4 h-4 mr-2" /> Conectar Carpeta Local
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                      <h4 className="font-bold text-orange-900 mb-2 flex items-center"><History className="w-4 h-4 mr-2" /> Restaurar Backup</h4>
-                      <p className="text-sm text-gray-600 mb-3">Recupera tus datos desde un archivo `.json` previamente guardado.</p>
-
-                      <div className="flex items-center gap-4 mb-4 bg-white p-3 rounded border">
-                        <span className="text-sm font-bold text-gray-700">Modo de Restauración:</span>
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input type="radio" name="restoreMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-1" />
-                          <span className="font-bold text-blue-700">Fusión (Merge)</span>
-                          <span className="text-xs text-gray-500 ml-1">- Agrega nuevos, mantiene existentes.</span>
-                        </label>
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input type="radio" name="restoreMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-1" />
-                          <span className="font-bold text-red-600">Reemplazo Total</span>
-                          <span className="text-xs text-gray-500 ml-1">- BORRA TODO y restaura.</span>
-                        </label>
-                      </div>
-
-                      <label className="block w-full border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:bg-orange-100 transition-colors">
-                        <Download className="w-8 h-8 mx-auto text-orange-400 mb-2" />
-                        <span className="font-bold text-orange-800 block">Click para seleccionar archivo backup (.json)</span>
-                        <input type="file" accept=".json" onChange={handleRestoreBackupFile} className="hidden" />
-                      </label>
-                    </div>
+          {
+            isPasteModalOpen && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+                <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Importación Masiva (Copiar y Pegar)</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    1. Abra su Excel.<br />
+                    2. Seleccione las filas que desea importar <strong>incluyendo los encabezados</strong>.<br />
+                    3. Copie (Ctrl+C) y pegue (Ctrl+V) en el cuadro de abajo.
+                  </p>
+                  <textarea
+                    className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Pegue aquí los datos de Excel..."
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
+                  ></textarea>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setIsPasteModalOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+                    <button onClick={handleBulkPaste} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Procesar Importación</button>
                   </div>
-                )}
+                </div>
+              </div>
+            )
+          }
 
-                {dataModalTab === 'import' && (
-                  <div className="space-y-4">
-                    {!importPreview ? (
-                      <>
-                        <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                          <h4 className="font-bold text-green-900 mb-2">Importar desde Excel</h4>
-                          <p className="text-sm text-gray-600 mb-4">Sube tu archivo Excel con la lista de pacientes. El sistema intentará detectar automáticamente las columnas.</p>
-                          <label className="block w-full border-2 border-dashed border-green-300 rounded-lg p-8 text-center cursor-pointer hover:bg-green-100 transition-colors">
-                            <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                            <span className="font-bold text-green-800 block">Click para subir Excel (.xlsx)</span>
-                            <input type="file" accept=".xlsx, .xls" onChange={handlePreviewExcel} className="hidden" />
-                          </label>
-                        </div>
-                        <div className="text-center text-gray-400 text-xs font-bold uppercase my-2">- O -</div>
-                        <button onClick={() => { setIsDataModalOpen(false); setIsPasteModalOpen(true); }} className="w-full py-3 border-2 border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-50 flex justify-center items-center">
-                          <Clipboard className="w-4 h-4 mr-2" /> Pegar datos desde Portapapeles (Ctrl+V)
-                        </button>
-                      </>
-                    ) : (
-                      <div className="flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="font-bold text-gray-800">Vista Previa ({importPreview.fileName})</h4>
-                          <button onClick={() => setImportPreview(null)} className="text-red-500 text-xs font-bold hover:underline">Cancelar / Volver</button>
+          {/* MODAL GESTIÓN DE DATOS (NUEVO) */}
+          {
+            isDataModalOpen && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+                <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                  <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+                    <h3 className="font-bold text-lg flex items-center"><Briefcase className="w-5 h-5 mr-2" /> Gestión de Datos y Respaldos</h3>
+                    <button onClick={() => setIsDataModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
+                  </div>
+
+                  <div className="flex border-b">
+                    <button onClick={() => setDataModalTab('backup')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'backup' ? 'border-b-4 border-blue-600 text-blue-800 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}>
+                      COPIA DE SEGURIDAD
+                    </button>
+                    <button onClick={() => setDataModalTab('import')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'import' ? 'border-b-4 border-green-600 text-green-800 bg-green-50' : 'text-gray-500 hover:bg-gray-50'}`}>
+                      IMPORTAR DATOS (EXCEL)
+                    </button>
+                    <button onClick={() => setDataModalTab('trash')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'trash' ? 'border-b-4 border-red-600 text-red-800 bg-red-50' : 'text-gray-500 hover:bg-gray-50'}`}>
+                      PAPELERA
+                    </button>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1">
+                    {dataModalTab === 'backup' && (
+                      <div className="space-y-6">
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                          <h4 className="font-bold text-blue-900 mb-2 flex items-center"><Save className="w-4 h-4 mr-2" /> Exportar / Guardar Backup</h4>
+                          <p className="text-sm text-gray-600 mb-4">Descarga una copia completa de tu base de datos en formato JSON. Guarda este archivo en un lugar seguro (USB, Drive).</p>
+                          <div className="flex gap-3">
+                            <button onClick={exportToJSON} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center">
+                              <Download className="w-4 h-4 mr-2" /> Descargar Backup (.json)
+                            </button>
+                            {directoryHandle ? (
+                              <button onClick={saveToFolder} className="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 shadow flex items-center">
+                                <Save className="w-4 h-4 mr-2" /> Guardar en Carpeta Conectada
+                              </button>
+                            ) : (
+                              <button onClick={handleConnectFolder} className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 shadow flex items-center">
+                                <Briefcase className="w-4 h-4 mr-2" /> Conectar Carpeta Local
+                              </button>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-4 border">
-                          <table className="w-full whitespace-nowrap">
-                            <thead>
-                              <tr className="bg-gray-200">
-                                {importPreview.headers.map((h, i) => <th key={i} className="p-2 text-left border-r border-gray-300">{h}</th>)}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {importPreview.previewRows.map((row, i) => (
-                                <tr key={i} className="border-b border-gray-200 bg-white">
-                                  {row.map((cell, j) => <td key={j} className="p-2 border-r border-gray-100">{cell}</td>)}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          <p className="text-center text-gray-400 italic mt-2">Mostrando 5 primeros registros...</p>
-                        </div>
+                        <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                          <h4 className="font-bold text-orange-900 mb-2 flex items-center"><History className="w-4 h-4 mr-2" /> Restaurar Backup</h4>
+                          <p className="text-sm text-gray-600 mb-3">Recupera tus datos desde un archivo `.json` previamente guardado.</p>
 
-                        <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-                          <h5 className="font-bold text-yellow-800 mb-2 text-sm">Opciones de Importación</h5>
-                          <div className="flex items-center gap-6 mb-4">
+                          <div className="flex items-center gap-4 mb-4 bg-white p-3 rounded border">
+                            <span className="text-sm font-bold text-gray-700">Modo de Restauración:</span>
                             <label className="flex items-center text-sm cursor-pointer">
-                              <input type="radio" name="importMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-2" />
-                              <div>
-                                <span className="font-bold text-gray-800 block">Fusionar (Recomendado)</span>
-                                <span className="text-xs text-gray-500">Agrega pacientes nuevos. No borra los existentes.</span>
-                              </div>
+                              <input type="radio" name="restoreMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-1" />
+                              <span className="font-bold text-blue-700">Fusión (Merge)</span>
+                              <span className="text-xs text-gray-500 ml-1">- Agrega nuevos, mantiene existentes.</span>
                             </label>
                             <label className="flex items-center text-sm cursor-pointer">
-                              <input type="radio" name="importMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-2" />
-                              <div>
-                                <span className="font-bold text-red-600 block">Reemplazar Todo</span>
-                                <span className="text-xs text-gray-500">Borra la base de datos actual y carga el Excel.</span>
-                              </div>
+                              <input type="radio" name="restoreMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-1" />
+                              <span className="font-bold text-red-600">Reemplazo Total</span>
+                              <span className="text-xs text-gray-500 ml-1">- BORRA TODO y restaura.</span>
                             </label>
                           </div>
-                          <button onClick={processImport} className="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg">
-                            CONFIRMAR IMPORTACIÓN ({importPreview.fullData.length} Registros)
-                          </button>
+
+                          <label className="block w-full border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:bg-orange-100 transition-colors">
+                            <Download className="w-8 h-8 mx-auto text-orange-400 mb-2" />
+                            <span className="font-bold text-orange-800 block">Click para seleccionar archivo backup (.json)</span>
+                            <input type="file" accept=".json" onChange={handleRestoreBackupFile} className="hidden" />
+                          </label>
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
 
-                {dataModalTab === 'trash' && (
-                  <TrashView user={user} />
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      }
-      {/* VISTA AGENDA */}
-      {
-        view === 'agenda' && (
-          <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800">Solicitud de Citas</h2>
-                <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const link = `${window.location.origin}/citas/${user.clinicId}`;
-                    navigator.clipboard.writeText(link);
-                    alert("Link de citas copiado al portapapeles");
-                  }}
-                  className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
-                >
-                  <Link className="w-4 h-4" />
-                  Copiar Link Público
-                </button>
-                <button
-                  onClick={() => setIsAgendaImportOpen(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-                >
-                  <Clipboard className="w-4 h-4" />
-                  Importar (Pegar)
-                </button>
-                <button
-                  onClick={() => setShowConfirmed(!showConfirmed)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors border ${showConfirmed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200'}`}
-                >
-                  {showConfirmed ? 'Ocultar Confirmados' : 'Ver Confirmados'}
-                </button>
-                <button
-                  onClick={fetchAppointments}
-                  className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {loadingAppointments ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-slate-500">Cargando agenda...</p>
-              </div>
-            ) : appointments.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CalendarDays className="w-8 h-8 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
-                <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                  Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length === 0 && (
-                  <div className="text-center py-8 text-slate-400">No hay citas pendientes. {showConfirmed ? '' : 'Revisa los confirmados.'}</div>
-                )}
-                {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
-                  <div key={apt.id} className={`p-4 rounded-xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${apt.status === 'confirmed' ? 'bg-green-50 border-green-100 opacity-75' : 'bg-white border-slate-200 hover:shadow-md'}`}>
-                    <div className="flex items-start gap-4">
-                      <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[100px] relative group">
-                        {editingAppointment?.id === apt.id ? (
-                          <div className="flex flex-col gap-2">
-                            <input type="date" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} />
-                            <input type="time" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} step="300" />
-
-                            <div className="flex flex-col gap-1">
-                              <button onClick={handleSaveTime} className="bg-green-600 text-white text-[10px] py-1 rounded hover:bg-green-700 font-bold">Guardar</button>
-
-                              {editingAppointment.date && editingAppointment.time && (
-                                <a
-                                  href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(editingAppointment.date + 'T' + editingAppointment.time).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${editingAppointment.time}. ¿Confirma?`)}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="bg-green-100 text-green-700 text-[10px] py-1 rounded hover:bg-green-200 border border-green-200 flex items-center justify-center gap-1"
-                                  title="Enviar propuesta por WhatsApp"
-                                >
-                                  <MessageCircle className="w-3 h-3" /> Propuesta
-                                </a>
-                              )}
-
-                              <button onClick={() => setEditingAppointment(null)} className="bg-gray-200 text-gray-600 text-[10px] py-1 rounded hover:bg-gray-300">Cancelar</button>
+                    {dataModalTab === 'import' && (
+                      <div className="space-y-4">
+                        {!importPreview ? (
+                          <>
+                            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                              <h4 className="font-bold text-green-900 mb-2">Importar desde Excel</h4>
+                              <p className="text-sm text-gray-600 mb-4">Sube tu archivo Excel con la lista de pacientes. El sistema intentará detectar automáticamente las columnas.</p>
+                              <label className="block w-full border-2 border-dashed border-green-300 rounded-lg p-8 text-center cursor-pointer hover:bg-green-100 transition-colors">
+                                <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
+                                <span className="font-bold text-green-800 block">Click para subir Excel (.xlsx)</span>
+                                <input type="file" accept=".xlsx, .xls" onChange={handlePreviewExcel} className="hidden" />
+                              </label>
                             </div>
-                          </div>
+                            <div className="text-center text-gray-400 text-xs font-bold uppercase my-2">- O -</div>
+                            <button onClick={() => { setIsDataModalOpen(false); setIsPasteModalOpen(true); }} className="w-full py-3 border-2 border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-50 flex justify-center items-center">
+                              <Clipboard className="w-4 h-4 mr-2" /> Pegar datos desde Portapapeles (Ctrl+V)
+                            </button>
+                          </>
                         ) : (
-                          <div onClick={() => {
-                            const d = new Date(apt.appointment_date);
-                            setEditingAppointment({
-                              id: apt.id,
-                              date: d.toISOString().split('T')[0],
-                              time: d.toTimeString().slice(0, 5)
-                            });
-                          }}
-                            className="cursor-pointer hover:bg-blue-100 transition-colors rounded p-1"
-                            title="Clic para editar fecha/hora"
-                          >
-                            <span className="block text-xs font-bold text-blue-600 uppercase">
-                              {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
-                            </span>
-                            <span className="block text-3xl font-bold text-slate-900">
-                              {new Date(apt.appointment_date).getDate()}
-                            </span>
-                            <span className="block text-xs text-slate-500">
-                              {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                            </span>
-                            <div className="mt-1 text-[10px] text-blue-400 font-medium flex items-center justify-center gap-1">
-                              <Edit3 className="w-3 h-3" /> Editar
+                          <div className="flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-4">
+                              <h4 className="font-bold text-gray-800">Vista Previa ({importPreview.fileName})</h4>
+                              <button onClick={() => setImportPreview(null)} className="text-red-500 text-xs font-bold hover:underline">Cancelar / Volver</button>
+                            </div>
+
+                            <div className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-4 border">
+                              <table className="w-full whitespace-nowrap">
+                                <thead>
+                                  <tr className="bg-gray-200">
+                                    {importPreview.headers.map((h, i) => <th key={i} className="p-2 text-left border-r border-gray-300">{h}</th>)}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {importPreview.previewRows.map((row, i) => (
+                                    <tr key={i} className="border-b border-gray-200 bg-white">
+                                      {row.map((cell, j) => <td key={j} className="p-2 border-r border-gray-100">{cell}</td>)}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                              <p className="text-center text-gray-400 italic mt-2">Mostrando 5 primeros registros...</p>
+                            </div>
+
+                            <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
+                              <h5 className="font-bold text-yellow-800 mb-2 text-sm">Opciones de Importación</h5>
+                              <div className="flex items-center gap-6 mb-4">
+                                <label className="flex items-center text-sm cursor-pointer">
+                                  <input type="radio" name="importMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-2" />
+                                  <div>
+                                    <span className="font-bold text-gray-800 block">Fusionar (Recomendado)</span>
+                                    <span className="text-xs text-gray-500">Agrega pacientes nuevos. No borra los existentes.</span>
+                                  </div>
+                                </label>
+                                <label className="flex items-center text-sm cursor-pointer">
+                                  <input type="radio" name="importMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-2" />
+                                  <div>
+                                    <span className="font-bold text-red-600 block">Reemplazar Todo</span>
+                                    <span className="text-xs text-gray-500">Borra la base de datos actual y carga el Excel.</span>
+                                  </div>
+                                </label>
+                              </div>
+                              <button onClick={processImport} className="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg">
+                                CONFIRMAR IMPORTACIÓN ({importPreview.fullData.length} Registros)
+                              </button>
                             </div>
                           </div>
                         )}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
-                          {apt.patient_phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" /> {apt.patient_phone}
-                            </span>
-                          )}
-                          {apt.patient_age && (
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
-                            </span>
-                          )}
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                            {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
-                          </span>
+                    )}
+
+                    {dataModalTab === 'trash' && (
+                      <TrashView user={user} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          {/* VISTA AGENDA */}
+          {
+            view === 'agenda' && (
+              <div className="p-4 md:p-8 max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800">Solicitud de Citas</h2>
+                    <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const link = `${window.location.origin}/citas/${user.clinicId}`;
+                        navigator.clipboard.writeText(link);
+                        alert("Link de citas copiado al portapapeles");
+                      }}
+                      className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
+                    >
+                      <Link className="w-4 h-4" />
+                      Copiar Link Público
+                    </button>
+                    <button
+                      onClick={() => setIsAgendaImportOpen(true)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Importar (Pegar)
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmed(!showConfirmed)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors border ${showConfirmed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200'}`}
+                    >
+                      {showConfirmed ? 'Ocultar Confirmados' : 'Ver Confirmados'}
+                    </button>
+                    <button
+                      onClick={fetchAppointments}
+                      className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {loadingAppointments ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-slate-500">Cargando agenda...</p>
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CalendarDays className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
+                    <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                      Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length === 0 && (
+                      <div className="text-center py-8 text-slate-400">No hay citas pendientes. {showConfirmed ? '' : 'Revisa los confirmados.'}</div>
+                    )}
+                    {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                      <div key={apt.id} className={`p-4 rounded-xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${apt.status === 'confirmed' ? 'bg-green-50 border-green-100 opacity-75' : 'bg-white border-slate-200 hover:shadow-md'}`}>
+                        <div className="flex items-start gap-4">
+                          <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[100px] relative group">
+                            {editingAppointment?.id === apt.id ? (
+                              <div className="flex flex-col gap-2">
+                                <input type="date" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} />
+                                <input type="time" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} step="300" />
+
+                                <div className="flex flex-col gap-1">
+                                  <button onClick={handleSaveTime} className="bg-green-600 text-white text-[10px] py-1 rounded hover:bg-green-700 font-bold">Guardar</button>
+
+                                  {editingAppointment.date && editingAppointment.time && (
+                                    <a
+                                      href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(editingAppointment.date + 'T' + editingAppointment.time).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${editingAppointment.time}. ¿Confirma?`)}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="bg-green-100 text-green-700 text-[10px] py-1 rounded hover:bg-green-200 border border-green-200 flex items-center justify-center gap-1"
+                                      title="Enviar propuesta por WhatsApp"
+                                    >
+                                      <MessageCircle className="w-3 h-3" /> Propuesta
+                                    </a>
+                                  )}
+
+                                  <button onClick={() => setEditingAppointment(null)} className="bg-gray-200 text-gray-600 text-[10px] py-1 rounded hover:bg-gray-300">Cancelar</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div onClick={() => {
+                                const d = new Date(apt.appointment_date);
+                                setEditingAppointment({
+                                  id: apt.id,
+                                  date: d.toISOString().split('T')[0],
+                                  time: d.toTimeString().slice(0, 5)
+                                });
+                              }}
+                                className="cursor-pointer hover:bg-blue-100 transition-colors rounded p-1"
+                                title="Clic para editar fecha/hora"
+                              >
+                                <span className="block text-xs font-bold text-blue-600 uppercase">
+                                  {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
+                                </span>
+                                <span className="block text-3xl font-bold text-slate-900">
+                                  {new Date(apt.appointment_date).getDate()}
+                                </span>
+                                <span className="block text-xs text-slate-500">
+                                  {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                </span>
+                                <div className="mt-1 text-[10px] text-blue-400 font-medium flex items-center justify-center gap-1">
+                                  <Edit3 className="w-3 h-3" /> Editar
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
+                              {apt.patient_phone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3" /> {apt.patient_phone}
+                                </span>
+                              )}
+                              {apt.patient_age && (
+                                <span className="flex items-center gap-1">
+                                  <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                              </span>
+                            </div>
+
+                            <div className="mt-2 space-y-1">
+                              {apt.symptoms && (
+                                <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
+                                  <strong>Motivo:</strong> {apt.symptoms}
+                                </p>
+                              )}
+                              {(apt.chronic_illnesses || apt.medications) && (
+                                <p className="text-slate-500 text-xs">
+                                  <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="mt-2 space-y-1">
-                          {apt.symptoms && (
-                            <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                              <strong>Motivo:</strong> {apt.symptoms}
-                            </p>
+                        <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
+                          {apt.status !== 'confirmed' && (
+                            <button
+                              onClick={() => confirmAppointment(apt)}
+                              className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm flex items-center justify-center gap-2"
+                              title="Confirmar y Mover a Triaje"
+                            >
+                              <Calendar className="w-4 h-4" />
+                              Confirmar
+                            </button>
                           )}
-                          {(apt.chronic_illnesses || apt.medications) && (
-                            <p className="text-slate-500 text-xs">
-                              <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
-                            </p>
-                          )}
+
+                          <a
+                            href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            WhatsApp
+                          </a>
+                          <button
+                            onClick={() => deleteAppointment(apt.id)}
+                            className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
+                            title="Eliminar Solicitud"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          {/* MODAL DE GESTIÓN DE EQUIPO */}
+          {
+            isTeamModalOpen && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+                <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+                  <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+                    <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
+                    <button onClick={() => setIsTeamModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
+                  </div>
+
+                  <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
+                    <div className="bg-blue-50 p-3 rounded border border-blue-100 text-sm text-blue-800 mb-4">
+                      Crearás una cuenta vinculada a tu consultorio. Tú defines la contraseña inicial.
                     </div>
 
-                    <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
-                      {apt.status !== 'confirmed' && (
-                        <button
-                          onClick={() => confirmAppointment(apt)}
-                          className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm flex items-center justify-center gap-2"
-                          title="Confirmar y Mover a Triaje"
-                        >
-                          <Calendar className="w-4 h-4" />
-                          Confirmar
-                        </button>
-                      )}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
+                      <input required type="text" value={newMember.name} onChange={e => setNewMember({ ...newMember, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Dr. Ejemplo" />
+                    </div>
 
-                      <a
-                        href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        WhatsApp
-                      </a>
-                      <button
-                        onClick={() => deleteAppointment(apt.id)}
-                        className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
-                        title="Eliminar Solicitud"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
+                      <input required type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full border p-2 rounded" placeholder="usuario@medsys.local" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
+                      <input required type="text" value={newMember.password} onChange={e => setNewMember({ ...newMember, password: e.target.value })} className="w-full border p-2 rounded bg-yellow-50" placeholder="Mínimo 6 caracteres" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Rol</label>
+                      <select value={newMember.role} onChange={e => setNewMember({ ...newMember, role: e.target.value })} className="w-full border p-2 rounded">
+                        <option value="doctor">Médico</option>
+                        <option value="assistant">Asistente / Recepción</option>
+                      </select>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                      <button type="button" onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
+                      <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
+                        {teamLoading ? 'Creando...' : 'Crear Cuenta'}
                       </button>
                     </div>
+                  </form>
+                </div>
+              </div>
+            )
+          }
+          {/* MODAL IMPORTACIÓN AGENDA */}
+          {
+            isAgendaImportOpen && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+                <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
+                  </p>
+                  <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
+                    <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
                   </div>
-                ))}
+                  <textarea
+                    className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Pega aquí las filas de Excel..."
+                    value={agendaPasteText}
+                    onChange={(e) => setAgendaPasteText(e.target.value)}
+                  ></textarea>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+                    <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        )
-      }
-
-      {/* MODAL DE GESTIÓN DE EQUIPO */}
-      {
-        isTeamModalOpen && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
-                <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
-                <button onClick={() => setIsTeamModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
-              </div>
-
-              <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
-                <div className="bg-blue-50 p-3 rounded border border-blue-100 text-sm text-blue-800 mb-4">
-                  Crearás una cuenta vinculada a tu consultorio. Tú defines la contraseña inicial.
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
-                  <input required type="text" value={newMember.name} onChange={e => setNewMember({ ...newMember, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Dr. Ejemplo" />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
-                  <input required type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full border p-2 rounded" placeholder="usuario@medsys.local" />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
-                  <input required type="text" value={newMember.password} onChange={e => setNewMember({ ...newMember, password: e.target.value })} className="w-full border p-2 rounded bg-yellow-50" placeholder="Mínimo 6 caracteres" />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Rol</label>
-                  <select value={newMember.role} onChange={e => setNewMember({ ...newMember, role: e.target.value })} className="w-full border p-2 rounded">
-                    <option value="doctor">Médico</option>
-                    <option value="assistant">Asistente / Recepción</option>
-                  </select>
-                </div>
-
-                <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
-                  <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
-                    {teamLoading ? 'Creando...' : 'Crear Cuenta'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )
-      }
-      {/* MODAL IMPORTACIÓN AGENDA */}
-      {
-        isAgendaImportOpen && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
-              </p>
-              <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
-                <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
-              </div>
-              <textarea
-                className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                placeholder="Pega aquí las filas de Excel..."
-                value={agendaPasteText}
-                onChange={(e) => setAgendaPasteText(e.target.value)}
-              ></textarea>
-              <div className="flex justify-end gap-3 mt-4">
-                <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
-                <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-    </div >
+            )
+          }
+        </div>
+      </main>
+    </div>
   );
 }
