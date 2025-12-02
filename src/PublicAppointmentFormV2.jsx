@@ -230,6 +230,7 @@ export default function PublicAppointmentFormV2() {
                     patient_district: formData.district,
                     patient_email: formData.email,
                     patient_dob: formData.dob, // Already calculated in handleAgeChange
+                    referral_source: formData.referral_source.join(', '), // Save as string
                     symptoms: details,
                     appointment_date: appointmentDate.toISOString(),
                     status: 'pending'

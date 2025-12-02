@@ -949,6 +949,12 @@ export default function MedicalSystem({ user, onLogout }) {
         const district = cols[8]?.trim() || '';
         const phone = cols[9]?.trim() || '';
         const email = cols[10]?.trim() || '';
+        // New columns for History and Reference
+        const referral = cols[11]?.trim() || '';
+        const illness = cols[12]?.trim() || '';
+        const meds = cols[13]?.trim() || '';
+        const allergies = cols[14]?.trim() || '';
+        const surgeries = cols[15]?.trim() || '';
 
         // 5. Construct Symptoms String (Keep for display in Agenda)
         const details = [
@@ -966,6 +972,11 @@ export default function MedicalSystem({ user, onLogout }) {
           patient_occupation: occupation, // Mapped
           patient_district: district, // Mapped
           patient_email: email,       // Mapped
+          referral_source: referral,  // Mapped
+          chronic_illnesses: illness, // Mapped
+          medications: meds,          // Mapped
+          allergies: allergies,       // Mapped
+          surgeries: surgeries,       // Mapped
           symptoms: details,
           appointment_date: appointmentDate,
           status: 'pending'
