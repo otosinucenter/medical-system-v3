@@ -1301,7 +1301,13 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   const deleteAppointment = async (id) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
+    const apt = appointments.find(a => a.id === id) || dailyList.find(a => a.id === id);
+
+    if (apt && apt.status === 'confirmed') {
+      if (!window.confirm("⚠️ Esta cita está CONFIRMADA y aparece en Triaje.\n\nSi la eliminas aquí, también desaparecerá de la lista de Triaje del día.\n\n¿Estás seguro de eliminarla?")) return;
+    } else {
+      if (!window.confirm("¿Estás seguro de que deseas eliminar esta solicitud?")) return;
+    }
 
     // Optimistic update
     setDailyList(prev => prev.filter(p => p.id !== id));
@@ -1314,10 +1320,6 @@ export default function MedicalSystem({ user, onLogout }) {
         .eq('id', id);
 
       if (error) throw error;
-
-      // Force refresh to ensure sync
-      fetchDailyAppointments();
-      fetchAppointments();
     } catch (error) {
       console.error("Error deleting appointment:", error);
       fetchDailyAppointments(); // Revert
@@ -1328,33 +1330,19 @@ export default function MedicalSystem({ user, onLogout }) {
   const deletePatient = async (patient) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar al paciente ${patient.nombre}? Se moverá a la papelera.`)) return;
 
-    // Optimistic update for all lists
+    // Optimistic update
     setPatients(prev => prev.filter(p => p.id !== patient.id));
-    setAppointments(prev => prev.filter(a => a.patient_dni !== patient.id));
-    setDailyList(prev => prev.filter(p => p.patient_dni !== patient.id));
 
     try {
-      // 1. Delete Patient
-      const { error: errorPatient } = await supabase
+      const { error } = await supabase
         .from('patients')
-        .update({ status: 'trash' })
+        .update({ status: 'trash' }) // Soft delete
         .eq('id', patient.id);
 
-      if (errorPatient) throw errorPatient;
-
-      // 2. Cascade Delete Appointments (Soft delete)
-      const { error: errorApts } = await supabase
-        .from('appointments')
-        .update({ status: 'trash' })
-        .eq('patient_dni', patient.id);
-
-      if (errorApts) throw errorApts;
-
+      if (error) throw error;
     } catch (error) {
       console.error("Error deleting patient:", error);
       fetchPatients(); // Revert
-      fetchAppointments();
-      fetchDailyAppointments();
       alert("Error al eliminar paciente.");
     }
   };
@@ -3201,128 +3189,156 @@ margin: 0;
                     </p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length === 0 && (
-                      <div className="text-center py-8 text-slate-400">No hay citas pendientes. {showConfirmed ? '' : 'Revisa los confirmados.'}</div>
-                    )}
-                    {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
-                      <div key={apt.id} className={`p-4 rounded-xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${apt.status === 'confirmed' ? 'bg-green-50 border-green-100 opacity-75' : 'bg-white border-slate-200 hover:shadow-md'}`}>
-                        <div className="flex items-start gap-4">
-                          <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[100px] relative group">
-                            {editingAppointment?.id === apt.id ? (
-                              <div className="flex flex-col gap-2">
-                                <input type="date" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} />
-                                <input type="time" className="text-[10px] w-full p-1 border rounded bg-white" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} step="300" />
-
-                                <div className="flex flex-col gap-1">
-                                  <button onClick={handleSaveTime} className="bg-green-600 text-white text-[10px] py-1 rounded hover:bg-green-700 font-bold">Guardar</button>
-
-                                  {editingAppointment.date && editingAppointment.time && (
-                                    <a
-                                      href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(editingAppointment.date + 'T' + editingAppointment.time).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${editingAppointment.time}. ¿Confirma?`)}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="bg-green-100 text-green-700 text-[10px] py-1 rounded hover:bg-green-200 border border-green-200 flex items-center justify-center gap-1"
-                                      title="Enviar propuesta por WhatsApp"
-                                    >
-                                      <MessageCircle className="w-3 h-3" /> Propuesta
-                                    </a>
-                                  )}
-
-                                  <button onClick={() => setEditingAppointment(null)} className="bg-gray-200 text-gray-600 text-[10px] py-1 rounded hover:bg-gray-300">Cancelar</button>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <tr>
+                          <th className="p-4 w-48">Fecha / Hora</th>
+                          <th className="p-4">Paciente</th>
+                          <th className="p-4">Motivo / Antecedentes</th>
+                          <th className="p-4 w-32 text-center">Estado</th>
+                          <th className="p-4 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                          <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
+                            {/* FECHA Y HORA EDITABLE */}
+                            <td className="p-4 align-top">
+                              {editingAppointment?.id === apt.id ? (
+                                <div className="flex flex-col gap-2 bg-white p-2 rounded shadow-sm border border-blue-200 z-10 relative">
+                                  <input
+                                    type="date"
+                                    className="text-xs font-bold border rounded p-1 w-full"
+                                    value={editingAppointment.date}
+                                    onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                                  />
+                                  <input
+                                    type="time"
+                                    className="text-xs font-bold border rounded p-1 w-full"
+                                    value={editingAppointment.time}
+                                    onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
+                                    step="300"
+                                  />
+                                  <div className="flex gap-1 justify-end mt-1">
+                                    <button onClick={() => setEditingAppointment(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                                    <button onClick={handleSaveTime} className="p-1 text-green-600 hover:text-green-700 bg-green-50 rounded"><Save className="w-4 h-4" /></button>
+                                  </div>
                                 </div>
-                              </div>
-                            ) : (
-                              <div onClick={() => {
-                                const d = new Date(apt.appointment_date);
-                                setEditingAppointment({
-                                  id: apt.id,
-                                  date: d.toISOString().split('T')[0],
-                                  time: d.toTimeString().slice(0, 5)
-                                });
-                              }}
-                                className="cursor-pointer hover:bg-blue-100 transition-colors rounded p-1"
-                                title="Clic para editar fecha/hora"
-                              >
-                                <span className="block text-xs font-bold text-blue-600 uppercase">
-                                  {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
-                                </span>
-                                <span className="block text-3xl font-bold text-slate-900">
-                                  {new Date(apt.appointment_date).getDate()}
-                                </span>
-                                <span className="block text-xs text-slate-500">
-                                  {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                </span>
-                                <div className="mt-1 text-[10px] text-blue-400 font-medium flex items-center justify-center gap-1">
-                                  <Edit3 className="w-3 h-3" /> Editar
+                              ) : (
+                                <div
+                                  onClick={() => {
+                                    const d = new Date(apt.appointment_date);
+                                    setEditingAppointment({
+                                      id: apt.id,
+                                      date: d.toISOString().split('T')[0],
+                                      time: d.toTimeString().slice(0, 5)
+                                    });
+                                  }}
+                                  className="cursor-pointer group-hover:bg-white p-2 rounded border border-transparent group-hover:border-blue-100 transition-all"
+                                  title="Clic para editar"
+                                >
+                                  <div className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                    {new Date(apt.appointment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                  </div>
+                                  <div className="font-mono text-lg font-bold text-blue-600">
+                                    {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
-                              {apt.patient_phone && (
-                                <span className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3" /> {apt.patient_phone}
-                                </span>
                               )}
-                              {apt.patient_age && (
-                                <span className="flex items-center gap-1">
-                                  <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
-                                </span>
-                              )}
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
-                              </span>
-                            </div>
+                            </td>
 
-                            <div className="mt-2 space-y-1">
-                              {apt.symptoms && (
-                                <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                                  <strong>Motivo:</strong> {apt.symptoms}
-                                </p>
+                            {/* DATOS PACIENTE */}
+                            <td className="p-4 align-top">
+                              <div className="font-bold text-slate-800 text-sm">{apt.patient_name}</div>
+                              <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-500">
+                                {apt.patient_phone && (
+                                  <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                    <Phone className="w-3 h-3" /> {apt.patient_phone}
+                                  </span>
+                                )}
+                                {apt.patient_age && (
+                                  <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                    <User className="w-3 h-3" /> {apt.patient_age}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* MOTIVO */}
+                            <td className="p-4 align-top">
+                              {apt.symptoms ? (
+                                <div className="text-sm text-slate-600 italic bg-yellow-50/50 p-2 rounded border border-yellow-100/50 max-w-xs">
+                                  "{apt.symptoms}"
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-300 italic">Sin motivo especificado</span>
                               )}
                               {(apt.chronic_illnesses || apt.medications) && (
-                                <p className="text-slate-500 text-xs">
-                                  <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
-                                </p>
+                                <div className="text-[10px] text-slate-400 mt-1 max-w-xs truncate">
+                                  Ant: {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
+                                </div>
                               )}
-                            </div>
-                          </div>
-                        </div>
+                            </td>
 
-                        <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
-                          {apt.status !== 'confirmed' && (
-                            <button
-                              onClick={() => confirmAppointment(apt)}
-                              className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm flex items-center justify-center gap-2"
-                              title="Confirmar y Mover a Triaje"
-                            >
-                              <Calendar className="w-4 h-4" />
-                              Confirmar
-                            </button>
-                          )}
+                            {/* ESTADO */}
+                            <td className="p-4 align-top text-center">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {apt.status === 'confirmed' ? 'Confirmado' : 'Pendiente'}
+                              </span>
+                            </td>
 
-                          <a
-                            href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            WhatsApp
-                          </a>
-                          <button
-                            onClick={() => deleteAppointment(apt.id)}
-                            className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
-                            title="Eliminar Solicitud"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                            {/* ACCIONES */}
+                            <td className="p-4 align-top text-right">
+                              <div className="flex justify-end items-center gap-2">
+                                {apt.status !== 'confirmed' && (
+                                  <button
+                                    onClick={() => confirmAppointment(apt)}
+                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                    title="Confirmar y Mover a Triaje"
+                                  >
+                                    <CheckCircle2 className="w-5 h-5" />
+                                  </button>
+                                )}
+
+                                {editingAppointment?.id === apt.id && editingAppointment.date && editingAppointment.time && (
+                                  <a
+                                    href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(editingAppointment.date + 'T' + editingAppointment.time).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${editingAppointment.time}. ¿Confirma?`)}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                                    title="Enviar propuesta por WhatsApp"
+                                  >
+                                    <MessageCircle className="w-5 h-5" />
+                                  </a>
+                                )}
+
+                                {!editingAppointment && (
+                                  <a
+                                    href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                    title="Abrir WhatsApp"
+                                  >
+                                    <MessageCircle className="w-5 h-5" />
+                                  </a>
+                                )}
+
+                                <button
+                                  onClick={() => deleteAppointment(apt.id)}
+                                  className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                  title="Eliminar Solicitud"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
