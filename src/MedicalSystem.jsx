@@ -885,7 +885,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
     for (const line of lines) {
       const cols = line.split('\t');
-      if (cols.length < 5) continue; // Skip invalid lines
+      if (cols.length < 2) continue; // Relaxed: Only need Date and Time minimum
 
       try {
         // 1. Parse Date (DD/MM/YYYY -> YYYY-MM-DD)
@@ -894,7 +894,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
         // 2. Parse Time (2.2 -> 14:20, 3 -> 15:00)
         let timeStr = "00:00";
-        const rawTime = cols[1].trim();
+        const rawTime = cols[1]?.trim() || "00:00";
         if (rawTime.includes('.')) {
           const [h, min] = rawTime.split('.');
           let hour = parseInt(h);
@@ -907,7 +907,8 @@ export default function MedicalSystem({ user, onLogout }) {
           timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         } else {
           let hour = parseInt(rawTime);
-          if (hour < 8) hour += 12; // Assume PM
+          if (isNaN(hour)) hour = 0;
+          if (hour < 8 && hour !== 0) hour += 12; // Assume PM
           timeStr = `${hour.toString().padStart(2, '0')}:00`;
         }
 
@@ -915,10 +916,10 @@ export default function MedicalSystem({ user, onLogout }) {
         // Note: We construct it in local time string then ISO
         const appointmentDate = new Date(`${dateStr}T${timeStr}:00`).toISOString();
 
-        // 4. Map Columns
+        // 4. Map Columns (Relaxed)
         const reason = cols[2]?.trim() || '';
         const dni = cols[3]?.trim() || '';
-        const name = cols[4]?.trim() || 'Sin Nombre';
+        const name = cols[4]?.trim() || 'Paciente Importado'; // Default name if missing
         const age = cols[5]?.trim() || '';
         const sex = cols[6]?.trim() || '';
         const occupation = cols[7]?.trim() || '';
