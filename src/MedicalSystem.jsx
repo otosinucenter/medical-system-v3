@@ -3511,6 +3511,7 @@ margin: 0;
                             <div className="flex flex-col gap-2">
                               <input
                                 key={`date-v2-${apt.id}-${apt.appointment_date}`}
+                                onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                                 type="date"
                                 className="text-xs font-bold border border-transparent hover:border-indigo-200 focus:border-indigo-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none"
                                 defaultValue={new Date(apt.appointment_date).toISOString().split('T')[0]}
@@ -3528,6 +3529,7 @@ margin: 0;
                               />
                               <input
                                 key={`time-v2-${apt.id}-${apt.appointment_date}`}
+                                onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                                 type="time"
                                 className="text-lg font-bold border border-transparent hover:border-indigo-200 focus:border-indigo-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none text-slate-800"
                                 defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
