@@ -1445,6 +1445,12 @@ export default function MedicalSystem({ user, onLogout }) {
 
     // 2. Actualizar estado local
     setPatients(updatedPatientsList);
+
+    // ACTUALIZAR selectedPatient SI ES EL MISMO QUE ESTAMOS EDITANDO
+    if (selectedPatient && selectedPatient.id === docId) {
+      setSelectedPatient(patientToSave);
+    }
+
     // setView('list'); // MOVIDO AL FINAL para permitir imprimir
     setImportText('');
     setEditingConsultationIndex(null);
