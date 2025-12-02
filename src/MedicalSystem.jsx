@@ -39,6 +39,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [importPreview, setImportPreview] = useState(null); // { headers: [], rows: [] }
   const [importMode, setImportMode] = useState('merge'); // 'merge' | 'replace'
   const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
+  const [selectedTriageItems, setSelectedTriageItems] = useState([]); // For bulk delete in Triage
 
   // --- PERSISTENCIA EN CARPETA LOCAL (FILE SYSTEM ACCESS API) ---
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -303,6 +304,56 @@ export default function MedicalSystem({ user, onLogout }) {
       } catch (error) {
         console.error("Error restoring:", error);
         alert("Error al restaurar.");
+      }
+    };
+
+    const handleBulkDelete = async () => {
+      if (selectedAppointments.length === 0) return;
+      if (!window.confirm(`¿Estás seguro de eliminar ${selectedAppointments.length} citas seleccionadas? Esta acción moverá las citas a la papelera.`)) return;
+
+      try {
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'trash' })
+          .in('id', selectedAppointments);
+
+        if (error) throw error;
+
+        alert("Citas eliminadas correctamente.");
+        setSelectedAppointments([]);
+        fetchAppointments();
+      } catch (error) {
+        console.error("Error deleting appointments:", error);
+        alert("Error al eliminar citas.");
+      }
+    };
+
+    const handleTriageBulkDelete = async () => {
+      if (selectedTriageItems.length === 0) return;
+      if (!window.confirm(`¿Estás seguro de eliminar ${selectedTriageItems.length} pacientes de la lista de triaje? Esta acción moverá las citas a la papelera.`)) return;
+
+      try {
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'trash' })
+          .in('id', selectedTriageItems);
+
+        if (error) throw error;
+
+        alert("Pacientes eliminados correctamente.");
+        setSelectedTriageItems([]);
+        fetchAppointments();
+      } catch (error) {
+        console.error("Error deleting triage items:", error);
+        alert("Error al eliminar pacientes.");
+      }
+    };
+
+    const handleTriageSelectAll = (e, items) => {
+      if (e.target.checked) {
+        setSelectedTriageItems(items.map(i => i.id));
+      } else {
+        setSelectedTriageItems([]);
       }
     };
 
@@ -2400,9 +2451,20 @@ margin: 0;
                   <h3 className="font-bold text-blue-800 flex items-center"><Clipboard className="w-5 h-5 mr-2" /> Lista de Pacientes del Día</h3>
                   <p className="text-xs text-gray-500 mt-1">Gestiona el flujo de pacientes, pagos y exámenes.</p>
                 </div>
-                <button onClick={fetchDailyAppointments} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-200 flex items-center">
-                  <RefreshCw className="w-4 h-4 mr-2" /> Actualizar Lista
-                </button>
+                <div className="flex gap-2">
+                  {selectedTriageItems.length > 0 && (
+                    <button
+                      onClick={handleTriageBulkDelete}
+                      className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar ({selectedTriageItems.length})
+                    </button>
+                  )}
+                  <button onClick={fetchDailyAppointments} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-200 flex items-center">
+                    <RefreshCw className="w-4 h-4 mr-2" /> Actualizar Lista
+                  </button>
+                </div>
               </div>
 
               <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -2422,6 +2484,14 @@ margin: 0;
                   <table className="w-full text-left min-w-[800px]">
                     <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
                       <tr>
+                        <th className="p-4 w-12">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => handleTriageSelectAll(e, dailyList)}
+                            checked={dailyList.length > 0 && selectedTriageItems.length === dailyList.length}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </th>
                         <th className="p-4 w-16">Orden</th>
                         <th className="p-4">Hora</th>
                         <th className="p-4">Paciente</th>
@@ -2436,6 +2506,20 @@ margin: 0;
                       {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
                       {dailyList.map((p, index) => (
                         <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
+                          <td className="p-4 align-top">
+                            <input
+                              type="checkbox"
+                              checked={selectedTriageItems.includes(p.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedTriageItems([...selectedTriageItems, p.id]);
+                                } else {
+                                  setSelectedTriageItems(selectedTriageItems.filter(id => id !== p.id));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+                            />
+                          </td>
                           <td className="p-4 font-bold text-slate-400 text-center">
                             {index + 1}
                           </td>
