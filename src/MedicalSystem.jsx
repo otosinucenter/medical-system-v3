@@ -328,34 +328,7 @@ export default function MedicalSystem({ user, onLogout }) {
       }
     };
 
-    const handleTriageBulkDelete = async () => {
-      if (selectedTriageItems.length === 0) return;
-      if (!window.confirm(`¿Estás seguro de eliminar ${selectedTriageItems.length} pacientes de la lista de triaje? Esta acción moverá las citas a la papelera.`)) return;
 
-      try {
-        const { error } = await supabase
-          .from('appointments')
-          .update({ status: 'trash' })
-          .in('id', selectedTriageItems);
-
-        if (error) throw error;
-
-        alert("Pacientes eliminados correctamente.");
-        setSelectedTriageItems([]);
-        fetchAppointments();
-      } catch (error) {
-        console.error("Error deleting triage items:", error);
-        alert("Error al eliminar pacientes.");
-      }
-    };
-
-    const handleTriageSelectAll = (e, items) => {
-      if (e.target.checked) {
-        setSelectedTriageItems(items.map(i => i.id));
-      } else {
-        setSelectedTriageItems([]);
-      }
-    };
 
     const deleteSelectedPermanently = async () => {
       if (selectedIds.size === 0) return;
@@ -1513,6 +1486,36 @@ export default function MedicalSystem({ user, onLogout }) {
       console.error("Error bulk deleting:", error);
       fetchAppointments();
       fetchDailyAppointments();
+    }
+  };
+
+  const handleTriageBulkDelete = async () => {
+    if (selectedTriageItems.length === 0) return;
+    if (!window.confirm(`¿Estás seguro de eliminar ${selectedTriageItems.length} pacientes de la lista de triaje? Esta acción moverá las citas a la papelera.`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'trash' })
+        .in('id', selectedTriageItems);
+
+      if (error) throw error;
+
+      alert("Pacientes eliminados correctamente.");
+      setSelectedTriageItems([]);
+      fetchAppointments();
+      fetchDailyAppointments();
+    } catch (error) {
+      console.error("Error deleting triage items:", error);
+      alert("Error al eliminar pacientes.");
+    }
+  };
+
+  const handleTriageSelectAll = (e, items) => {
+    if (e.target.checked) {
+      setSelectedTriageItems(items.map(i => i.id));
+    } else {
+      setSelectedTriageItems([]);
     }
   };
 
