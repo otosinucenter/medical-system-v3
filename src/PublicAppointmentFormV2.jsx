@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe } from 'lucide-react';
+import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart } from 'lucide-react';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -231,48 +231,77 @@ export default function PublicAppointmentFormV2() {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-                <div className="bg-white max-w-lg w-full p-8 rounded-2xl shadow-xl text-center border border-slate-100">
-                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-300">
-                        <CheckCircle className="w-10 h-10 text-green-600" />
+            <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4 font-sans">
+                <div className="bg-white max-w-lg w-full p-8 rounded-3xl shadow-xl text-center border border-blue-100 relative overflow-hidden">
+                    {/* Decorative background elements */}
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500"></div>
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-100 rounded-full blur-3xl opacity-50"></div>
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+
+                    <div className="relative">
+                        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500 shadow-sm border border-green-100">
+                            <div className="relative">
+                                <CheckCircle className="w-12 h-12 text-green-500" />
+                                <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-2 -right-2 animate-pulse" />
+                            </div>
+                        </div>
+
+                        <h2 className="text-3xl font-bold text-slate-800 mb-2 tracking-tight">¡Excelente!</h2>
+                        <p className="text-lg text-slate-600 font-medium mb-6">Nos alegra mucho recibirte.</p>
+
+                        <div className="bg-slate-50/80 rounded-2xl p-5 mb-8 text-left border border-slate-100 shadow-sm">
+                            <p className="text-xs text-slate-400 mb-3 uppercase tracking-wider font-bold flex items-center gap-2">
+                                <Activity className="w-3 h-3" /> Resumen de tu cita
+                            </p>
+                            <div className="space-y-2">
+                                <p className="text-slate-800 font-medium flex items-center gap-2">
+                                    <User className="w-4 h-4 text-blue-500" />
+                                    {formData.name}
+                                </p>
+                                <p className="text-slate-800 font-medium flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-blue-500" />
+                                    {new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
+                                <p className="text-slate-800 font-medium flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-blue-500" />
+                                    {formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-slate-600 mb-8 leading-relaxed text-sm">
+                            Hemos recibido tus datos correctamente. Nos pondremos en contacto a la brevedad para confirmar los detalles.
+                            <br /><br />
+                            <span className="text-indigo-600 font-medium">¿Quieres agilizar el proceso?</span>
+                            <br />
+                            Te invitamos a enviarnos un mensajito por WhatsApp.
+                        </p>
+
+                        <div className="flex flex-col gap-3">
+                            <a
+                                href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-full py-4 px-6 bg-green-50 border border-green-200 text-green-800 hover:bg-green-100 hover:border-green-300 rounded-xl font-bold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-3 group"
+                            >
+                                <div className="bg-green-500 text-white p-1.5 rounded-full group-hover:scale-110 transition-transform">
+                                    <Phone className="w-4 h-4" />
+                                </div>
+                                Confirmar envío por WhatsApp
+                            </a>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="w-full py-3 px-4 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors hover:underline"
+                            >
+                                Enviar otra solicitud
+                            </button>
+                        </div>
+
+                        <div className="mt-8 flex items-center justify-center gap-1 text-xs text-slate-300">
+                            <Heart className="w-3 h-3 text-red-300 fill-red-300" />
+                            <span>Cuidamos tu salud</span>
+                        </div>
                     </div>
-
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">¡Solicitud Registrada!</h2>
-
-                    <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left border border-slate-100">
-                        <p className="text-sm text-slate-500 mb-1 uppercase tracking-wide font-bold">Resumen de solicitud</p>
-                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Paciente:</span> {formData.name}</p>
-                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Fecha:</span> {new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Hora preferida:</span> {formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}</p>
-                    </div>
-
-                    <p className="text-slate-600 mb-6 leading-relaxed">
-                        Hemos recibido sus datos correctamente. Nos pondremos en contacto a la brevedad para confirmar su cita.
-                        <br /><br />
-                        Le invitamos a confirmar su solicitud vía WhatsApp para facilitar la coordinación.
-                    </p>
-
-                    <div className="flex flex-col gap-3">
-                        <a
-                            href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-full py-3 px-4 bg-white border border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2"
-                        >
-                            <Phone className="w-5 h-5 text-green-600" />
-                            Confirmar envío por WhatsApp
-                        </a>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="w-full py-3 px-4 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors"
-                        >
-                            Enviar otra solicitud
-                        </button>
-                    </div>
-
-                    <p className="mt-6 text-xs text-slate-400">
-                        Gracias por confiar en {clinicName || 'nosotros'}.
-                    </p>
                 </div>
             </div>
         );
