@@ -231,7 +231,7 @@ export default function PublicAppointmentFormV2() {
                     patient_email: formData.email,
                     patient_dob: formData.dob, // Already calculated in handleAgeChange
                     referral_source: formData.referral_source.join(', '), // Save as string
-                    chronic_illnesses: formData.chronicIllnesses,
+                    chronic_illnesses: formData.chronic_illnesses, // Fixed variable name
                     medications: formData.medications,
                     allergies: formData.allergies,
                     surgeries: formData.surgeries,
