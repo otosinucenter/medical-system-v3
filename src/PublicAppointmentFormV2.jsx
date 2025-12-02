@@ -280,13 +280,33 @@ export default function PublicAppointmentFormV2() {
                                         <div className="grid grid-cols-2 gap-3">
                                             {availableSlots.filter((slot, i) => {
                                                 const isBooked = bookedSlots.includes(slot);
-                                                if (isBooked) return false; // Nunca mostrar ocupados
+                                                if (isBooked) return false; // 1. Ocultar ocupados
 
-                                                // Lógica "Smart Replacement":
-                                                // Indices pares (0, 2, 4...) son "Principales" (ej. 14:20)
-                                                // Indices impares (1, 3, 5...) son "Secundarios" (ej. 14:40)
+                                                // Definir si es "Borde" (Temprano/Tarde) o "Centro"
+                                                // Lunes: 10:20-15:00. Centro: 11:00-14:00
+                                                // Mié/Vie: 14:20-20:00. Centro: 15:00-19:00
+                                                let isEdge = false;
+                                                const day = new Date(formData.date + 'T00:00:00').getDay();
 
-                                                // Si es par (Principal): Mostrar siempre (si está libre)
+                                                if (day === 1) { // Lunes
+                                                    if (slot < "11:00" || slot >= "14:20") isEdge = true;
+                                                } else { // Mié/Vie
+                                                    if (slot < "15:00" || slot >= "19:00") isEdge = true;
+                                                }
+
+                                                // Calcular saturación del Centro
+                                                const coreSlots = availableSlots.filter(s => {
+                                                    if (day === 1) return s >= "11:00" && s < "14:20";
+                                                    return s >= "15:00" && s < "19:00";
+                                                });
+                                                const bookedCore = coreSlots.filter(s => bookedSlots.includes(s));
+                                                const isCoreFull = bookedCore.length >= (coreSlots.length * 0.7); // 70% lleno
+
+                                                // 2. Regla de Bordes: Ocultar bordes si el centro no está lleno
+                                                if (isEdge && !isCoreFull) return false;
+
+                                                // 3. Regla de Intercalado (Smart Replacement)
+                                                // Si es par (Principal): Mostrar
                                                 if (i % 2 === 0) return true;
 
                                                 // Si es impar (Secundario): Mostrar SOLO si el Principal anterior está ocupado
