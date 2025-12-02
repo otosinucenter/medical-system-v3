@@ -141,7 +141,8 @@ export default function PublicAppointmentFormV2() {
                 .eq('clinic_id', clinicId)
                 .gte('appointment_date', startOfDay.toISOString())
                 .lte('appointment_date', endOfDay.toISOString())
-                .neq('status', 'cancelled'); // Asumimos que canceladas liberan cupo
+                .neq('status', 'cancelled')
+                .neq('status', 'trash'); // Excluir también las eliminadas (papelera)
 
             if (data) {
                 const times = data.map(apt => {

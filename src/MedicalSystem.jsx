@@ -1834,7 +1834,39 @@ export default function MedicalSystem({ user, onLogout }) {
           celular: String(getVal(['Celular Whatsapp', 'Celular', 'Telefono', 'Teléfono', 'Movil']) || ''),
           email: getVal(['Email', 'Correo']) || '',
           fechaNacimiento: parseDate(String(getVal(['Fecha de Nacimiento', 'Fecha Nacimiento', 'Nacimiento']) || '')),
-          fechaCita: getVal(['Fecha y Hora de la cita', 'Marca temporal']) || getNowDate(),
+          fechaCita: (() => {
+            const dateVal = getVal(['Fecha y Hora de la cita', 'Marca temporal', 'Fecha']);
+            const timeVal = getVal(['Hora', 'Time']);
+
+            if (dateVal && timeVal) {
+              // Parse decimal time (e.g. 2.2 -> 14:20, 2.4 -> 14:40)
+              let hours = 0;
+              let minutes = 0;
+
+              if (timeVal.includes('.')) {
+                const parts = timeVal.split('.');
+                hours = parseInt(parts[0]);
+                // If single digit decimal (2.2), treat as tens (20 min). If double (2.25), treat as exact (25 min).
+                minutes = parts[1].length === 1 ? parseInt(parts[1]) * 10 : parseInt(parts[1]);
+              } else {
+                hours = parseInt(timeVal);
+              }
+
+              // Assume PM for 1-6, AM for 7-12 if ambiguous? 
+              // Or just standard 24h?
+              // User sheet shows "2.2", "3", "4.2". Likely PM (afternoon shift).
+              // Let's assume if hour < 7, add 12 (1 PM - 6 PM).
+              if (hours < 7) hours += 12;
+
+              // Format Date
+              // dateVal might be "3/12/2025"
+              const [d, m, y] = dateVal.split('/');
+              // Construct ISO
+              return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+            }
+
+            return getVal(['Fecha y Hora de la cita', 'Marca temporal']) || getNowDate();
+          })(),
           resumen: getVal(['Resumen de enfermedad', 'Motivo']) || '',
           enfermedades: getVal(['Enfermedad', 'Enfermedades', 'Antecedentes']) || '',
           medicamentos: getVal(['Medicamentos usados frecuentemente', 'Medicamentos']) || '',
