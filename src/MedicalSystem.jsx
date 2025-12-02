@@ -244,7 +244,7 @@ const TrashView = ({ user }) => {
                         />
                         <div>
                           <p className="font-bold text-gray-800">{item.nombre}</p>
-                          <p className="text-xs text-gray-500">DNI: {item.id} | {item.edad} años</p>
+                          <p className="text-xs text-gray-500">DNI: {item.id} | {item.edad} {(!item.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -2412,7 +2412,7 @@ margin: 0;
                   <h3 className="font-bold text-blue-800 flex items-center mb-3"><User className="w-4 h-4 mr-2" /> FILIACIÓN Y CONTACTO</h3>
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <div className="col-span-2 font-bold text-lg text-gray-800">{selectedPatient.nombre}</div>
-                    <div className="flex items-center text-gray-600"><CalendarDays className="w-3 h-3 mr-2" /> {selectedPatient.edad} años</div>
+                    <div className="flex items-center text-gray-600"><CalendarDays className="w-3 h-3 mr-2" /> {selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</div>
                     <div className="flex items-center text-gray-600">
                       <Phone className="w-3 h-3 mr-2" />
                       <a href={`https://wa.me/51${selectedPatient.celular?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600 hover:underline">
@@ -2546,7 +2546,7 @@ margin: 0;
                       </div>
                       <div className="w-24 flex items-baseline gap-2 justify-end">
                         <span className="font-bold text-blue-900 uppercase text-[10px]">EDAD:</span>
-                        <span className="font-medium">{selectedPatient.edad} años</span>
+                        <span className="font-medium">{selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</span>
                       </div>
                       <div className="w-32 flex items-baseline gap-2 justify-end">
                         <span className="font-bold text-blue-900 uppercase text-[10px]">DNI:</span>
