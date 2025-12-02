@@ -247,7 +247,9 @@ export default function PublicAppointmentFormV2() {
                     </div>
 
                     <p className="text-slate-600 mb-6 leading-relaxed">
-                        Hemos recibido sus datos correctamente. Nuestro equipo administrativo revisará la disponibilidad y <strong>nos pondremos en contacto con usted a la brevedad</strong> (vía WhatsApp o llamada) para confirmar su cita.
+                        Hemos recibido sus datos correctamente. Nuestro equipo revisará la disponibilidad y le contactará a la brevedad.
+                        <br /><br />
+                        <strong>¿Desea agilizar su atención?</strong> Le recomendamos confirmar su registro enviándonos un mensaje por WhatsApp ahora mismo.
                     </p>
 
                     <div className="flex flex-col gap-3">
