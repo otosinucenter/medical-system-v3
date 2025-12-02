@@ -875,6 +875,97 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- AGENDA LOGIC ---
   const [showConfirmed, setShowConfirmed] = useState(false); // Toggle for Agenda view
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+
+  const handleImport = async () => {
+    if (!importText.trim()) return;
+    const lines = importText.trim().split('\n');
+    const newAppointments = [];
+
+    for (const line of lines) {
+      const cols = line.split('\t');
+      if (cols.length < 5) continue; // Skip invalid lines
+
+      try {
+        // 1. Parse Date (DD/MM/YYYY -> YYYY-MM-DD)
+        const [d, m, y] = cols[0].trim().split('/');
+        const dateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+
+        // 2. Parse Time (2.2 -> 14:20, 3 -> 15:00)
+        let timeStr = "00:00";
+        const rawTime = cols[1].trim();
+        if (rawTime.includes('.')) {
+          const [h, min] = rawTime.split('.');
+          let hour = parseInt(h);
+          let minute = parseInt(min);
+
+          // Adjust logic: 2.2 -> 2:20 (not 2:02). 2.4 -> 2:40.
+          if (minute < 10 && rawTime.split('.')[1].length === 1) minute *= 10;
+
+          if (hour < 8) hour += 12; // Assume PM for small numbers
+          timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        } else {
+          let hour = parseInt(rawTime);
+          if (hour < 8) hour += 12; // Assume PM
+          timeStr = `${hour.toString().padStart(2, '0')}:00`;
+        }
+
+        // 3. Construct Appointment Date (UTC)
+        // Note: We construct it in local time string then ISO
+        const appointmentDate = new Date(`${dateStr}T${timeStr}:00`).toISOString();
+
+        // 4. Map Columns
+        const reason = cols[2]?.trim() || '';
+        const dni = cols[3]?.trim() || '';
+        const name = cols[4]?.trim() || 'Sin Nombre';
+        const age = cols[5]?.trim() || '';
+        const sex = cols[6]?.trim() || '';
+        const occupation = cols[7]?.trim() || '';
+        const district = cols[8]?.trim() || '';
+        const phone = cols[9]?.trim() || '';
+        const email = cols[10]?.trim() || '';
+
+        // 5. Construct Symptoms String
+        const details = [
+          reason,
+          dni ? `DNI: ${dni}` : '',
+          age ? `Edad: ${age}` : '',
+          sex ? `Sexo: ${sex}` : '',
+          occupation ? `Ocupación: ${occupation}` : '',
+          district ? `Dirección: ${district}` : '',
+          email ? `Email: ${email}` : '',
+          `[Ticket: IMPORT]`
+        ].filter(Boolean).join(' | ');
+
+        newAppointments.push({
+          clinic_id: user.clinicId,
+          patient_name: name,
+          patient_phone: phone,
+          symptoms: details,
+          appointment_date: appointmentDate,
+          status: 'pending'
+        });
+
+      } catch (e) {
+        console.error("Error parsing line:", line, e);
+      }
+    }
+
+    if (newAppointments.length > 0) {
+      const { error } = await supabase.from('appointments').insert(newAppointments);
+      if (error) {
+        alert("Error al importar: " + error.message);
+      } else {
+        alert(`Se importaron ${newAppointments.length} citas correctamente.`);
+        setShowImportModal(false);
+        setImportText('');
+        fetchAppointments();
+      }
+    } else {
+      alert("No se pudieron procesar las líneas. Verifica el formato.");
+    }
+  };
 
   const fetchAppointments = async () => {
     if (!user.clinicId) return;
@@ -1793,7 +1884,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
 
 
-  const handleBulkPaste = async () => {
+  const handleBulkPaste = () => {
     if (!pasteText.trim()) return;
 
     const rows = pasteText.trim().split('\n');
@@ -1834,39 +1925,7 @@ export default function MedicalSystem({ user, onLogout }) {
           celular: String(getVal(['Celular Whatsapp', 'Celular', 'Telefono', 'Teléfono', 'Movil']) || ''),
           email: getVal(['Email', 'Correo']) || '',
           fechaNacimiento: parseDate(String(getVal(['Fecha de Nacimiento', 'Fecha Nacimiento', 'Nacimiento']) || '')),
-          fechaCita: (() => {
-            const dateVal = getVal(['Fecha y Hora de la cita', 'Marca temporal', 'Fecha']);
-            const timeVal = getVal(['Hora', 'Time']);
-
-            if (dateVal && timeVal) {
-              // Parse decimal time (e.g. 2.2 -> 14:20, 2.4 -> 14:40)
-              let hours = 0;
-              let minutes = 0;
-
-              if (timeVal.includes('.')) {
-                const parts = timeVal.split('.');
-                hours = parseInt(parts[0]);
-                // If single digit decimal (2.2), treat as tens (20 min). If double (2.25), treat as exact (25 min).
-                minutes = parts[1].length === 1 ? parseInt(parts[1]) * 10 : parseInt(parts[1]);
-              } else {
-                hours = parseInt(timeVal);
-              }
-
-              // Assume PM for 1-6, AM for 7-12 if ambiguous? 
-              // Or just standard 24h?
-              // User sheet shows "2.2", "3", "4.2". Likely PM (afternoon shift).
-              // Let's assume if hour < 7, add 12 (1 PM - 6 PM).
-              if (hours < 7) hours += 12;
-
-              // Format Date
-              // dateVal might be "3/12/2025"
-              const [d, m, y] = dateVal.split('/');
-              // Construct ISO
-              return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-            }
-
-            return getVal(['Fecha y Hora de la cita', 'Marca temporal']) || getNowDate();
-          })(),
+          fechaCita: getVal(['Fecha y Hora de la cita', 'Marca temporal']) || getNowDate(),
           resumen: getVal(['Resumen de enfermedad', 'Motivo']) || '',
           enfermedades: getVal(['Enfermedad', 'Enfermedades', 'Antecedentes']) || '',
           medicamentos: getVal(['Medicamentos usados frecuentemente', 'Medicamentos']) || '',
@@ -1887,28 +1946,7 @@ export default function MedicalSystem({ user, onLogout }) {
         return [...uniqueNewPatients, ...prev];
       });
 
-      // ALSO create appointments for these imported patients so they appear in Agenda/Requests
-      const appointmentsToInsert = newPatients.map(p => ({
-        clinic_id: user.clinicId,
-        patient_name: p.nombre,
-        patient_phone: p.celular,
-        appointment_date: p.fechaCita, // Already ISO format from my previous fix
-        symptoms: `${p.resumen || 'Importado'} | [Ticket: #IMPORT-${Math.floor(Math.random() * 1000)}]`, // Add Ticket tag to ensure visibility
-        status: 'pending',
-        created_at: new Date().toISOString()
-      }));
-
-      if (appointmentsToInsert.length > 0) {
-        const { error } = await supabase.from('appointments').insert(appointmentsToInsert);
-        if (error) {
-          console.error("Error creating appointments from import:", error);
-          alert("Pacientes importados, pero hubo un error creando las citas en la agenda.");
-        } else {
-          fetchAppointments(); // Refresh agenda view
-        }
-      }
-
-      alert(`Importación completada: ${newPatients.length} registros procesados y citas creadas.`);
+      alert(`Importación completada: ${newPatients.length} registros procesados.`);
       setIsPasteModalOpen(false);
       setPasteText("");
     }
@@ -3321,10 +3359,10 @@ margin: 0;
                             <input
                               type="checkbox"
                               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              onChange={(e) => handleSelectAll(e, appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')))}
+                              onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
                               checked={
-                                appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).length > 0 &&
-                                appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).every(a => selectedAppointments.includes(a.id))
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 &&
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').every(a => selectedAppointments.includes(a.id))
                               }
                             />
                           </th>
@@ -3336,7 +3374,7 @@ margin: 0;
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).map((apt) => (
+                        {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
                           <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''} ${selectedAppointments.includes(apt.id) ? 'bg-blue-50' : ''}`}>
                             <td className="p-4 align-top">
                               <input
@@ -3508,6 +3546,13 @@ margin: 0;
                       </button>
                     )}
                     <button
+                      onClick={() => setShowImportModal(true)}
+                      className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Importar Excel
+                    </button>
+                    <button
                       onClick={() => {
                         const link = `${window.location.origin}/citas-v2/${user.clinicId}`;
                         navigator.clipboard.writeText(link);
@@ -3669,6 +3714,45 @@ margin: 0;
                     </tbody>
                   </table>
                 </div>
+
+                {/* IMPORT MODAL */}
+                {showImportModal && (
+                  <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                      <div className="bg-green-600 text-white p-4 flex justify-between items-center">
+                        <h3 className="font-bold text-lg flex items-center"><FileText className="w-5 h-5 mr-2" /> Importar desde Excel</h3>
+                        <button onClick={() => setShowImportModal(false)} className="hover:text-green-100"><X className="w-6 h-6" /></button>
+                      </div>
+                      <div className="p-6">
+                        <p className="text-sm text-gray-600 mb-4">
+                          Copia las filas de tu Excel y pégalas aquí. El sistema detectará automáticamente fechas, horas y datos del paciente.
+                        </p>
+                        <textarea
+                          value={importText}
+                          onChange={(e) => setImportText(e.target.value)}
+                          placeholder={`Ejemplo:\n3/12/2025\t2.2\tMotivo...\tDNI...\tNombre...`}
+                          className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-xs focus:ring-2 focus:ring-green-500 focus:border-green-500 mb-4"
+                        />
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => setShowImportModal(false)}
+                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={handleImport}
+                            disabled={!importText.trim()}
+                            className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Procesar Importación
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           }
