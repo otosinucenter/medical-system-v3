@@ -870,6 +870,33 @@ export default function MedicalSystem({ user, onLogout }) {
     ]
   };
 
+  // --- AGENDA LOGIC ---
+  const fetchAppointments = async () => {
+    if (!user.clinicId) return;
+    setLoadingAppointments(true);
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('clinic_id', user.clinicId)
+        .neq('status', 'trash') // Exclude trash
+        .order('appointment_date', { ascending: true });
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === 'agenda') {
+      fetchAppointments();
+    }
+  }, [view]);
+
   const handleConvertToPatient = async (apt) => {
     // 1. Check if patient already exists (even in trash) to avoid overwriting history
     let existingPatient = null;
