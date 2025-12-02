@@ -46,6 +46,7 @@ export default function PublicAppointmentFormV2() {
     const [error, setError] = useState('');
     const [clinicName, setClinicName] = useState('');
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [bookedSlots, setBookedSlots] = useState([]);
 
     useEffect(() => {
         const fetchClinic = async () => {
@@ -76,9 +77,9 @@ export default function PublicAppointmentFormV2() {
         if (day === 1) {
             slots = generateSlots("10:20", "15:00", 20);
         }
-        // Miércoles (3) y Viernes (5): 14.15 h a 20.00 h
+        // Miércoles (3) y Viernes (5): 14.20 h a 20.00 h
         else if (day === 3 || day === 5) {
-            slots = generateSlots("14:15", "20:00", 20);
+            slots = generateSlots("14:20", "20:00", 20);
         }
 
         setAvailableSlots(slots);
@@ -88,6 +89,34 @@ export default function PublicAppointmentFormV2() {
         }
 
     }, [formData.date]);
+
+    // Fetch de citas existentes para bloquear horarios
+    useEffect(() => {
+        const fetchBookedSlots = async () => {
+            if (!clinicId || !formData.date) return;
+
+            const startOfDay = new Date(`${formData.date}T00:00:00`).toISOString();
+            const endOfDay = new Date(`${formData.date}T23:59:59`).toISOString();
+
+            const { data, error } = await supabase
+                .from('appointments')
+                .select('appointment_date')
+                .eq('clinic_id', clinicId)
+                .gte('appointment_date', startOfDay)
+                .lte('appointment_date', endOfDay)
+                .neq('status', 'cancelled'); // Asumimos que canceladas liberan cupo
+
+            if (data) {
+                const times = data.map(apt => {
+                    const d = new Date(apt.appointment_date);
+                    return d.toTimeString().slice(0, 5); // "HH:mm"
+                });
+                setBookedSlots(times);
+            }
+        };
+
+        fetchBookedSlots();
+    }, [formData.date, clinicId]);
 
     const generateSlots = (start, end, intervalMinutes) => {
         const slots = [];
@@ -247,35 +276,82 @@ export default function PublicAppointmentFormV2() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Hora Propuesta</label>
                                 {availableSlots.length > 0 ? (
-                                    <select
-                                        required
-                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                                        value={formData.time}
-                                        onChange={e => setFormData({ ...formData, time: e.target.value })}
-                                    >
-                                        <option value="">Selecciona una hora...</option>
-                                        {availableSlots.map(slot => (
-                                            <option key={slot} value={slot}>
-                                                {new Date(`2000-01-01T${slot}`).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                            </option>
-                                        ))}
-                                        <option value="other">Otro horario...</option>
-                                    </select>
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {availableSlots.filter((slot, i) => {
+                                                const isBooked = bookedSlots.includes(slot);
+                                                if (isBooked) return false; // Nunca mostrar ocupados
+
+                                                // Lógica "Smart Replacement":
+                                                // Indices pares (0, 2, 4...) son "Principales" (ej. 14:20)
+                                                // Indices impares (1, 3, 5...) son "Secundarios" (ej. 14:40)
+
+                                                // Si es par (Principal): Mostrar siempre (si está libre)
+                                                if (i % 2 === 0) return true;
+
+                                                // Si es impar (Secundario): Mostrar SOLO si el Principal anterior está ocupado
+                                                const prevSlot = availableSlots[i - 1];
+                                                const prevIsBooked = bookedSlots.includes(prevSlot);
+                                                return prevIsBooked;
+                                            }).map(slot => (
+                                                <button
+                                                    key={slot}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, time: slot })}
+                                                    className={`
+                                                        relative p-4 rounded-xl border-2 text-left transition-all duration-200 group
+                                                        ${formData.time === slot
+                                                            ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200 scale-[1.02] z-10'
+                                                            : 'bg-white border-slate-100 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={`text-lg font-bold ${formData.time === slot ? 'text-white' : 'text-slate-700'}`}>
+                                                            {new Date(`2000-01-01T${slot}`).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                        </span>
+                                                        {formData.time === slot && <CheckCircle className="w-5 h-5 text-white" />}
+                                                    </div>
+                                                    <div className={`text-xs mt-1 font-medium ${formData.time === slot ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                        Disponible
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {!showAllSlots && availableSlots.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAllSlots(true)}
+                                                className="w-full py-2 text-sm text-indigo-600 font-bold hover:bg-indigo-50 rounded-lg transition-colors border border-dashed border-indigo-200"
+                                            >
+                                                Ver más horarios disponibles...
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, time: 'other' })}
+                                            className={`w-full p-3 rounded-xl border-2 text-center font-bold transition-all ${formData.time === 'other'
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:border-slate-300'
+                                                }`}
+                                        >
+                                            Proponer otro horario
+                                        </button>
+                                    </div>
                                 ) : (
-                                    <div className="text-sm text-slate-500 p-3 bg-slate-50 rounded border border-slate-200 italic">
-                                        {formData.date ? "No hay horarios predefinidos para este día. Selecciona 'Otro horario' para proponer uno." : "Selecciona una fecha primero."}
+                                    <div className="text-sm text-slate-500 p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <Clock className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                                        <p className="mb-4">{formData.date ? "No hay horarios sugeridos para esta fecha." : "Selecciona una fecha en el calendario."}</p>
                                         {formData.date && (
-                                            <div className="mt-2">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        name="timeOption"
-                                                        checked={formData.time === 'other'}
-                                                        onChange={() => setFormData({ ...formData, time: 'other' })}
-                                                    />
-                                                    <span className="not-italic font-medium text-slate-700">Proponer otro horario</span>
-                                                </label>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, time: 'other' })}
+                                                className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-50 shadow-sm"
+                                            >
+                                                Proponer horario manual
+                                            </button>
                                         )}
                                     </div>
                                 )}

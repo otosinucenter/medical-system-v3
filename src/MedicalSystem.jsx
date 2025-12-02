@@ -3584,6 +3584,7 @@ margin: 0;
                 </div>
               </div>
             )
+          }
 
           {/* MODAL DE GESTIÓN DE EQUIPO */}
           {
