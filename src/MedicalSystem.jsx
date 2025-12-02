@@ -875,33 +875,7 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   // Cargar pacientes al inicio
-  // Real-time Subscription & Polling for Daily Appointments
-  useEffect(() => {
-    if (!user?.clinicId) return;
 
-    // 1. Initial Fetch
-    fetchDailyAppointments();
-
-    // 2. Real-time Subscription
-    const subscription = supabase
-      .channel('appointments-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, (payload) => {
-        console.log('Real-time change detected:', payload);
-        fetchDailyAppointments();
-      })
-      .subscribe();
-
-    // 3. Polling (Backup every 5 minutes)
-    const intervalId = setInterval(() => {
-      console.log('Auto-refreshing appointments (5 min)...');
-      fetchDailyAppointments();
-    }, 5 * 60 * 1000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearInterval(intervalId);
-    };
-  }, [user?.clinicId, selectedDate]); // Re-subscribe if clinic or date changes
 
   // Cargar pacientes al inicio
   useEffect(() => {
@@ -945,6 +919,34 @@ export default function MedicalSystem({ user, onLogout }) {
   const [dailyList, setDailyList] = useState([]);
   const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
+
+  // Real-time Subscription & Polling for Daily Appointments
+  useEffect(() => {
+    if (!user?.clinicId) return;
+
+    // 1. Initial Fetch
+    fetchDailyAppointments();
+
+    // 2. Real-time Subscription
+    const subscription = supabase
+      .channel('appointments-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, (payload) => {
+        console.log('Real-time change detected:', payload);
+        fetchDailyAppointments();
+      })
+      .subscribe();
+
+    // 3. Polling (Backup every 5 minutes)
+    const intervalId = setInterval(() => {
+      console.log('Auto-refreshing appointments (5 min)...');
+      fetchDailyAppointments();
+    }, 5 * 60 * 1000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(intervalId);
+    };
+  }, [user?.clinicId, selectedDate]); // Re-subscribe if clinic or date changes
 
   const fetchDailyAppointments = async () => {
     if (!user.clinicId) return;
