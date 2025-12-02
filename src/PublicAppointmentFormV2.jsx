@@ -223,6 +223,13 @@ export default function PublicAppointmentFormV2() {
                     clinic_id: clinicId,
                     patient_name: formData.name,
                     patient_phone: `(${formData.phoneCode}) ${formData.phone}`,
+                    patient_dni: formData.dni,
+                    patient_age: `${formData.age} ${formData.ageUnit}`,
+                    patient_sex: formData.sex,
+                    patient_occupation: formData.occupation,
+                    patient_district: formData.district,
+                    patient_email: formData.email,
+                    patient_dob: formData.dob, // Already calculated in handleAgeChange
                     symptoms: details,
                     appointment_date: appointmentDate.toISOString(),
                     status: 'pending'
