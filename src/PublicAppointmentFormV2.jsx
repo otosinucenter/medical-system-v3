@@ -252,7 +252,7 @@ export default function PublicAppointmentFormV2() {
 
                     <div className="flex flex-col gap-3">
                         <a
-                            href={`https://wa.me/51991874363?text=Hola, acabo de enviar una solicitud de cita para ${formData.name}.`}
+                            href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, atento a su confirmación, gracias.`)}`}
                             target="_blank"
                             rel="noreferrer"
                             className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
