@@ -2708,7 +2708,7 @@ margin: 0;
                   {/* Tabla Receta (Inputs editables) */}
                   <div className="mb-1 flex-1 relative">
                     {/* Cálculo dinámico de tamaño de letra según cantidad de items */}
-                    <div style={{ fontSize: editableReceta.length > 6 ? '0.75rem' : '0.85rem' }}>
+                    <div style={{ fontSize: editableReceta.length > 8 ? '0.65rem' : (editableReceta.length > 6 ? '0.75rem' : '0.85rem') }}>
                       <table className="w-full border-collapse table-fixed">
                         <thead>
                           <tr className="border-b-2 border-blue-900">
@@ -2770,7 +2770,7 @@ margin: 0;
                     <div className="flex-1">
                       <h3 className="font-bold text-xs uppercase mb-1 text-blue-900">INDICACIONES ADICIONALES:</h3>
                       <textarea
-                        className="w-full text-[7px] resize-none outline-none bg-transparent whitespace-pre-wrap font-medium text-gray-700 leading-tight"
+                        className="w-full text-[6px] resize-none outline-none bg-transparent whitespace-pre-wrap font-medium text-gray-700 leading-tight"
                         rows={4}
                         value={editableIndicaciones}
                         onChange={(e) => setEditableIndicaciones(e.target.value)}
