@@ -1314,6 +1314,10 @@ export default function MedicalSystem({ user, onLogout }) {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Force refresh to ensure sync
+      fetchDailyAppointments();
+      fetchAppointments();
     } catch (error) {
       console.error("Error deleting appointment:", error);
       fetchDailyAppointments(); // Revert
@@ -1324,19 +1328,33 @@ export default function MedicalSystem({ user, onLogout }) {
   const deletePatient = async (patient) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar al paciente ${patient.nombre}? Se moverá a la papelera.`)) return;
 
-    // Optimistic update
+    // Optimistic update for all lists
     setPatients(prev => prev.filter(p => p.id !== patient.id));
+    setAppointments(prev => prev.filter(a => a.patient_dni !== patient.id));
+    setDailyList(prev => prev.filter(p => p.patient_dni !== patient.id));
 
     try {
-      const { error } = await supabase
+      // 1. Delete Patient
+      const { error: errorPatient } = await supabase
         .from('patients')
-        .update({ status: 'trash' }) // Soft delete
+        .update({ status: 'trash' })
         .eq('id', patient.id);
 
-      if (error) throw error;
+      if (errorPatient) throw errorPatient;
+
+      // 2. Cascade Delete Appointments (Soft delete)
+      const { error: errorApts } = await supabase
+        .from('appointments')
+        .update({ status: 'trash' })
+        .eq('patient_dni', patient.id);
+
+      if (errorApts) throw errorApts;
+
     } catch (error) {
       console.error("Error deleting patient:", error);
       fetchPatients(); // Revert
+      fetchAppointments();
+      fetchDailyAppointments();
       alert("Error al eliminar paciente.");
     }
   };
