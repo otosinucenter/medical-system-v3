@@ -1369,8 +1369,21 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   // --- GUARDADO EN NUBE (SUPABASE) ---
-  const handleSave = async (e) => {
+  const onFormSubmit = async (e) => {
     e.preventDefault();
+
+    // Preguntar si desea imprimir antes de guardar
+    if (formData.receta.length > 0) {
+      if (confirm("¿Desea visualizar/imprimir la receta antes de finalizar la consulta?")) {
+        setIsPrescriptionOpen(true);
+        return;
+      }
+    }
+
+    await saveConsultation();
+  };
+
+  const saveConsultation = async () => {
     const docId = formData.id || Date.now().toString();
     const currentConsultationData = {
       fechaCita: formData.fechaCita,
@@ -1452,6 +1465,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (error) throw error;
       // Opcional: mostrar toast de éxito
+      setIsPrescriptionOpen(false); // Close modal if open
     } catch (error) {
       console.error("Error al guardar en Supabase:", error);
       alert("Error al guardar en la nube. Los datos están en local pero podrían perderse si recargas.");
@@ -2326,7 +2340,7 @@ margin: 0;
                   </div>
                 )}
 
-                <form onSubmit={handleSave} className="bg-white rounded-xl shadow border p-6 space-y-6">
+                <form onSubmit={onFormSubmit} className="bg-white rounded-xl shadow border p-6 space-y-6">
                   <div className={!isNewPatient ? "opacity-80" : ""}>
                     <h3 className="font-bold text-blue-800 border-b pb-2 mb-4 flex items-center"><User className="w-4 h-4 mr-2" /> 1. Filiación y Contacto</h3>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -2591,6 +2605,7 @@ margin: 0;
                   <h3 className="font-bold text-gray-700 flex items-center"><Edit3 className="w-4 h-4 mr-2" /> Vista Previa Receta (A5 Horizontal)</h3>
                   <div className="flex gap-2">
                     <button onClick={handleUpdatePrescription} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">Guardar Cambios</button>
+                    <button onClick={() => saveConsultation()} className="bg-blue-800 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-900 flex items-center border border-blue-600"><Save className="w-3 h-3 mr-1" /> Guardar y Finalizar</button>
                     <button onClick={printPrescription} className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 flex items-center"><Printer className="w-3 h-3 mr-1" /> Imprimir</button>
                     <button onClick={() => setIsPrescriptionOpen(false)} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
                   </div>
