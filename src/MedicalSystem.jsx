@@ -842,36 +842,80 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   }, [view]);
 
-  const handleConvertToPatient = (apt) => {
-    // Pre-fill form with appointment data
-    setFormData({
-      // Explicitly reset medical fields to avoid carrying over data from previous patient
-      resumen: '',
-      examenOido: '',
-      examenNariz: '',
-      examenGarganta: '',
-      diagnosticos: [],
-      receta: [],
-      indicaciones: '',
-      fechaCita: getNowDate(), // Default to today for the new consultation record
-      nombre: apt.patient_name,
-      celular: apt.patient_phone || '',
-      id: apt.patient_dni || '',
-      edad: apt.patient_age || '',
-      sexo: apt.patient_sex || '',
-      ocupacion: apt.patient_occupation || '',
-      procedencia: apt.patient_district || '',
-      email: apt.patient_email || '',
-      fechaNacimiento: apt.patient_dob || '',
-      referencia: `${apt.referral_source || ''} ${apt.referral_detail ? `(${apt.referral_detail})` : ''}`.trim(),
-      // Map medical history to individual fields
-      enfermedades: apt.chronic_illnesses || '',
-      medicamentos: apt.medications || '',
-      alergias: apt.allergies || '',
-      cirugias: apt.surgeries || ''
-    });
+  const handleConvertToPatient = async (apt) => {
+    // 1. Check if patient already exists (even in trash) to avoid overwriting history
+    let existingPatient = null;
+    if (apt.patient_dni) {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', apt.patient_dni)
+        .maybeSingle();
+
+      if (data) {
+        // If patient exists, we must use their data (especially history/consultations)
+        // We restore the structure from the 'data' JSONB column if available
+        existingPatient = { ...data.data, id: data.id };
+        console.log("Found existing patient:", existingPatient);
+
+        if (confirm(`El paciente ${existingPatient.nombre} ya existe en la base de datos (posiblemente en papelera). ¿Desea cargar su historial previo?`)) {
+          // If user accepts, we use existing data
+        } else {
+          // If user refuses, we start fresh (WARNING: this will overwrite if saved)
+          existingPatient = null;
+        }
+      }
+    }
+
+    // 2. Prepare Form Data
+    if (existingPatient) {
+      // MERGE: Use existing patient data, but update current appointment details if needed
+      setFormData({
+        ...existingPatient,
+        // Ensure we don't lose the current appointment context (e.g. date)
+        fechaCita: getNowDate(),
+        // Reset current consultation fields to empty for the NEW consultation
+        resumen: '',
+        examenOido: '',
+        examenNariz: '',
+        examenGarganta: '',
+        diagnosticos: [],
+        receta: [],
+        indicaciones: ''
+      });
+      setIsNewPatient(false); // It's an existing patient
+    } else {
+      // NEW PATIENT (or overwrite)
+      setFormData({
+        // Explicitly reset medical fields to avoid carrying over data from previous patient
+        resumen: '',
+        examenOido: '',
+        examenNariz: '',
+        examenGarganta: '',
+        diagnosticos: [],
+        receta: [],
+        indicaciones: '',
+        fechaCita: getNowDate(), // Default to today for the new consultation record
+        nombre: apt.patient_name,
+        celular: apt.patient_phone || '',
+        id: apt.patient_dni || '',
+        edad: apt.patient_age || '',
+        sexo: apt.patient_sex || '',
+        ocupacion: apt.patient_occupation || '',
+        procedencia: apt.patient_district || '',
+        email: apt.patient_email || '',
+        fechaNacimiento: apt.patient_dob || '',
+        referencia: `${apt.referral_source || ''} ${apt.referral_detail ? `(${apt.referral_detail})` : ''}`.trim(),
+        // Map medical history to individual fields
+        enfermedades: apt.chronic_illnesses || '',
+        medicamentos: apt.medications || '',
+        alergias: apt.allergies || '',
+        cirugias: apt.surgeries || ''
+      });
+      setIsNewPatient(true);
+    }
+
     setView('form');
-    setIsNewPatient(true);
   };
 
   // Cargar pacientes al inicio
