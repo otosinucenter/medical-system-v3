@@ -249,7 +249,7 @@ export default function PublicAppointmentFormV2() {
                     <p className="text-slate-600 mb-6 leading-relaxed">
                         Hemos recibido sus datos correctamente. Nuestro equipo revisará la disponibilidad y le contactará a la brevedad.
                         <br /><br />
-                        <strong>¿Desea agilizar su atención?</strong> Le recomendamos confirmar su registro enviándonos un mensaje por WhatsApp ahora mismo.
+                        Le invitamos a confirmar su solicitud vía WhatsApp para facilitar la coordinación de su cita.
                     </p>
 
                     <div className="flex flex-col gap-3">
