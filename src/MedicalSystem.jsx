@@ -3533,9 +3533,14 @@ margin: 0;
                                 defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
                                 onBlur={(e) => {
                                   const newTime = e.target.value;
-                                  const currentDate = new Date(apt.appointment_date).toISOString().split('T')[0];
+                                  // Fix: Use local date, not UTC date, to avoid shifting days
+                                  const localDate = new Date(apt.appointment_date);
+                                  localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+                                  const currentDate = localDate.toISOString().split('T')[0];
+
                                   const currentTime = new Date(apt.appointment_date).toTimeString().slice(0, 5);
                                   if (newTime && newTime !== currentTime) {
+                                    // Construct new date in local time, then convert to UTC
                                     const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
                                     setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
                                     supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
