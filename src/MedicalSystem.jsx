@@ -1371,15 +1371,6 @@ export default function MedicalSystem({ user, onLogout }) {
   // --- GUARDADO EN NUBE (SUPABASE) ---
   const onFormSubmit = async (e) => {
     e.preventDefault();
-
-    // Preguntar si desea imprimir antes de guardar
-    if (formData.receta.length > 0) {
-      if (confirm("¿Desea visualizar/imprimir la receta antes de finalizar la consulta?")) {
-        setIsPrescriptionOpen(true);
-        return;
-      }
-    }
-
     await saveConsultation();
   };
 
@@ -1426,7 +1417,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
     // 2. Actualizar estado local
     setPatients(updatedPatientsList);
-    setView('list');
+    // setView('list'); // MOVIDO AL FINAL para permitir imprimir
     setImportText('');
     setEditingConsultationIndex(null);
 
@@ -1466,6 +1457,41 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
       // Opcional: mostrar toast de éxito
       setIsPrescriptionOpen(false); // Close modal if open
+
+      // Preguntar si desea imprimir DESPUÉS de guardar
+      if (formData.receta.length > 0) {
+        if (confirm("Consulta guardada correctamente. ¿Desea imprimir la receta ahora?")) {
+          // Necesitamos establecer el paciente seleccionado para que el modal funcione
+          setSelectedPatient(patientToSave);
+          // Y la consulta seleccionada (la última, que acabamos de agregar)
+          if (patientToSave.consultas && patientToSave.consultas.length > 0) {
+            // Si es nuevo o editado, suele ser la primera en la lista si ordenamos por fecha, 
+            // pero en el array 'consultas' que acabamos de guardar:
+            // Si es nuevo: consultas[0]
+            // Si editamos: consultas[editingIndex]
+            // Para simplificar, usamos la lógica de visualización que usa 'getDisplayConsultation'
+            // pero necesitamos asegurarnos que 'selectedConsultationIndex' apunte a la correcta.
+
+            // Si es nuevo paciente o nueva consulta, la agregamos al inicio en 'updatedPatientsList' logic?
+            // Revisemos save logic:
+            // if (isNewPatient) ... consultas: [current] ...
+            // else ... newConsultations = [current, ...prev] OR update index
+
+            if (editingConsultationIndex !== null) {
+              setSelectedConsultationIndex(editingConsultationIndex);
+            } else {
+              setSelectedConsultationIndex(0); // La más reciente
+            }
+          }
+          setIsPrescriptionOpen(true);
+          // No cambiamos a 'list' todavía para permitir imprimir
+          return;
+        }
+      }
+
+      // Si no imprime, volvemos a la lista
+      setView('list');
+
     } catch (error) {
       console.error("Error al guardar en Supabase:", error);
       alert("Error al guardar en la nube. Los datos están en local pero podrían perderse si recargas.");
@@ -1476,7 +1502,21 @@ export default function MedicalSystem({ user, onLogout }) {
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.includes(searchTerm)
   );
 
-  // --- MODAL Y EDICIÓN RECETA ---
+  // Cargar datos al abrir modal receta
+  useEffect(() => {
+    if (isPrescriptionOpen) {
+      const consultation = getDisplayConsultation();
+      // FIX: Si la consulta viene vacía (ej. acabamos de guardar y el estado no se ha refrescado completamente)
+      // o si estamos en el flujo de "Guardar y luego Imprimir", usamos formData como fallback
+      const recetaData = (consultation && consultation.receta && consultation.receta.length > 0)
+        ? consultation.receta
+        : (formData.receta || []);
+
+      setEditableReceta(recetaData);
+      setEditableIndicaciones(consultation.indicaciones || "");
+    }
+  }, [isPrescriptionOpen, selectedPatient, selectedConsultationIndex, formData.receta]);
+
   const openPrescriptionModal = () => {
     const consultation = getDisplayConsultation();
     setEditableReceta(JSON.parse(JSON.stringify(consultation.receta || [])));
