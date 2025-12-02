@@ -1232,15 +1232,18 @@ export default function MedicalSystem({ user, onLogout }) {
       }
 
       // Create NEW appointment
+      // 1. Destructure to remove ID and other fields we don't want to copy directly
+      const { id, created_at, ...rest } = originalApt;
+
       try {
         const { data, error } = await supabase
           .from('appointments')
           .insert([{
-            ...originalApt,
-            id: undefined, // Let DB generate new ID
+            ...rest,
             appointment_date: newDateTime,
-            status: 'confirmed', // New appointment starts as confirmed (since we are setting date)
-            triage_status: 'pending', // Pending triage
+            status: 'confirmed', // New appointment starts as confirmed
+            triage_status: 'pending', // Reset triage
+            payment_status: 'pending', // Reset payment
             created_at: new Date().toISOString(),
             queue_order: 999 // Put at end
           }])
