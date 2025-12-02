@@ -381,10 +381,10 @@ export default function PublicAppointmentFormV2() {
                                     </div>
                                 )}
 
-                                {formData.time && formData.time >= "18:00" && formData.time !== 'other' && (
+                                {formData.time && formData.time >= "19:00" && formData.time !== 'other' && (
                                     <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 flex items-start gap-2">
                                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                                        <span>Nota: Las citas después de las 6:00 PM pueden estar sujetas a disponibilidad especial de la clínica.</span>
+                                        <span>Nota: Las citas después de las 7:00 PM están sujetas a disponibilidad previa coordinación.</span>
                                     </div>
                                 )}
                             </div>
