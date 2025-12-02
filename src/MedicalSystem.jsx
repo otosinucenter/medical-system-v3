@@ -38,6 +38,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [dataModalTab, setDataModalTab] = useState('backup'); // 'backup' | 'import'
   const [importPreview, setImportPreview] = useState(null); // { headers: [], rows: [] }
   const [importMode, setImportMode] = useState('merge'); // 'merge' | 'replace'
+  const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
 
   // --- PERSISTENCIA EN CARPETA LOCAL (FILE SYSTEM ACCESS API) ---
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -1324,6 +1325,51 @@ export default function MedicalSystem({ user, onLogout }) {
       console.error("Error deleting appointment:", error);
       fetchDailyAppointments(); // Revert
       fetchAppointments(); // Revert
+    }
+  };
+
+  const handleSelectAll = (e, visibleAppointments) => {
+    if (e.target.checked) {
+      setSelectedAppointments(visibleAppointments.map(a => a.id));
+    } else {
+      setSelectedAppointments([]);
+    }
+  };
+
+  const handleSelectAppointment = (id) => {
+    setSelectedAppointments(prev =>
+      prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedAppointments.length === 0) return;
+
+    const confirmedCount = appointments.filter(a => selectedAppointments.includes(a.id) && a.status === 'confirmed').length;
+
+    let message = `¿Estás seguro de eliminar ${selectedAppointments.length} solicitudes seleccionadas?`;
+    if (confirmedCount > 0) {
+      message += `\n\n⚠️ ${confirmedCount} de ellas están CONFIRMADAS y se eliminarán también de Triaje.`;
+    }
+
+    if (!window.confirm(message)) return;
+
+    // Optimistic
+    setAppointments(prev => prev.filter(a => !selectedAppointments.includes(a.id)));
+    setDailyList(prev => prev.filter(a => !selectedAppointments.includes(a.id)));
+    setSelectedAppointments([]);
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'trash' })
+        .in('id', selectedAppointments);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error bulk deleting:", error);
+      fetchAppointments();
+      fetchDailyAppointments();
     }
   };
 
@@ -3170,6 +3216,15 @@ margin: 0;
                     >
                       <RefreshCw className="w-4 h-4" />
                     </button>
+                    {selectedAppointments.length > 0 && (
+                      <button
+                        onClick={handleBulkDelete}
+                        className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar ({selectedAppointments.length})
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -3193,6 +3248,17 @@ margin: 0;
                     <table className="w-full text-left border-collapse min-w-[800px]">
                       <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
+                          <th className="p-4 w-10">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
+                              checked={
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 &&
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').every(a => selectedAppointments.includes(a.id))
+                              }
+                            />
+                          </th>
                           <th className="p-4 w-48">Fecha / Hora</th>
                           <th className="p-4">Paciente</th>
                           <th className="p-4">Motivo / Antecedentes</th>
@@ -3202,7 +3268,15 @@ margin: 0;
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
-                          <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
+                          <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''} ${selectedAppointments.includes(apt.id) ? 'bg-blue-50' : ''}`}>
+                            <td className="p-4 align-top">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 cursor-pointer"
+                                checked={selectedAppointments.includes(apt.id)}
+                                onChange={() => handleSelectAppointment(apt.id)}
+                              />
+                            </td>
                             {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
                             <td className="p-4 align-top">
                               <div className="flex flex-col gap-2">
