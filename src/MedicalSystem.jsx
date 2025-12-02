@@ -3445,6 +3445,15 @@ margin: 0;
                     <h3 className="text-lg font-bold text-slate-800">Próximas Citas (v2)</h3>
                   </div>
                   <div className="flex gap-2">
+                    {selectedAppointments.length > 0 && (
+                      <button
+                        onClick={handleBulkDelete}
+                        className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar ({selectedAppointments.length})
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         const link = `${window.location.origin}/citas-v2/${user.clinicId}`;
