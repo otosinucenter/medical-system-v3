@@ -870,7 +870,11 @@ export default function MedicalSystem({ user, onLogout }) {
     ]
   };
 
+
+
   // --- AGENDA LOGIC ---
+  const [showConfirmed, setShowConfirmed] = useState(false); // Toggle for Agenda view
+
   const fetchAppointments = async () => {
     if (!user.clinicId) return;
     setLoadingAppointments(true);
@@ -888,6 +892,41 @@ export default function MedicalSystem({ user, onLogout }) {
       console.error("Error fetching appointments:", error);
     } finally {
       setLoadingAppointments(false);
+    }
+  };
+
+  const confirmAppointment = async (apt) => {
+    if (!apt.appointment_date || !apt.appointment_time) {
+      alert("Por favor, asigna una fecha y hora antes de confirmar.");
+      // Activar modo edición para este cita
+      const d = new Date(apt.appointment_date || new Date());
+      setEditingAppointment({
+        id: apt.id,
+        date: d.toISOString().split('T')[0],
+        time: d.toTimeString().slice(0, 5)
+      });
+      return;
+    }
+
+    if (!confirm(`¿Confirmar cita para ${apt.patient_name} el ${new Date(apt.appointment_date).toLocaleDateString()} a las ${new Date(apt.appointment_date).toLocaleTimeString()}? \n\nPasará a la lista de Triaje del día correspondiente.`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'confirmed',
+          triage_status: 'pending' // Ready for triage
+        })
+        .eq('id', apt.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status: 'confirmed', triage_status: 'pending' } : a));
+      alert("Cita confirmada y movida a Triaje.");
+    } catch (error) {
+      console.error("Error confirming appointment:", error);
+      alert("Error al confirmar cita.");
     }
   };
 
@@ -3056,10 +3095,16 @@ margin: 0;
                   Importar (Pegar)
                 </button>
                 <button
+                  onClick={() => setShowConfirmed(!showConfirmed)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors border ${showConfirmed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200'}`}
+                >
+                  {showConfirmed ? 'Ocultar Confirmados' : 'Ver Confirmados'}
+                </button>
+                <button
                   onClick={fetchAppointments}
                   className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
                 >
-                  Actualizar
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -3081,8 +3126,11 @@ margin: 0;
               </div>
             ) : (
               <div className="grid gap-4">
-                {appointments.map((apt) => (
-                  <div key={apt.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length === 0 && (
+                  <div className="text-center py-8 text-slate-400">No hay citas pendientes. {showConfirmed ? '' : 'Revisa los confirmados.'}</div>
+                )}
+                {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                  <div key={apt.id} className={`p-4 rounded-xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${apt.status === 'confirmed' ? 'bg-green-50 border-green-100 opacity-75' : 'bg-white border-slate-200 hover:shadow-md'}`}>
                     <div className="flex items-start gap-4">
                       <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px] relative group">
                         {editingAppointment?.id === apt.id ? (
@@ -3163,6 +3211,18 @@ margin: 0;
                         <UserPlus className="w-4 h-4" />
                         Crear Ficha
                       </button>
+
+                      {apt.status !== 'confirmed' && (
+                        <button
+                          onClick={() => confirmAppointment(apt)}
+                          className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm flex items-center justify-center gap-2"
+                          title="Confirmar y Mover a Triaje"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          Confirmar
+                        </button>
+                      )}
+
                       <a
                         href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
                         target="_blank"
