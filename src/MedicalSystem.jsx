@@ -3300,10 +3300,10 @@ margin: 0;
                             <input
                               type="checkbox"
                               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
+                              onChange={(e) => handleSelectAll(e, appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')))}
                               checked={
-                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 &&
-                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').every(a => selectedAppointments.includes(a.id))
+                                appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).length > 0 &&
+                                appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).every(a => selectedAppointments.includes(a.id))
                               }
                             />
                           </th>
@@ -3315,7 +3315,7 @@ margin: 0;
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                        {appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).map((apt) => (
                           <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''} ${selectedAppointments.includes(apt.id) ? 'bg-blue-50' : ''}`}>
                             <td className="p-4 align-top">
                               <input
