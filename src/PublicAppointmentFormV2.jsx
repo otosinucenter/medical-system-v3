@@ -63,26 +63,27 @@ export default function PublicAppointmentFormV2() {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
 
-    // Verificar si ya hay una solicitud enviada en localStorage
+    // Verificar si hay un ticket en la URL para mostrar la pantalla de éxito
     useEffect(() => {
-        const savedSubmission = localStorage.getItem(`appointment_submission_${clinicId}`);
-        if (savedSubmission) {
-            try {
-                const parsed = JSON.parse(savedSubmission);
-                // Opcional: Verificar antigüedad (ej. 24 horas)
-                const submissionTime = new Date(parsed.timestamp).getTime();
-                const now = new Date().getTime();
-                if (now - submissionTime < 24 * 60 * 60 * 1000) {
-                    setFormData(parsed.formData);
+        const params = new URLSearchParams(window.location.search);
+        const ticketParam = params.get('ticket');
+
+        if (ticketParam) {
+            const savedData = localStorage.getItem(`appointment_ticket_${clinicId}_${ticketParam}`);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    setFormData(parsed);
                     setSubmitted(true);
-                } else {
-                    localStorage.removeItem(`appointment_submission_${clinicId}`);
+                } catch (e) {
+                    console.error("Error parsing saved ticket", e);
                 }
-            } catch (e) {
-                console.error("Error parsing saved submission", e);
             }
+        } else {
+            setSubmitted(false);
+            setFormData(prev => ({ ...prev, date: '', time: '' })); // Limpiar formulario básico
         }
-    }, [clinicId]);
+    }, [window.location.search, clinicId]);
 
     useEffect(() => {
         const fetchClinic = async () => {
@@ -194,8 +195,13 @@ export default function PublicAppointmentFormV2() {
 
             const appointmentDate = new Date(`${formData.date}T${finalTime}`);
 
-            // Generar Ticket ID (6 dígitos aleatorios)
-            const ticketId = Math.floor(100000 + Math.random() * 900000).toString();
+            // Generar Ticket ID Secuencial (Contar citas existentes + 1)
+            const { count, error: countError } = await supabase
+                .from('appointments')
+                .select('*', { count: 'exact', head: true })
+                .eq('clinic_id', clinicId);
+
+            const ticketId = countError ? Math.floor(1000 + Math.random() * 9000).toString() : (count + 1).toString();
 
             const { error: insertError } = await supabase
                 .from('appointments')
@@ -208,18 +214,11 @@ export default function PublicAppointmentFormV2() {
                     status: 'pending',
                     // Nuevos campos
                     patient_dni: formData.dni,
-                    patient_age: `${formData.age} ${formData.ageUnit}`,
-                    patient_sex: formData.sex,
+                    patient_age: formData.age ? `${formData.age} ${formData.ageUnit}` : null,
+                    patient_gender: formData.sex,
                     patient_occupation: formData.occupation,
-                    patient_district: `${formData.country} - ${formData.district}`,
-                    patient_email: formData.email,
-                    patient_dob: formData.dob,
-                    chronic_illnesses: formData.chronic_illnesses,
-                    medications: formData.medications,
-                    allergies: formData.allergies,
-                    surgeries: formData.surgeries,
-                    referral_source: formData.referral_source.join(', '),
-                    referral_detail: formData.referral_detail
+                    patient_address: formData.district, // Usamos district como dirección/distrito
+                    patient_email: formData.email
                 }]);
 
             if (insertError) throw insertError;
@@ -327,8 +326,8 @@ export default function PublicAppointmentFormV2() {
                             </a>
                             <button
                                 onClick={() => {
-                                    localStorage.removeItem(`appointment_submission_${clinicId}`);
-                                    window.location.reload();
+                                    // Limpiar URL y recargar para nuevo formulario
+                                    window.location.href = window.location.pathname;
                                 }}
                                 className="w-full py-4 px-6 bg-white border-2 border-slate-100 text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                             >
