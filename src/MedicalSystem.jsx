@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export default function MedicalSystem({ user, onLogout }) {
   console.log("MedicalSystem user prop:", user);
-  const [view, setView] = useState('triage'); // triage, patients, history, agenda
+  const [view, setView] = useState('triage'); // triage, patients, history, agenda, agenda-v2
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [importText, setImportText] = useState('');
@@ -2306,9 +2306,23 @@ margin: 0;
           )}
 
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
-            <button onClick={() => { navigate('agenda'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+            <button
+              onClick={() => { setView('agenda'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+            >
               <CalendarDays className="w-5 h-5 mr-3" />
-              <span className="font-medium">Solicitud Citas</span>
+              <span className="font-medium">Solicitud de Citas</span>
+            </button>
+
+            <button
+              onClick={() => { setView('agenda-v2'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda-v2' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+            >
+              <div className="relative mr-3">
+                <CalendarDays className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              </div>
+              <span className="font-medium">Agenda v2.0</span>
             </button>
 
             {(user.role === 'admin') && (
@@ -2347,11 +2361,13 @@ margin: 0;
               {view === 'list' && 'Pacientes'}
               {view === 'triage' && 'Triaje'}
               {view === 'agenda' && 'Solicitud Citas'}
+              {view === 'agenda-v2' && 'Agenda v2.0'}
               {view === 'form' && 'Ficha de Ingreso'}
               {view === 'detail' && 'Historia Clínica'}
             </span>
           </div>
           <div className="w-8"></div> {/* Espaciador para centrar */}
+
         </div>
 
         <div className="p-4 md:p-8 pb-24">
@@ -3406,6 +3422,168 @@ margin: 0;
               </div>
             )
           }
+
+          {/* VISTA AGENDA V2 (BETA) */}
+          {
+            view === 'agenda-v2' && (
+              <div className="p-4 md:p-8 max-w-6xl mx-auto">
+                <div className="bg-indigo-600 rounded-xl p-6 mb-6 text-white shadow-lg relative overflow-hidden">
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-white text-indigo-600 text-xs font-bold px-2 py-1 rounded-full">BETA v2.0</span>
+                      <h2 className="text-2xl font-bold">Agenda Inteligente</h2>
+                    </div>
+                    <p className="text-indigo-100 max-w-2xl">
+                      Esta es una vista experimental para probar la nueva lógica de horarios. Aquí verás las citas agendadas a través del nuevo formulario v2.0.
+                    </p>
+                  </div>
+                  <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-indigo-500 to-transparent opacity-50"></div>
+                </div>
+
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">Próximas Citas (v2)</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const link = `${window.location.origin}/citas-v2/${user.clinicId}`;
+                        navigator.clipboard.writeText(link);
+                        alert("Link de citas v2 copiado al portapapeles");
+                      }}
+                      className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-200 transition-colors flex items-center gap-2"
+                    >
+                      <Link className="w-4 h-4" />
+                      Copiar Link v2.0
+                    </button>
+                    <button
+                      onClick={fetchAppointments}
+                      className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Reutilizamos la tabla de citas por ahora, pero filtrada o destacada */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[800px]">
+                    <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      <tr>
+                        <th className="p-4 w-48">Fecha / Hora</th>
+                        <th className="p-4">Paciente</th>
+                        <th className="p-4">Motivo / Antecedentes</th>
+                        <th className="p-4 w-32 text-center">Estado</th>
+                        <th className="p-4 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                        <tr key={apt.id} className={`hover:bg-indigo-50/30 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
+                          {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
+                          <td className="p-4 align-top">
+                            <div className="flex flex-col gap-2">
+                              <input
+                                key={`date-v2-${apt.id}-${apt.appointment_date}`}
+                                type="date"
+                                className="text-xs font-bold border border-transparent hover:border-indigo-200 focus:border-indigo-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none"
+                                defaultValue={new Date(apt.appointment_date).toISOString().split('T')[0]}
+                                onBlur={(e) => {
+                                  // Logic duplicated for simplicity in prototype
+                                  const newDate = e.target.value;
+                                  if (newDate && newDate !== new Date(apt.appointment_date).toISOString().split('T')[0]) {
+                                    const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
+                                    setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+                                    supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                      if (error) { console.error(error); fetchAppointments(); }
+                                    });
+                                  }
+                                }}
+                              />
+                              <input
+                                key={`time-v2-${apt.id}-${apt.appointment_date}`}
+                                type="time"
+                                className="text-lg font-bold border border-transparent hover:border-indigo-200 focus:border-indigo-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none text-slate-800"
+                                defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
+                                onBlur={(e) => {
+                                  const newTime = e.target.value;
+                                  const currentDate = new Date(apt.appointment_date).toISOString().split('T')[0];
+                                  const currentTime = new Date(apt.appointment_date).toTimeString().slice(0, 5);
+                                  if (newTime && newTime !== currentTime) {
+                                    const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
+                                    setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+                                    supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                      if (error) { console.error(error); fetchAppointments(); }
+                                    });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </td>
+
+                          {/* DATOS PACIENTE */}
+                          <td className="p-4 align-top">
+                            <div className="font-bold text-slate-800 text-sm">{apt.patient_name}</div>
+                            <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-500">
+                              {apt.patient_phone && (
+                                <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                  <Phone className="w-3 h-3" /> {apt.patient_phone}
+                                </span>
+                              )}
+                              {apt.patient_age && (
+                                <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                  <User className="w-3 h-3" /> {apt.patient_age}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* MOTIVO */}
+                          <td className="p-4 align-top">
+                            {apt.symptoms ? (
+                              <div className="text-sm text-slate-600 italic bg-indigo-50/50 p-2 rounded border border-indigo-100/50 max-w-xs">
+                                "{apt.symptoms}"
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-300 italic">Sin motivo especificado</span>
+                            )}
+                          </td>
+
+                          {/* ESTADO */}
+                          <td className="p-4 align-top text-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {apt.status === 'confirmed' ? 'Confirmado' : 'Pendiente'}
+                            </span>
+                          </td>
+
+                          {/* ACCIONES */}
+                          <td className="p-4 align-top text-right">
+                            <div className="flex justify-end items-center gap-2">
+                              {apt.status !== 'confirmed' && (
+                                <button
+                                  onClick={() => confirmAppointment(apt)}
+                                  className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                  title="Confirmar y Mover a Triaje"
+                                >
+                                  <CheckCircle2 className="w-5 h-5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => deleteAppointment(apt.id)}
+                                className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                title="Eliminar Solicitud"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
 
           {/* MODAL DE GESTIÓN DE EQUIPO */}
           {

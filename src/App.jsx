@@ -4,6 +4,7 @@ import Login from './Login';
 import MedicalSystem from './MedicalSystem';
 import Landing from './Landing';
 import PublicAppointmentForm from './PublicAppointmentForm';
+import PublicAppointmentFormV2 from './PublicAppointmentFormV2';
 import ErrorBoundary from './ErrorBoundary';
 
 function AppContent() {
@@ -51,6 +52,7 @@ function AppContent() {
                 }
             />
             <Route path="/citas/:clinicId" element={<PublicAppointmentForm />} />
+            <Route path="/citas-v2/:clinicId" element={<PublicAppointmentFormV2 />} />
             {/* Redirigir cualquier otra ruta a la landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
