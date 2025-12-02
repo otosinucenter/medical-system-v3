@@ -216,21 +216,46 @@ export default function PublicAppointmentFormV2() {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl text-center">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+                <div className="bg-white max-w-lg w-full p-8 rounded-2xl shadow-xl text-center border border-slate-100">
+                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-300">
+                        <CheckCircle className="w-10 h-10 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">¡Solicitud Enviada!</h2>
-                    <p className="text-slate-600 mb-6">
-                        Hemos recibido tus datos correctamente. El consultorio {clinicName && <strong>{clinicName}</strong>} se pondrá en contacto contigo pronto para confirmar tu cita.
+
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">¡Solicitud Registrada!</h2>
+
+                    <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left border border-slate-100">
+                        <p className="text-sm text-slate-500 mb-1 uppercase tracking-wide font-bold">Resumen de solicitud</p>
+                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Paciente:</span> {formData.name}</p>
+                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Fecha:</span> {new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p className="text-slate-800 font-medium"><span className="text-slate-500">Hora preferida:</span> {formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}</p>
+                    </div>
+
+                    <p className="text-slate-600 mb-6 leading-relaxed">
+                        Hemos recibido sus datos correctamente. Nuestro equipo administrativo revisará la disponibilidad y <strong>nos pondremos en contacto con usted a la brevedad</strong> (vía WhatsApp o llamada) para confirmar su cita.
                     </p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="text-blue-600 font-medium hover:underline"
-                    >
-                        Enviar otra solicitud
-                    </button>
+
+                    <div className="flex flex-col gap-3">
+                        <a
+                            href={`https://wa.me/51991874363?text=Hola, acabo de enviar una solicitud de cita para ${formData.name}.`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Phone className="w-5 h-5" />
+                            Contactar por WhatsApp
+                        </a>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="w-full py-3 px-4 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors"
+                        >
+                            Enviar otra solicitud
+                        </button>
+                    </div>
+
+                    <p className="mt-6 text-xs text-slate-400">
+                        Gracias por confiar en {clinicName || 'nosotros'}.
+                    </p>
                 </div>
             </div>
         );
@@ -381,8 +406,8 @@ export default function PublicAppointmentFormV2() {
                                     </div>
                                 )}
 
-                                {formData.time && formData.time >= "19:00" && formData.time !== 'other' && (
-                                    <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 flex items-start gap-2">
+                                {((formData.time && formData.time >= "19:00" && formData.time !== 'other') || (formData.time === 'other' && formData.customTime >= "19:00")) && (
+                                    <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
                                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                         <span>Nota: Las citas después de las 7:00 PM están sujetas a disponibilidad previa coordinación.</span>
                                     </div>
