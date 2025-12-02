@@ -203,22 +203,27 @@ export default function PublicAppointmentFormV2() {
 
             const ticketId = countError ? Math.floor(1000 + Math.random() * 9000).toString() : (count + 1).toString();
 
+            // Construir string de detalles para guardar en 'symptoms' (ya que no tenemos columnas nuevas en DB aún)
+            const details = [
+                formData.symptoms,
+                formData.dni ? `DNI: ${formData.dni}` : '',
+                formData.age ? `Edad: ${formData.age} ${formData.ageUnit}` : '',
+                formData.sex ? `Sexo: ${formData.sex}` : '',
+                formData.occupation ? `Ocupación: ${formData.occupation}` : '',
+                formData.district ? `Dirección: ${formData.district}` : '',
+                formData.email ? `Email: ${formData.email}` : '',
+                `[Ticket: #${ticketId}]`
+            ].filter(Boolean).join(' | ');
+
             const { error: insertError } = await supabase
                 .from('appointments')
                 .insert([{
                     clinic_id: clinicId,
                     patient_name: formData.name,
                     patient_phone: `(${formData.phoneCode}) ${formData.phone}`,
-                    symptoms: `${formData.symptoms} [Ticket: #${ticketId}]`,
+                    symptoms: details,
                     appointment_date: appointmentDate.toISOString(),
-                    status: 'pending',
-                    // Nuevos campos
-                    patient_dni: formData.dni,
-                    patient_age: formData.age ? `${formData.age} ${formData.ageUnit}` : null,
-                    patient_gender: formData.sex,
-                    patient_occupation: formData.occupation,
-                    patient_address: formData.district, // Usamos district como dirección/distrito
-                    patient_email: formData.email
+                    status: 'pending'
                 }]);
 
             if (insertError) throw insertError;
