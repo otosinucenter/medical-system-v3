@@ -3522,7 +3522,8 @@ margin: 0;
                                     const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
                                     setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
                                     supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                                      if (error) { console.error(error); fetchAppointments(); }
+                                      if (error) console.error(error);
+                                      fetchAppointments();
                                     });
                                   }
                                 }}
