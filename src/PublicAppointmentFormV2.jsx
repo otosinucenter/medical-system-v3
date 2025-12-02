@@ -12,6 +12,20 @@ const COUNTRIES = [
     "Perú", "Chile", "Colombia", "México", "Argentina", "España", "Estados Unidos", "Ecuador", "Bolivia", "Venezuela", "Otro"
 ];
 
+const COUNTRY_CODES = {
+    "Perú": "+51",
+    "Chile": "+56",
+    "Colombia": "+57",
+    "México": "+52",
+    "Argentina": "+54",
+    "España": "+34",
+    "Estados Unidos": "+1",
+    "Ecuador": "+593",
+    "Bolivia": "+591",
+    "Venezuela": "+58",
+    "Otro": ""
+};
+
 export default function PublicAppointmentFormV2() {
     const { clinicId } = useParams();
     const [formData, setFormData] = useState({
@@ -29,6 +43,7 @@ export default function PublicAppointmentFormV2() {
         country: 'Perú',
         district: '',
         phone: '',
+        phoneCode: '+51',
         email: '',
         dob: '',
         // Antecedentes
@@ -163,7 +178,7 @@ export default function PublicAppointmentFormV2() {
                 .insert([{
                     clinic_id: clinicId,
                     patient_name: formData.name,
-                    patient_phone: formData.phone,
+                    patient_phone: `(${formData.phoneCode}) ${formData.phone}`,
                     symptoms: formData.symptoms,
                     appointment_date: appointmentDate.toISOString(),
                     status: 'pending',
@@ -518,7 +533,27 @@ export default function PublicAppointmentFormV2() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp <span className="text-red-500">*</span></label>
-                                <input type="tel" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                <div className="flex gap-2">
+                                    <select
+                                        className="p-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 w-24 text-sm"
+                                        value={formData.phoneCode}
+                                        onChange={e => setFormData({ ...formData, phoneCode: e.target.value })}
+                                    >
+                                        {Object.entries(COUNTRY_CODES).map(([country, code]) => (
+                                            <option key={country} value={code}>
+                                                {code} ({country})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="tel"
+                                        required
+                                        placeholder="999 888 777"
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        value={formData.phone}
+                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Email <span className="text-red-500">*</span></label>
