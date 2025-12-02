@@ -62,12 +62,11 @@ export default function PublicAppointmentFormV2() {
     const [clinicName, setClinicName] = useState('');
     const [availableSlots, setAvailableSlots] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const ticketParam = searchParams.get('ticket');
 
     // Verificar si hay un ticket en la URL para mostrar la pantalla de éxito
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const ticketParam = params.get('ticket');
-
         if (ticketParam) {
             const savedData = localStorage.getItem(`appointment_ticket_${clinicId}_${ticketParam}`);
             if (savedData) {
@@ -83,7 +82,7 @@ export default function PublicAppointmentFormV2() {
             setSubmitted(false);
             setFormData(prev => ({ ...prev, date: '', time: '' })); // Limpiar formulario básico
         }
-    }, [window.location.search, clinicId]);
+    }, [ticketParam, clinicId]);
 
     useEffect(() => {
         const fetchClinic = async () => {
@@ -103,6 +102,7 @@ export default function PublicAppointmentFormV2() {
     useEffect(() => {
         if (!formData.date) {
             setAvailableSlots([]);
+            setBookedSlots([]); // Clear booked slots if no date
             return;
         }
 
@@ -125,22 +125,16 @@ export default function PublicAppointmentFormV2() {
             setFormData(prev => ({ ...prev, time: '' }));
         }
 
-    }, [formData.date]);
-
-    // Fetch de citas existentes para bloquear horarios
-    useEffect(() => {
+        // Fetch booked slots
         const fetchBookedSlots = async () => {
             if (!clinicId || !formData.date) return;
-
-            const startOfDay = new Date(`${formData.date}T00:00:00`).toISOString();
-            const endOfDay = new Date(`${formData.date}T23:59:59`).toISOString();
 
             const { data, error } = await supabase
                 .from('appointments')
                 .select('appointment_date')
                 .eq('clinic_id', clinicId)
-                .gte('appointment_date', startOfDay)
-                .lte('appointment_date', endOfDay)
+                .gte('appointment_date', `${formData.date}T00:00:00`)
+                .lte('appointment_date', `${formData.date}T23:59:59`)
                 .neq('status', 'cancelled'); // Asumimos que canceladas liberan cupo
 
             if (data) {
@@ -201,7 +195,9 @@ export default function PublicAppointmentFormV2() {
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId);
 
-            const ticketId = countError ? Math.floor(1000 + Math.random() * 9000).toString() : (count + 1).toString();
+            // Fallback robusto: si count es null/undefined, usar 0. Si hay error, usar random.
+            const safeCount = (count === null || count === undefined) ? 0 : count;
+            const ticketId = countError ? Math.floor(1000 + Math.random() * 9000).toString() : (safeCount + 1).toString();
 
             // Construir string de detalles para guardar en 'symptoms' (ya que no tenemos columnas nuevas en DB aún)
             const details = [
@@ -228,18 +224,19 @@ export default function PublicAppointmentFormV2() {
 
             if (insertError) throw insertError;
 
-            // Guardar en localStorage para persistencia
-            localStorage.setItem(`appointment_submission_${clinicId}`, JSON.stringify({
-                timestamp: new Date().toISOString(),
-                formData: { ...formData, ticketId } // Guardar también el ticketId
-            }));
+            // Guardar datos del ticket específico
+            const finalFormData = { ...formData, ticketId };
+            localStorage.setItem(`appointment_ticket_${clinicId}_${ticketId}`, JSON.stringify(finalFormData));
 
+            // Actualizar URL usando setSearchParams de React Router
+            setSearchParams({ ticket: ticketId });
+
+            setFormData(finalFormData);
             setSubmitted(true);
             setLoading(false);
         } catch (err) {
             console.error("Error al agendar:", err);
             setError("Hubo un problema al enviar tu solicitud. Por favor intenta de nuevo.");
-        } finally {
             setLoading(false);
         }
     };
