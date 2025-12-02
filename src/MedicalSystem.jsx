@@ -2233,9 +2233,10 @@ margin: 0;
                       <th className="p-4 w-16">Orden</th>
                       <th className="p-4">Hora</th>
                       <th className="p-4">Paciente</th>
-                      <th className="p-4">Notas</th>
-                      <th className="p-4">Estado / Flujo</th>
-                      <th className="p-4">Gestión (Pagos / Exámenes)</th>
+                      <th className="p-4">Celular</th>
+                      <th className="p-4 hidden md:table-cell">Notas</th>
+                      <th className="p-4 hidden md:table-cell">Estado / Flujo</th>
+                      <th className="p-4 hidden md:table-cell">Gestión (Pagos / Exámenes)</th>
                       <th className="p-4 text-right">Acción</th>
                     </tr>
                   </thead>
@@ -2296,6 +2297,21 @@ margin: 0;
                           {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
                         </td>
                         <td className="p-4">
+                          {p.patient_phone ? (
+                            <a
+                              href={`https://wa.me/51${p.patient_phone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 px-2 py-1 rounded border border-green-200 hover:bg-green-100 transition-colors w-fit"
+                            >
+                              <Phone className="w-3 h-3 mr-1" />
+                              {p.patient_phone}
+                            </a>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 hidden md:table-cell">
                           <textarea
                             defaultValue={p.notes || ''}
                             onBlur={(e) => updateAppointmentField(p.id, 'notes', e.target.value)}
@@ -2303,7 +2319,7 @@ margin: 0;
                             placeholder="Agregar nota..."
                           ></textarea>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 hidden md:table-cell">
                           <div className="flex flex-col gap-2">
                             <div className="flex gap-1">
                               <button
@@ -2332,7 +2348,7 @@ margin: 0;
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 hidden md:table-cell">
                           <div className="space-y-2">
                             <label className="flex items-center gap-2 cursor-pointer">
                               <input
