@@ -1793,7 +1793,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
 
 
-  const handleBulkPaste = () => {
+  const handleBulkPaste = async () => {
     if (!pasteText.trim()) return;
 
     const rows = pasteText.trim().split('\n');
