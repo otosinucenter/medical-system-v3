@@ -252,13 +252,13 @@ export default function PublicAppointmentFormV2() {
 
                     <div className="flex flex-col gap-3">
                         <a
-                            href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, atento a su confirmación, gracias.`)}`}
+                            href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-4 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-green-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 text-lg"
                         >
-                            <Phone className="w-5 h-5" />
-                            Contactar por WhatsApp
+                            <Phone className="w-6 h-6" />
+                            Confirmar envío por WhatsApp
                         </a>
                         <button
                             onClick={() => window.location.reload()}
