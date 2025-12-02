@@ -257,9 +257,9 @@ export default function PublicAppointmentFormV2() {
                             href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="w-full py-4 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-green-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 text-lg"
+                            className="w-full py-3 px-4 bg-white border border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2"
                         >
-                            <Phone className="w-6 h-6" />
+                            <Phone className="w-5 h-5 text-green-600" />
                             Confirmar envío por WhatsApp
                         </a>
                         <button
