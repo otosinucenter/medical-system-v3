@@ -845,7 +845,15 @@ export default function MedicalSystem({ user, onLogout }) {
   const handleConvertToPatient = (apt) => {
     // Pre-fill form with appointment data
     setFormData({
-      ...formData,
+      // Explicitly reset medical fields to avoid carrying over data from previous patient
+      resumen: '',
+      examenOido: '',
+      examenNariz: '',
+      examenGarganta: '',
+      diagnosticos: [],
+      receta: [],
+      indicaciones: '',
+      fechaCita: getNowDate(), // Default to today for the new consultation record
       nombre: apt.patient_name,
       celular: apt.patient_phone || '',
       id: apt.patient_dni || '',
