@@ -63,6 +63,27 @@ export default function PublicAppointmentFormV2() {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
 
+    // Verificar si ya hay una solicitud enviada en localStorage
+    useEffect(() => {
+        const savedSubmission = localStorage.getItem(`appointment_submission_${clinicId}`);
+        if (savedSubmission) {
+            try {
+                const parsed = JSON.parse(savedSubmission);
+                // Opcional: Verificar antigüedad (ej. 24 horas)
+                const submissionTime = new Date(parsed.timestamp).getTime();
+                const now = new Date().getTime();
+                if (now - submissionTime < 24 * 60 * 60 * 1000) {
+                    setFormData(parsed.formData);
+                    setSubmitted(true);
+                } else {
+                    localStorage.removeItem(`appointment_submission_${clinicId}`);
+                }
+            } catch (e) {
+                console.error("Error parsing saved submission", e);
+            }
+        }
+    }, [clinicId]);
+
     useEffect(() => {
         const fetchClinic = async () => {
             if (!clinicId) return;
@@ -200,7 +221,14 @@ export default function PublicAppointmentFormV2() {
 
             if (insertError) throw insertError;
 
+            // Guardar en localStorage para persistencia
+            localStorage.setItem(`appointment_submission_${clinicId}`, JSON.stringify({
+                timestamp: new Date().toISOString(),
+                formData: formData
+            }));
+
             setSubmitted(true);
+            setLoading(false);
         } catch (err) {
             console.error("Error al agendar:", err);
             setError("Hubo un problema al enviar tu solicitud. Por favor intenta de nuevo.");
@@ -290,7 +318,10 @@ export default function PublicAppointmentFormV2() {
                                 Confirmar envío por WhatsApp
                             </a>
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={() => {
+                                    localStorage.removeItem(`appointment_submission_${clinicId}`);
+                                    window.location.reload();
+                                }}
                                 className="w-full py-3 px-4 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors hover:underline"
                             >
                                 Enviar otra solicitud
