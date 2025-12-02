@@ -194,13 +194,16 @@ export default function PublicAppointmentFormV2() {
 
             const appointmentDate = new Date(`${formData.date}T${finalTime}`);
 
+            // Generar Ticket ID (6 dígitos aleatorios)
+            const ticketId = Math.floor(100000 + Math.random() * 900000).toString();
+
             const { error: insertError } = await supabase
                 .from('appointments')
                 .insert([{
                     clinic_id: clinicId,
                     patient_name: formData.name,
                     patient_phone: `(${formData.phoneCode}) ${formData.phone}`,
-                    symptoms: formData.symptoms,
+                    symptoms: `${formData.symptoms} [Ticket: #${ticketId}]`,
                     appointment_date: appointmentDate.toISOString(),
                     status: 'pending',
                     // Nuevos campos
@@ -224,7 +227,7 @@ export default function PublicAppointmentFormV2() {
             // Guardar en localStorage para persistencia
             localStorage.setItem(`appointment_submission_${clinicId}`, JSON.stringify({
                 timestamp: new Date().toISOString(),
-                formData: formData
+                formData: { ...formData, ticketId } // Guardar también el ticketId
             }));
 
             setSubmitted(true);
@@ -277,7 +280,12 @@ export default function PublicAppointmentFormV2() {
                         <h2 className="text-3xl font-bold text-slate-800 mb-2 tracking-tight">¡Excelente!</h2>
                         <p className="text-lg text-slate-600 font-medium mb-6">Nos alegra mucho recibirte.</p>
 
-                        <div className="bg-slate-50/80 rounded-2xl p-5 mb-8 text-left border border-slate-100 shadow-sm">
+                        <div className="bg-slate-50/80 rounded-2xl p-5 mb-8 text-left border border-slate-100 shadow-sm relative overflow-hidden">
+                            {/* Ticket Badge */}
+                            <div className="absolute top-0 right-0 bg-blue-100 text-blue-700 px-3 py-1 rounded-bl-xl text-xs font-bold border-b border-l border-blue-200">
+                                Ticket #{formData.ticketId}
+                            </div>
+
                             <p className="text-xs text-slate-400 mb-3 uppercase tracking-wider font-bold flex items-center gap-2">
                                 <Activity className="w-3 h-3" /> Resumen de tu cita
                             </p>
@@ -307,7 +315,7 @@ export default function PublicAppointmentFormV2() {
 
                         <div className="flex flex-col gap-3">
                             <a
-                                href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name}, para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
+                                href={`https://wa.me/51955449503?text=${encodeURIComponent(`Hola, acabo de enviar la solicitud de cita para ${formData.name} (Ticket #${formData.ticketId}), para el ${new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${formData.time === 'other' ? (formData.customTime || 'Por coordinar') : formData.time}, atento a su confirmación, gracias.`)}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="w-full py-4 px-6 bg-green-50 border border-green-200 text-green-800 hover:bg-green-100 hover:border-green-300 rounded-xl font-bold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-3 group"
