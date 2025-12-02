@@ -3482,8 +3482,8 @@ margin: 0;
                         <th className="p-4 w-12">
                           <input
                             type="checkbox"
-                            onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
-                            checked={appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 && selectedAppointments.length === appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length}
+                            onChange={(e) => handleSelectAll(e, appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')))}
+                            checked={appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).length > 0 && selectedAppointments.length === appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).length}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                         </th>
@@ -3495,7 +3495,7 @@ margin: 0;
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                      {appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket: #')).map((apt) => (
                         <tr key={apt.id} className={`hover:bg-indigo-50/30 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
                           {/* CHECKBOX */}
                           <td className="p-4 align-top">
