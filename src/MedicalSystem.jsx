@@ -3470,6 +3470,14 @@ margin: 0;
                   <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <tr>
+                        <th className="p-4 w-12">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
+                            checked={appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 && selectedAppointments.length === appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </th>
                         <th className="p-4 w-48">Fecha / Hora</th>
                         <th className="p-4">Paciente</th>
                         <th className="p-4">Motivo / Antecedentes</th>
@@ -3480,6 +3488,15 @@ margin: 0;
                     <tbody className="divide-y divide-slate-100">
                       {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
                         <tr key={apt.id} className={`hover:bg-indigo-50/30 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
+                          {/* CHECKBOX */}
+                          <td className="p-4 align-top">
+                            <input
+                              type="checkbox"
+                              checked={selectedAppointments.includes(apt.id)}
+                              onChange={() => handleSelectAppointment(apt.id)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-2"
+                            />
+                          </td>
                           {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
                           <td className="p-4 align-top">
                             <div className="flex flex-col gap-2">
