@@ -875,12 +875,12 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- AGENDA LOGIC ---
   const [showConfirmed, setShowConfirmed] = useState(false); // Toggle for Agenda view
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importText, setImportText] = useState('');
+  const [showAgendaImportModal, setShowAgendaImportModal] = useState(false);
+  const [agendaImportText, setAgendaImportText] = useState('');
 
-  const handleImport = async () => {
-    if (!importText.trim()) return;
-    const lines = importText.trim().split('\n');
+  const handleAgendaImport = async () => {
+    if (!agendaImportText.trim()) return;
+    const lines = agendaImportText.trim().split('\n');
     const newAppointments = [];
 
     for (const line of lines) {
@@ -958,8 +958,8 @@ export default function MedicalSystem({ user, onLogout }) {
         alert("Error al importar: " + error.message);
       } else {
         alert(`Se importaron ${newAppointments.length} citas correctamente.`);
-        setShowImportModal(false);
-        setImportText('');
+        setShowAgendaImportModal(false);
+        setAgendaImportText('');
         fetchAppointments();
       }
     } else {
@@ -3546,7 +3546,7 @@ margin: 0;
                       </button>
                     )}
                     <button
-                      onClick={() => setShowImportModal(true)}
+                      onClick={() => setShowAgendaImportModal(true)}
                       className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center gap-2"
                     >
                       <FileText className="w-4 h-4" />
@@ -3716,33 +3716,33 @@ margin: 0;
                 </div>
 
                 {/* IMPORT MODAL */}
-                {showImportModal && (
+                {showAgendaImportModal && (
                   <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4">
                     <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                       <div className="bg-green-600 text-white p-4 flex justify-between items-center">
                         <h3 className="font-bold text-lg flex items-center"><FileText className="w-5 h-5 mr-2" /> Importar desde Excel</h3>
-                        <button onClick={() => setShowImportModal(false)} className="hover:text-green-100"><X className="w-6 h-6" /></button>
+                        <button onClick={() => setShowAgendaImportModal(false)} className="hover:text-green-100"><X className="w-6 h-6" /></button>
                       </div>
                       <div className="p-6">
                         <p className="text-sm text-gray-600 mb-4">
                           Copia las filas de tu Excel y pégalas aquí. El sistema detectará automáticamente fechas, horas y datos del paciente.
                         </p>
                         <textarea
-                          value={importText}
-                          onChange={(e) => setImportText(e.target.value)}
+                          value={agendaImportText}
+                          onChange={(e) => setAgendaImportText(e.target.value)}
                           placeholder={`Ejemplo:\n3/12/2025\t2.2\tMotivo...\tDNI...\tNombre...`}
                           className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-xs focus:ring-2 focus:ring-green-500 focus:border-green-500 mb-4"
                         />
                         <div className="flex justify-end gap-3">
                           <button
-                            onClick={() => setShowImportModal(false)}
+                            onClick={() => setShowAgendaImportModal(false)}
                             className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
                           >
                             Cancelar
                           </button>
                           <button
-                            onClick={handleImport}
-                            disabled={!importText.trim()}
+                            onClick={handleAgendaImport}
+                            disabled={!agendaImportText.trim()}
                             className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                           >
                             <CheckCircle2 className="w-4 h-4" />
