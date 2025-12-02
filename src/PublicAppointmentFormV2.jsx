@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart } from 'lucide-react';
+import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus } from 'lucide-react';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -298,11 +298,11 @@ export default function PublicAppointmentFormV2() {
                         </div>
 
                         <p className="text-slate-600 mb-8 leading-relaxed text-sm">
-                            Hemos recibido tus datos correctamente. Nos pondremos en contacto a la brevedad para confirmar los detalles.
+                            Hemos recibido sus datos correctamente. Nos pondremos en contacto a la brevedad para confirmar los detalles.
                             <br /><br />
-                            <span className="text-indigo-600 font-medium">¿Quieres agilizar el proceso?</span>
+                            <span className="text-indigo-600 font-medium">¿Desea agilizar el proceso?</span>
                             <br />
-                            Te invitamos a enviarnos un mensajito por WhatsApp.
+                            Le invitamos a enviarnos un mensaje por WhatsApp.
                         </p>
 
                         <div className="flex flex-col gap-3">
@@ -322,9 +322,10 @@ export default function PublicAppointmentFormV2() {
                                     localStorage.removeItem(`appointment_submission_${clinicId}`);
                                     window.location.reload();
                                 }}
-                                className="w-full py-3 px-4 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors hover:underline"
+                                className="w-full py-4 px-6 bg-white border-2 border-slate-100 text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                             >
-                                Enviar otra solicitud
+                                <UserPlus className="w-5 h-5" />
+                                Registrar otro paciente
                             </button>
                         </div>
 
