@@ -2260,161 +2260,164 @@ margin: 0;
                       className="bg-white border border-blue-300 text-blue-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 font-bold"
                     />
                   </div>
+
                 )}
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
-                    <tr>
-                      <th className="p-4 w-16">Orden</th>
-                      <th className="p-4">Hora</th>
-                      <th className="p-4">Paciente</th>
-                      <th className="p-4">Celular</th>
-                      <th className="p-4 hidden md:table-cell">Notas</th>
-                      <th className="p-4 hidden md:table-cell">Estado / Flujo</th>
-                      <th className="p-4 hidden md:table-cell">Gestión (Pagos / Exámenes)</th>
-                      <th className="p-4 text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
-                    {dailyList.map((p, index) => (
-                      <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
-                        <td className="p-4 font-bold text-slate-400 text-center">
-                          {index + 1}
-                        </td>
-                        <td className="p-4 text-sm font-mono font-bold text-blue-900">
-                          {editingAppointment?.id === p.id ? (
-                            <div className="flex flex-col gap-1">
-                              <input
-                                type="date"
-                                value={editingAppointment.date}
-                                onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
-                                className="text-xs border rounded p-1"
-                              />
-                              <input
-                                type="time"
-                                value={editingAppointment.time}
-                                onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
-                                className="text-xs border rounded p-1"
-                                step="300"
-                              />
-                              <div className="flex gap-1 mt-1">
-                                <button onClick={handleSaveTime} className="bg-green-100 text-green-700 p-1 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
-                                <button onClick={() => setEditingAppointment(null)} className="bg-red-100 text-red-700 p-1 rounded hover:bg-red-200"><X className="w-3 h-3" /></button>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
+                      <tr>
+                        <th className="p-4 w-16">Orden</th>
+                        <th className="p-4">Hora</th>
+                        <th className="p-4">Paciente</th>
+                        <th className="p-4">Celular</th>
+                        <th className="p-4">Notas</th>
+                        <th className="p-4">Estado / Flujo</th>
+                        <th className="p-4">Gestión (Pagos / Exámenes)</th>
+                        <th className="p-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
+                      {dailyList.map((p, index) => (
+                        <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
+                          <td className="p-4 font-bold text-slate-400 text-center">
+                            {index + 1}
+                          </td>
+                          <td className="p-4 text-sm font-mono font-bold text-blue-900">
+                            {editingAppointment?.id === p.id ? (
+                              <div className="flex flex-col gap-1">
+                                <input
+                                  type="date"
+                                  value={editingAppointment.date}
+                                  onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
+                                  className="text-xs border rounded p-1"
+                                />
+                                <input
+                                  type="time"
+                                  value={editingAppointment.time}
+                                  onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
+                                  className="text-xs border rounded p-1"
+                                  step="300"
+                                />
+                                <div className="flex gap-1 mt-1">
+                                  <button onClick={handleSaveTime} className="bg-green-100 text-green-700 p-1 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                                  <button onClick={() => setEditingAppointment(null)} className="bg-red-100 text-red-700 p-1 rounded hover:bg-red-200"><X className="w-3 h-3" /></button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>{new Date(p.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                <button
+                                  onClick={() => {
+                                    const d = new Date(p.appointment_date);
+                                    setEditingAppointment({
+                                      id: p.id,
+                                      date: d.toISOString().split('T')[0],
+                                      time: d.toTimeString().slice(0, 5)
+                                    });
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-gray-800">{p.patient_name}</div>
+                            <div className="text-xs text-gray-500">
+                              DNI: {p.patient_dni} | {p.patient_age} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}
+                            </div>
+                            {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
+                          </td>
+                          <td className="p-4">
+                            {p.patient_phone ? (
+                              <a
+                                href={`https://wa.me/51${p.patient_phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 px-2 py-1 rounded border border-green-200 hover:bg-green-100 transition-colors w-fit"
+                              >
+                                <Phone className="w-3 h-3 mr-1" />
+                                {p.patient_phone}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <textarea
+                              defaultValue={p.notes || ''}
+                              onBlur={(e) => updateAppointmentField(p.id, 'notes', e.target.value)}
+                              className="w-full h-16 text-xs border border-gray-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none bg-yellow-50/30"
+                              placeholder="Agregar nota..."
+                            ></textarea>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'confirmed')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'confirmed' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Confirmó
+                                </button>
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'arrived')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Llegó
+                                </button>
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'attended')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-green-200 text-green-800 border-green-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Atendido
+                                </button>
+                              </div>
+                              <div className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-wider">
+                                {p.triage_status === 'pending' ? 'Pendiente' :
+                                  p.triage_status === 'confirmed' ? 'Confirmado' :
+                                    p.triage_status === 'arrived' ? 'En Sala' : 'Finalizado'}
                               </div>
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-2 group">
-                              <span>{new Date(p.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                              <button
-                                onClick={() => {
-                                  const d = new Date(p.appointment_date);
-                                  setEditingAppointment({
-                                    id: p.id,
-                                    date: d.toISOString().split('T')[0],
-                                    time: d.toTimeString().slice(0, 5)
-                                  });
-                                }}
-                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="font-bold text-gray-800">{p.patient_name}</div>
-                          <div className="text-xs text-gray-500">
-                            DNI: {p.patient_dni} | {p.patient_age} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}
-                          </div>
-                          {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
-                        </td>
-                        <td className="p-4">
-                          {p.patient_phone ? (
-                            <a
-                              href={`https://wa.me/51${p.patient_phone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 px-2 py-1 rounded border border-green-200 hover:bg-green-100 transition-colors w-fit"
-                            >
-                              <Phone className="w-3 h-3 mr-1" />
-                              {p.patient_phone}
-                            </a>
-                          ) : (
-                            <span className="text-gray-400 text-xs">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 hidden md:table-cell">
-                          <textarea
-                            defaultValue={p.notes || ''}
-                            onBlur={(e) => updateAppointmentField(p.id, 'notes', e.target.value)}
-                            className="w-full h-16 text-xs border border-gray-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none bg-yellow-50/30"
-                            placeholder="Agregar nota..."
-                          ></textarea>
-                        </td>
-                        <td className="p-4 hidden md:table-cell">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'confirmed')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'confirmed' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
-                              >
-                                Confirmó
-                              </button>
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'arrived')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
-                              >
-                                Llegó
-                              </button>
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'attended')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-green-200 text-green-800 border-green-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
-                              >
-                                Atendido
-                              </button>
-                            </div>
-                            <div className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-wider">
-                              {p.triage_status === 'pending' ? 'Pendiente' :
-                                p.triage_status === 'confirmed' ? 'Confirmado' :
-                                  p.triage_status === 'arrived' ? 'En Sala' : 'Finalizado'}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 hidden md:table-cell">
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                          </td>
+                          <td className="p-4">
+                            <div className="space-y-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={p.payment_status === 'paid'}
+                                  onChange={(e) => updateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
+                                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                />
+                                <span className={`text-xs font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-gray-400'}`}>
+                                  {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente Pago'}
+                                </span>
+                              </label>
                               <input
-                                type="checkbox"
-                                checked={p.payment_status === 'paid'}
-                                onChange={(e) => updateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
-                                className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                type="text"
+                                placeholder="Exámenes compl..."
+                                value={p.complementary_exams || ''}
+                                onChange={(e) => updateAppointmentField(p.id, 'complementary_exams', e.target.value)}
+                                className="w-full text-xs border border-gray-200 rounded p-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
                               />
-                              <span className={`text-xs font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-gray-400'}`}>
-                                {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente Pago'}
-                              </span>
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Exámenes compl..."
-                              value={p.complementary_exams || ''}
-                              onChange={(e) => updateAppointmentField(p.id, 'complementary_exams', e.target.value)}
-                              className="w-full text-xs border border-gray-200 rounded p-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                            />
-                          </div>
-                        </td>
-                        <td className="p-4 text-right">
-                          {p.triage_status !== 'attended' && (user.role === 'doctor' || user.role === 'admin') && (
-                            <button onClick={() => { updateTriageStatus(p.id, 'attended'); handleConvertToPatient(p); }} className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700 shadow-sm flex items-center ml-auto">
-                              Atender <ArrowRight className="w-3 h-3 ml-1" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            </div>
+                          </td>
+                          <td className="p-4 text-right">
+                            {p.triage_status !== 'attended' && (user.role === 'doctor' || user.role === 'admin') && (
+                              <button onClick={() => { updateTriageStatus(p.id, 'attended'); handleConvertToPatient(p); }} className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700 shadow-sm flex items-center ml-auto">
+                                Atender <ArrowRight className="w-3 h-3 ml-1" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -2820,7 +2823,7 @@ margin: 0;
             </div>
           )}
         </div>
-      </main>
+      </main >
 
       {/* MODAL IMPORTACIÓN MASIVA (PEGAR) */}
       {
@@ -2998,235 +3001,241 @@ margin: 0;
         )
       }
       {/* VISTA AGENDA */}
-      {view === 'agenda' && (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">Agenda de Citas</h2>
-              <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const link = `${window.location.origin}/citas/${user.clinicId}`;
-                  navigator.clipboard.writeText(link);
-                  alert("Link de citas copiado al portapapeles");
-                }}
-                className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
-              >
-                <Link className="w-4 h-4" />
-                Copiar Link Público
-              </button>
-              <button
-                onClick={() => setIsAgendaImportOpen(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <Clipboard className="w-4 h-4" />
-                Importar (Pegar)
-              </button>
-              <button
-                onClick={fetchAppointments}
-                className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Actualizar
-              </button>
-            </div>
-          </div>
-
-          {loadingAppointments ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-slate-500">Cargando agenda...</p>
-            </div>
-          ) : appointments.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CalendarDays className="w-8 h-8 text-slate-400" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
-              <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {appointments.map((apt) => (
-                <div key={apt.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px] relative group">
-                      {editingAppointment?.id === apt.id ? (
-                        <div className="flex flex-col gap-1">
-                          <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
-                          <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} step="300" />
-                          <div className="flex justify-center gap-1">
-                            <button onClick={handleSaveTime} className="text-green-600 hover:bg-green-100 rounded p-1"><Save className="w-3 h-3" /></button>
-                            <button onClick={() => setEditingAppointment(null)} className="text-red-600 hover:bg-red-100 rounded p-1"><X className="w-3 h-3" /></button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              const d = new Date(apt.appointment_date);
-                              setEditingAppointment({
-                                id: apt.id,
-                                date: d.toISOString().split('T')[0],
-                                time: d.toTimeString().slice(0, 5)
-                              });
-                            }}
-                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-all bg-white rounded-full p-1 shadow-sm border"
-                            title="Editar fecha/hora"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                          <span className="block text-xs font-bold text-blue-600 uppercase">
-                            {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
-                          </span>
-                          <span className="block text-2xl font-bold text-slate-900">
-                            {new Date(apt.appointment_date).getDate()}
-                          </span>
-                          <span className="block text-xs text-slate-500">
-                            {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
-                        {apt.patient_phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" /> {apt.patient_phone}
-                          </span>
-                        )}
-                        {apt.patient_age && (
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
-                          </span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                          {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
-                        </span>
-                      </div>
-
-                      <div className="mt-2 space-y-1">
-                        {apt.symptoms && (
-                          <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                            <strong>Motivo:</strong> {apt.symptoms}
-                          </p>
-                        )}
-                        {(apt.chronic_illnesses || apt.medications) && (
-                          <p className="text-slate-500 text-xs">
-                            <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
-                    <button
-                      onClick={() => handleConvertToPatient(apt)}
-                      className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Crear Ficha
-                    </button>
-                    <a
-                      href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      WhatsApp
-                    </a>
-                    <button
-                      onClick={() => deleteAppointment(apt.id)}
-                      className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
-                      title="Eliminar Solicitud"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MODAL DE GESTIÓN DE EQUIPO */}
-      {isTeamModalOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-          <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
-            <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
-              <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
-              <button onClick={() => setIsTeamModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
-            </div>
-
-            <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
-              <div className="bg-blue-50 p-3 rounded border border-blue-100 text-sm text-blue-800 mb-4">
-                Crearás una cuenta vinculada a tu consultorio. Tú defines la contraseña inicial.
-              </div>
-
+      {
+        view === 'agenda' && (
+          <div className="p-4 md:p-8 max-w-6xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
-                <input required type="text" value={newMember.name} onChange={e => setNewMember({ ...newMember, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Dr. Ejemplo" />
+                <h2 className="text-2xl font-bold text-slate-800">Agenda de Citas</h2>
+                <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
-                <input required type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full border p-2 rounded" placeholder="usuario@medsys.local" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
-                <input required type="text" value={newMember.password} onChange={e => setNewMember({ ...newMember, password: e.target.value })} className="w-full border p-2 rounded bg-yellow-50" placeholder="Mínimo 6 caracteres" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Rol</label>
-                <select value={newMember.role} onChange={e => setNewMember({ ...newMember, role: e.target.value })} className="w-full border p-2 rounded">
-                  <option value="doctor">Médico</option>
-                  <option value="assistant">Asistente / Recepción</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
-                <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
-                  {teamLoading ? 'Creando...' : 'Crear Cuenta'}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const link = `${window.location.origin}/citas/${user.clinicId}`;
+                    navigator.clipboard.writeText(link);
+                    alert("Link de citas copiado al portapapeles");
+                  }}
+                  className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
+                >
+                  <Link className="w-4 h-4" />
+                  Copiar Link Público
+                </button>
+                <button
+                  onClick={() => setIsAgendaImportOpen(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  <Clipboard className="w-4 h-4" />
+                  Importar (Pegar)
+                </button>
+                <button
+                  onClick={fetchAppointments}
+                  className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Actualizar
                 </button>
               </div>
-            </form>
+            </div>
+
+            {loadingAppointments ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-slate-500">Cargando agenda...</p>
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CalendarDays className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                  Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {appointments.map((apt) => (
+                  <div key={apt.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-blue-50 p-3 rounded-lg text-center min-w-[80px] relative group">
+                        {editingAppointment?.id === apt.id ? (
+                          <div className="flex flex-col gap-1">
+                            <input type="date" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.date} onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} />
+                            <input type="time" className="text-[10px] w-full p-0 border-0 bg-transparent" value={editingAppointment.time} onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()} step="300" />
+                            <div className="flex justify-center gap-1">
+                              <button onClick={handleSaveTime} className="text-green-600 hover:bg-green-100 rounded p-1"><Save className="w-3 h-3" /></button>
+                              <button onClick={() => setEditingAppointment(null)} className="text-red-600 hover:bg-red-100 rounded p-1"><X className="w-3 h-3" /></button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                const d = new Date(apt.appointment_date);
+                                setEditingAppointment({
+                                  id: apt.id,
+                                  date: d.toISOString().split('T')[0],
+                                  time: d.toTimeString().slice(0, 5)
+                                });
+                              }}
+                              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-all bg-white rounded-full p-1 shadow-sm border"
+                              title="Editar fecha/hora"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                            <span className="block text-xs font-bold text-blue-600 uppercase">
+                              {new Date(apt.appointment_date).toLocaleDateString('es-ES', { month: 'short' })}
+                            </span>
+                            <span className="block text-2xl font-bold text-slate-900">
+                              {new Date(apt.appointment_date).getDate()}
+                            </span>
+                            <span className="block text-xs text-slate-500">
+                              {new Date(apt.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-lg">{apt.patient_name}</h3>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mt-1">
+                          {apt.patient_phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {apt.patient_phone}
+                            </span>
+                          )}
+                          {apt.patient_age && (
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" /> {apt.patient_age} {(!apt.patient_age.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}
+                            </span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {apt.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 space-y-1">
+                          {apt.symptoms && (
+                            <p className="text-slate-600 text-sm bg-slate-50 p-2 rounded border border-slate-100">
+                              <strong>Motivo:</strong> {apt.symptoms}
+                            </p>
+                          )}
+                          {(apt.chronic_illnesses || apt.medications) && (
+                            <p className="text-slate-500 text-xs">
+                              <strong>Antecedentes:</strong> {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0">
+                      <button
+                        onClick={() => handleConvertToPatient(apt)}
+                        className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Crear Ficha
+                      </button>
+                      <a
+                        href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 md:flex-none bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        WhatsApp
+                      </a>
+                      <button
+                        onClick={() => deleteAppointment(apt.id)}
+                        className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2"
+                        title="Eliminar Solicitud"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* MODAL DE GESTIÓN DE EQUIPO */}
+      {
+        isTeamModalOpen && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+              <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
+                <button onClick={() => setIsTeamModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
+              </div>
+
+              <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
+                <div className="bg-blue-50 p-3 rounded border border-blue-100 text-sm text-blue-800 mb-4">
+                  Crearás una cuenta vinculada a tu consultorio. Tú defines la contraseña inicial.
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
+                  <input required type="text" value={newMember.name} onChange={e => setNewMember({ ...newMember, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Dr. Ejemplo" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
+                  <input required type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full border p-2 rounded" placeholder="usuario@medsys.local" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
+                  <input required type="text" value={newMember.password} onChange={e => setNewMember({ ...newMember, password: e.target.value })} className="w-full border p-2 rounded bg-yellow-50" placeholder="Mínimo 6 caracteres" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Rol</label>
+                  <select value={newMember.role} onChange={e => setNewMember({ ...newMember, role: e.target.value })} className="w-full border p-2 rounded">
+                    <option value="doctor">Médico</option>
+                    <option value="assistant">Asistente / Recepción</option>
+                  </select>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button type="button" onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
+                  <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
+                    {teamLoading ? 'Creando...' : 'Crear Cuenta'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
       {/* MODAL IMPORTACIÓN AGENDA */}
-      {isAgendaImportOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
-            </p>
-            <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
-              <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
-            </div>
-            <textarea
-              className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              placeholder="Pega aquí las filas de Excel..."
-              value={agendaPasteText}
-              onChange={(e) => setAgendaPasteText(e.target.value)}
-            ></textarea>
-            <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
+      {
+        isAgendaImportOpen && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+            <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
+              </p>
+              <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
+                <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
+              </div>
+              <textarea
+                className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                placeholder="Pega aquí las filas de Excel..."
+                value={agendaPasteText}
+                onChange={(e) => setAgendaPasteText(e.target.value)}
+              ></textarea>
+              <div className="flex justify-end gap-3 mt-4">
+                <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+                <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div >
   );
 }
