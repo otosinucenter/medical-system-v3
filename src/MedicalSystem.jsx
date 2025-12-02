@@ -1887,7 +1887,28 @@ export default function MedicalSystem({ user, onLogout }) {
         return [...uniqueNewPatients, ...prev];
       });
 
-      alert(`Importación completada: ${newPatients.length} registros procesados.`);
+      // ALSO create appointments for these imported patients so they appear in Agenda/Requests
+      const appointmentsToInsert = newPatients.map(p => ({
+        clinic_id: user.clinicId,
+        patient_name: p.nombre,
+        patient_phone: p.celular,
+        appointment_date: p.fechaCita, // Already ISO format from my previous fix
+        symptoms: `${p.resumen || 'Importado'} | [Ticket: #IMPORT-${Math.floor(Math.random() * 1000)}]`, // Add Ticket tag to ensure visibility
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }));
+
+      if (appointmentsToInsert.length > 0) {
+        const { error } = await supabase.from('appointments').insert(appointmentsToInsert);
+        if (error) {
+          console.error("Error creating appointments from import:", error);
+          alert("Pacientes importados, pero hubo un error creando las citas en la agenda.");
+        } else {
+          fetchAppointments(); // Refresh agenda view
+        }
+      }
+
+      alert(`Importación completada: ${newPatients.length} registros procesados y citas creadas.`);
       setIsPasteModalOpen(false);
       setPasteText("");
     }
