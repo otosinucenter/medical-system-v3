@@ -303,7 +303,9 @@ export default function PublicAppointmentFormV2() {
                 finalTime = formData.customTime || "00:00";
             }
 
-            const appointmentDate = new Date(`${formData.date}T${finalTime}`);
+            // Force Peru Timezone (UTC-5) regardless of client location
+            // Appending -05:00 ensures 10:00 becomes 10:00 Peru Time (15:00 UTC)
+            const appointmentDate = new Date(`${formData.date}T${finalTime}:00-05:00`);
 
             // Generar Ticket ID Secuencial (Contar citas existentes + 1)
             const { count, error: countError } = await supabase
