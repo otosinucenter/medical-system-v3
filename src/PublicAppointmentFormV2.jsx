@@ -470,12 +470,11 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">v3.0 (Stable)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
-                        Versión de prueba con selección inteligente de horarios.
+                        El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
-                    <p className="text-white font-medium mt-1">Consultorio Dr. Walter Florez Guerra</p>
+                    <p className="text-white font-medium mt-4 border-t border-indigo-500 pt-4 inline-block px-8">Consultorio Dr. Walter Florez Guerra</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
