@@ -40,6 +40,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [importMode, setImportMode] = useState('merge'); // 'merge' | 'replace'
   const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
   const [selectedTriageItems, setSelectedTriageItems] = useState([]); // For bulk delete in Triage
+  const [selectedTrashItems, setSelectedTrashItems] = useState([]); // For bulk actions in Trash
 
   // --- PERSISTENCIA EN CARPETA LOCAL (FILE SYSTEM ACCESS API) ---
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -1663,6 +1664,57 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
+  // Trash bulk actions
+  const handleTrashSelectAll = (e, items) => {
+    if (e.target.checked) {
+      setSelectedTrashItems(items.map(i => i.id));
+    } else {
+      setSelectedTrashItems([]);
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    if (selectedTrashItems.length === 0) return;
+    if (!confirm(`¿Restaurar ${selectedTrashItems.length} ${selectedTrashItems.length === 1 ? 'cita' : 'citas'}?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'pending' })
+        .in('id', selectedTrashItems);
+
+      if (error) throw error;
+
+      setSelectedTrashItems([]);
+      fetchTrashedAppointments();
+      fetchAppointments();
+    } catch (error) {
+      console.error("Error restoring appointments:", error);
+      alert("Error al restaurar las citas.");
+    }
+  };
+
+  const handleBulkPermanentDelete = async () => {
+    if (selectedTrashItems.length === 0) return;
+    if (!confirm(`⚠️ ADVERTENCIA\n\n¿Estás seguro de eliminar PERMANENTEMENTE ${selectedTrashItems.length} ${selectedTrashItems.length === 1 ? 'cita' : 'citas'}?\n\nEsta acción NO se puede deshacer.`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .in('id', selectedTrashItems);
+
+      if (error) throw error;
+
+      setSelectedTrashItems([]);
+      fetchTrashedAppointments();
+    } catch (error) {
+      console.error("Error permanently deleting appointments:", error);
+      alert("Error al eliminar las citas.");
+    }
+  };
+
+
   const deletePatient = async (patient) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar al paciente ${patient.nombre}? Se moverá a la papelera.`)) return;
 
@@ -2840,10 +2892,43 @@ margin: 0;
                   </div>
                 </div>
 
+                {/* Bulk Actions Bar */}
+                {selectedTrashItems.length > 0 && (
+                  <div className="p-4 bg-blue-50 border-b flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedTrashItems.length} {selectedTrashItems.length === 1 ? 'cita seleccionada' : 'citas seleccionadas'}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleBulkRestore}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-2"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Restaurar Seleccionadas
+                      </button>
+                      <button
+                        onClick={handleBulkPermanentDelete}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar Permanentemente
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b">
                       <tr>
+                        <th className="p-4 w-12">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => handleTrashSelectAll(e, trashedAppointments)}
+                            checked={trashedAppointments.length > 0 && selectedTrashItems.length === trashedAppointments.length}
+                            className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                          />
+                        </th>
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Fecha Cita</th>
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Paciente</th>
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Motivo</th>
@@ -2852,7 +2937,7 @@ margin: 0;
                       </tr>
                     </thead>
                     <tbody>
-                      {trashedAppointments.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
+                      {trashedAppointments.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
                       {trashedAppointments.map((apt, index) => {
                         // Group header by date
                         const showDateHeader = index === 0 ||
@@ -2863,7 +2948,7 @@ margin: 0;
                           <React.Fragment key={apt.id}>
                             {showDateHeader && apt.deleted_at && (
                               <tr className="bg-slate-100">
-                                <td colSpan="5" className="p-3 text-sm font-bold text-slate-700">
+                                <td colSpan="6" className="p-3 text-sm font-bold text-slate-700">
                                   📅 {new Date(apt.deleted_at).toLocaleDateString('es-ES', {
                                     weekday: 'long',
                                     year: 'numeric',
@@ -2874,6 +2959,20 @@ margin: 0;
                               </tr>
                             )}
                             <tr className="border-b hover:bg-slate-50 transition-colors">
+                              <td className="p-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTrashItems.includes(apt.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedTrashItems([...selectedTrashItems, apt.id]);
+                                    } else {
+                                      setSelectedTrashItems(selectedTrashItems.filter(id => id !== apt.id));
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                                />
+                              </td>
                               <td className="p-4">
                                 <div className="text-sm font-medium text-slate-900">
                                   {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
