@@ -2564,7 +2564,7 @@ margin: 0;
             Cerrar Sesión
           </button>
           <div className="text-center">
-            <span className="text-[10px] text-slate-600 font-medium">v10.0.1 (Stable)</span>
+            <span className="text-[10px] text-slate-600 font-medium">V 1.0 (stable)</span>
           </div>
         </div>
       </aside>
