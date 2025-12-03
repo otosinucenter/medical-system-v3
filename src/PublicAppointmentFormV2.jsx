@@ -13,17 +13,17 @@ const COUNTRIES = [
 ];
 
 const COUNTRY_CODES = {
-    "Perú": "+51",
-    "Chile": "+56",
-    "Colombia": "+57",
-    "México": "+52",
-    "Argentina": "+54",
-    "España": "+34",
-    "Estados Unidos": "+1",
-    "Ecuador": "+593",
-    "Bolivia": "+591",
-    "Venezuela": "+58",
-    "Otro": ""
+    "Perú": { code: "+51", flag: "🇵🇪" },
+    "Chile": { code: "+56", flag: "🇨🇱" },
+    "Colombia": { code: "+57", flag: "🇨🇴" },
+    "México": { code: "+52", flag: "🇲🇽" },
+    "Argentina": { code: "+54", flag: "🇦🇷" },
+    "España": { code: "+34", flag: "🇪🇸" },
+    "Estados Unidos": { code: "+1", flag: "🇺🇸" },
+    "Ecuador": { code: "+593", flag: "🇪🇨" },
+    "Bolivia": { code: "+591", flag: "🇧🇴" },
+    "Venezuela": { code: "+58", flag: "🇻🇪" },
+    "Otro": { code: "", flag: "🌍" }
 };
 
 export default function PublicAppointmentFormV2() {
@@ -631,13 +631,13 @@ export default function PublicAppointmentFormV2() {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Celular / WhatsApp <span className="text-red-500">*</span></label>
                                 <div className="flex gap-2">
                                     <select
-                                        className="p-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 w-24 text-sm"
+                                        className="p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 w-32 text-base"
                                         value={formData.phoneCode}
                                         onChange={e => setFormData({ ...formData, phoneCode: e.target.value })}
                                     >
-                                        {Object.entries(COUNTRY_CODES).map(([country, code]) => (
-                                            <option key={country} value={code}>
-                                                {code} ({country})
+                                        {Object.entries(COUNTRY_CODES).map(([country, data]) => (
+                                            <option key={country} value={data.code}>
+                                                {data.flag} {data.code}
                                             </option>
                                         ))}
                                     </select>
