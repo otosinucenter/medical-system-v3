@@ -2517,14 +2517,6 @@ margin: 0;
 
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
             <button
-              onClick={() => { setView('agenda'); setIsMobileMenuOpen(false); }}
-              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
-            >
-              <CalendarDays className="w-5 h-5 mr-3" />
-              <span className="font-medium">Solicitud de Citas</span>
-            </button>
-
-            <button
               onClick={() => { setView('agenda-v2'); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda-v2' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
             >
