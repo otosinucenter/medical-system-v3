@@ -158,13 +158,11 @@ export default function PublicAppointmentFormV2() {
         searchEnd.setDate(searchEnd.getDate() + 1);
 
         const { data, error } = await supabase
-            .from('appointments')
-            .select('appointment_date')
-            .eq('clinic_id', clinicId)
-            .gte('appointment_date', searchStart.toISOString())
-            .lte('appointment_date', searchEnd.toISOString())
-            .neq('status', 'cancelled')
-            .neq('status', 'trash');
+            .rpc('get_booked_slots', {
+                p_clinic_id: clinicId,
+                p_start: searchStart.toISOString(),
+                p_end: searchEnd.toISOString()
+            });
 
         if (error) {
             console.error("Error fetching slots:", error);
@@ -490,7 +488,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.4 (Deep Debug)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.5 (RPC Fix)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
