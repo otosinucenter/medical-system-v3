@@ -1538,6 +1538,11 @@ export default function MedicalSystem({ user, onLogout }) {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Refresh trash if in trash view
+      if (view === 'trash') {
+        fetchTrashedAppointments();
+      }
     } catch (error) {
       console.error("Error deleting appointment:", error);
       fetchDailyAppointments(); // Revert
@@ -1604,6 +1609,11 @@ export default function MedicalSystem({ user, onLogout }) {
         .in('id', itemsToDelete);
 
       if (error) throw error;
+
+      // Refresh trash if in trash view
+      if (view === 'trash') {
+        fetchTrashedAppointments();
+      }
     } catch (error) {
       console.error("Error bulk deleting:", error);
       fetchAppointments();
