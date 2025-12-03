@@ -1289,7 +1289,7 @@ export default function MedicalSystem({ user, onLogout }) {
         .select('*')
         .eq('clinic_id', user.clinicId)
         .eq('status', 'trash')
-        .order('updated_at', { ascending: false });
+        .order('deleted_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       setTrashedAppointments(data || []);
@@ -1534,7 +1534,11 @@ export default function MedicalSystem({ user, onLogout }) {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'trash' }) // Soft delete
+        .update({
+          status: 'trash',
+          deleted_at: new Date().toISOString(),
+          deleted_from: view === 'agenda-v2' ? 'Agenda v2' : view === 'agenda' ? 'Agenda v1' : 'Desconocido'
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -1605,7 +1609,11 @@ export default function MedicalSystem({ user, onLogout }) {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'trash' })
+        .update({
+          status: 'trash',
+          deleted_at: new Date().toISOString(),
+          deleted_from: view === 'agenda-v2' ? 'Agenda v2' : view === 'agenda' ? 'Agenda v1' : 'Desconocido'
+        })
         .in('id', itemsToDelete);
 
       if (error) throw error;
@@ -1628,7 +1636,11 @@ export default function MedicalSystem({ user, onLogout }) {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'trash' })
+        .update({
+          status: 'trash',
+          deleted_at: new Date().toISOString(),
+          deleted_from: 'Triaje'
+        })
         .in('id', selectedTriageItems);
 
       if (error) throw error;
@@ -2835,51 +2847,94 @@ margin: 0;
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Fecha Cita</th>
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Paciente</th>
                         <th className="text-left p-4 text-sm font-bold text-slate-600">Motivo</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Eliminado</th>
                         <th className="text-center p-4 text-sm font-bold text-slate-600">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {trashedAppointments.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
-                      {trashedAppointments.map((apt) => (
-                        <tr key={apt.id} className="border-b hover:bg-slate-50 transition-colors">
-                          <td className="p-4">
-                            <div className="text-sm font-medium text-slate-900">
-                              {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : 'Sin fecha'}
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="text-sm font-medium text-slate-900">{apt.patient_name}</div>
-                            <div className="text-xs text-slate-500">{apt.patient_phone || 'Sin teléfono'}</div>
-                          </td>
-                          <td className="p-4">
-                            <div className="text-sm text-slate-600 max-w-md truncate">{apt.patient_reason || apt.symptoms || 'Sin motivo'}</div>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex gap-2 justify-center">
-                              <button
-                                onClick={() => restoreAppointment(apt.id)}
-                                className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 flex items-center gap-1 transition-colors"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Restaurar
-                              </button>
-                              <button
-                                onClick={() => permanentDeleteAppointment(apt.id)}
-                                className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 flex items-center gap-1 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Eliminar
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {trashedAppointments.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
+                      {trashedAppointments.map((apt, index) => {
+                        // Group header by date
+                        const showDateHeader = index === 0 ||
+                          (apt.deleted_at && trashedAppointments[index - 1]?.deleted_at &&
+                            new Date(apt.deleted_at).toLocaleDateString() !== new Date(trashedAppointments[index - 1].deleted_at).toLocaleDateString());
+
+                        return (
+                          <React.Fragment key={apt.id}>
+                            {showDateHeader && apt.deleted_at && (
+                              <tr className="bg-slate-100">
+                                <td colSpan="5" className="p-3 text-sm font-bold text-slate-700">
+                                  📅 {new Date(apt.deleted_at).toLocaleDateString('es-ES', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                </td>
+                              </tr>
+                            )}
+                            <tr className="border-b hover:bg-slate-50 transition-colors">
+                              <td className="p-4">
+                                <div className="text-sm font-medium text-slate-900">
+                                  {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  }) : 'Sin fecha'}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm font-medium text-slate-900">{apt.patient_name}</div>
+                                <div className="text-xs text-slate-500">{apt.patient_phone || 'Sin teléfono'}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm text-slate-600 max-w-md truncate">{apt.patient_reason || apt.symptoms || 'Sin motivo'}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-xs text-slate-500">
+                                  {apt.deleted_at ? (
+                                    <>
+                                      <div className="font-medium text-red-600">
+                                        🕐 {new Date(apt.deleted_at).toLocaleTimeString('es-ES', {
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </div>
+                                      {apt.deleted_from && (
+                                        <div className="text-slate-400 mt-1">
+                                          📍 {apt.deleted_from}
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <div className="text-slate-400">Sin registro</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    onClick={() => restoreAppointment(apt.id)}
+                                    className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 flex items-center gap-1 transition-colors"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    Restaurar
+                                  </button>
+                                  <button
+                                    onClick={() => permanentDeleteAppointment(apt.id)}
+                                    className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 flex items-center gap-1 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
