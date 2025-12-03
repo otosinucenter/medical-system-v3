@@ -152,7 +152,8 @@ export default function MedicalSystem({ user, onLogout }) {
       if (profileError) throw profileError;
 
       alert(`¡Genial! Hemos enviado un correo de invitación a ${newMember.email}.\n\nPor favor, avísale a ${newMember.name} que revise su bandeja de entrada (y Spam) para confirmar su cuenta y crear su contraseña.`);
-      setIsTeamModalOpen(false);
+      alert(`¡Genial! Hemos enviado un correo de invitación a ${newMember.email}.\n\nPor favor, avísale a ${newMember.name} que revise su bandeja de entrada (y Spam) para confirmar su cuenta y crear su contraseña.`);
+      navigate(view, { modal: null });
       setNewMember({ name: '', email: '', password: '', role: 'doctor' });
 
     } catch (error) {
@@ -166,6 +167,12 @@ export default function MedicalSystem({ user, onLogout }) {
   // --- NAVEGACIÓN Y PERSISTENCIA (URL) ---
   const navigate = (newView, params = {}) => {
     setView(newView);
+
+    // Handle modals based on params
+    if (params.modal !== undefined) {
+      setIsTeamModalOpen(params.modal === 'team');
+      setIsDataModalOpen(params.modal === 'data');
+    }
 
     // Construir URL
     const url = new URL(window.location);
@@ -189,8 +196,11 @@ export default function MedicalSystem({ user, onLogout }) {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view') || 'list';
       const patientId = params.get('patientId');
+      const modalParam = params.get('modal');
 
       setView(viewParam);
+      setIsTeamModalOpen(modalParam === 'team');
+      setIsDataModalOpen(modalParam === 'data');
 
       if (viewParam === 'detail' && patientId) {
         // Intentar recuperar paciente si no está seleccionado
@@ -2517,7 +2527,7 @@ margin: 0;
 
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
             <button
-              onClick={() => { setView('agenda-v2'); setIsMobileMenuOpen(false); }}
+              onClick={() => { navigate('agenda-v2'); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda-v2' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
             >
               <div className="relative mr-3">
@@ -2528,7 +2538,7 @@ margin: 0;
             </button>
 
             <button
-              onClick={() => { setView('trash'); setIsMobileMenuOpen(false); }}
+              onClick={() => { navigate('trash'); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'trash' ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
             >
               <Trash2 className="w-5 h-5 mr-3" />
@@ -2536,12 +2546,12 @@ margin: 0;
             </button>
 
             {(user.role === 'admin') && (
-              <button onClick={() => setIsTeamModalOpen(true)} className="w-full flex items-center p-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+              <button onClick={() => navigate(view, { modal: 'team' })} className="w-full flex items-center p-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
                 <UserPlus className="w-5 h-5 mr-3" />
                 <span className="font-medium text-sm">Gestionar Equipo</span>
               </button>
             )}
-            <button onClick={() => setIsDataModalOpen(true)} className="w-full flex items-center p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+            <button onClick={() => navigate(view, { modal: 'data' })} className="w-full flex items-center p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
               <Briefcase className="w-5 h-5 mr-3" />
               <span className="font-medium text-sm">Gestión de Datos</span>
             </button>
@@ -3473,7 +3483,7 @@ margin: 0;
                 <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                   <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center"><Briefcase className="w-5 h-5 mr-2" /> Gestión de Datos y Respaldos</h3>
-                    <button onClick={() => setIsDataModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
+                    <button onClick={() => navigate(view, { modal: null })} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
                   </div>
 
                   <div className="flex border-b">
@@ -3550,7 +3560,7 @@ margin: 0;
                               </label>
                             </div>
                             <div className="text-center text-gray-400 text-xs font-bold uppercase my-2">- O -</div>
-                            <button onClick={() => { setIsDataModalOpen(false); setIsPasteModalOpen(true); }} className="w-full py-3 border-2 border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-50 flex justify-center items-center">
+                            <button onClick={() => { navigate(view, { modal: null }); setIsPasteModalOpen(true); }} className="w-full py-3 border-2 border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-50 flex justify-center items-center">
                               <Clipboard className="w-4 h-4 mr-2" /> Pegar datos desde Portapapeles (Ctrl+V)
                             </button>
                           </>
@@ -4095,7 +4105,7 @@ margin: 0;
                 <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
                   <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
-                    <button onClick={() => setIsTeamModalOpen(false)} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
+                    <button onClick={() => navigate(view, { modal: null })} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
                   </div>
 
                   <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
@@ -4127,7 +4137,7 @@ margin: 0;
                     </div>
 
                     <div className="pt-4 flex gap-3">
-                      <button type="button" onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
+                      <button type="button" onClick={() => navigate(view, { modal: null })} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
                       <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
                         {teamLoading ? 'Creando...' : 'Crear Cuenta'}
                       </button>
