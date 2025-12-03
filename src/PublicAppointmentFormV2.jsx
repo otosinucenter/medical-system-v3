@@ -185,24 +185,25 @@ export default function PublicAppointmentFormV2() {
             data.forEach(apt => {
                 const aptDate = new Date(apt.appointment_date);
 
-                // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú)
-                // Usamos 'en-CA' para formato YYYY-MM-DD
-                const peruDate = aptDate.toLocaleDateString('en-CA', {
-                    timeZone: 'America/Lima'
-                });
+                // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú UTC-5)
+                // Manual Offset Calculation: UTC - 5 hours
+                const PERU_OFFSET = 5 * 60 * 60 * 1000;
+                const peruDateObj = new Date(aptDate.getTime() - PERU_OFFSET);
 
-                if (peruDate !== formData.date) {
-                    return; // Ignorar citas de otros días (por el rango ampliado)
+                // Formato YYYY-MM-DD usando métodos UTC del objeto desplazado
+                const pYear = peruDateObj.getUTCFullYear();
+                const pMonth = String(peruDateObj.getUTCMonth() + 1).padStart(2, '0');
+                const pDay = String(peruDateObj.getUTCDate()).padStart(2, '0');
+                const calculatedPeruDate = `${pYear}-${pMonth}-${pDay}`;
+
+                if (calculatedPeruDate !== formData.date) {
+                    return; // Ignorar citas de otros días
                 }
 
-                // 2. Convertir hora a Perú
-                const peruTime = aptDate.toLocaleTimeString('en-GB', {
-                    timeZone: 'America/Lima',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+                // 2. Obtener hora en Perú (UTC-5)
+                const aptH = peruDateObj.getUTCHours();
+                const aptM = peruDateObj.getUTCMinutes();
 
-                const [aptH, aptM] = peruTime.split(':').map(Number);
                 const aptStartMinutes = aptH * 60 + aptM;
                 const aptEndMinutes = aptStartMinutes + APPOINTMENT_DURATION;
 
@@ -470,7 +471,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.2 (Timezone Fix)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.3 (Manual Offset)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
@@ -833,6 +834,33 @@ export default function PublicAppointmentFormV2() {
                     </button>
                 </form>
             </div>
-        </div>
+
+            {/* DEBUG SECTION - SOLO VISIBLE SI HAY PARAMETRO ?debug=true */}
+            {
+                searchParams.get('debug') === 'true' && (
+                    <div className="mt-8 p-4 bg-gray-100 rounded text-xs font-mono overflow-x-auto max-w-2xl mx-auto">
+                        <h3 className="font-bold mb-2">Debug Info (v2.3)</h3>
+                        <p>Clinic ID: {clinicId}</p>
+                        <p>Selected Date: {formData.date}</p>
+                        <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
+                        <p>Available Slots: {JSON.stringify(availableSlots)}</p>
+                        <p>User Agent: {navigator.userAgent}</p>
+                    </div>
+                )
+            }
+            {/* DEBUG SECTION - SOLO VISIBLE SI HAY PARAMETRO ?debug=true */}
+            {
+                searchParams.get('debug') === 'true' && (
+                    <div className="mt-8 p-4 bg-gray-100 rounded text-xs font-mono overflow-x-auto max-w-2xl mx-auto">
+                        <h3 className="font-bold mb-2">Debug Info (v2.3)</h3>
+                        <p>Clinic ID: {clinicId}</p>
+                        <p>Selected Date: {formData.date}</p>
+                        <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
+                        <p>Available Slots: {JSON.stringify(availableSlots)}</p>
+                        <p>User Agent: {navigator.userAgent}</p>
+                    </div>
+                )
+            }
+        </div >
     );
 }
