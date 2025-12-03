@@ -2747,7 +2747,7 @@ margin: 0;
 
                 )}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left min-w-[800px]">
+                  <table className="w-full text-left min-w-[1200px]">
                     <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
                       <tr>
                         <th className="p-4 w-12">
@@ -2764,7 +2764,7 @@ margin: 0;
                         <th className="p-4">Celular</th>
                         <th className="p-4">Notas</th>
                         <th className="p-4">Estado / Flujo</th>
-                        <th className="p-4">Gestión (Pagos / Exámenes)</th>
+                        <th className="p-4 min-w-[200px]">Gestión (Pagos / Exámenes)</th>
                         <th className="p-4 text-right">Acción</th>
                       </tr>
                     </thead>
