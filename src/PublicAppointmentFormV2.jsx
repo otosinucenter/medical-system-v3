@@ -26,11 +26,30 @@ const COUNTRY_CODES = {
     "Otro": { code: "", flag: "🌍" }
 };
 
+const getNextAvailableDate = () => {
+    let date = new Date();
+    // Ajustar a zona horaria local si es necesario, pero new Date() toma la del navegador
+    // Si queremos ser estrictos con la hora del servidor/Perú, habría que manejar offsets.
+    // Por simplicidad y UX, usamos la fecha del navegador del usuario.
+
+    // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
+    // Días permitidos: 1 (Lun), 3 (Mie), 5 (Vie)
+    while (![1, 3, 5].includes(date.getDay())) {
+        date.setDate(date.getDate() + 1);
+    }
+
+    // Formato YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function PublicAppointmentFormV2() {
     const { clinicId } = useParams();
     const [formData, setFormData] = useState({
         // Cita
-        date: '',
+        date: getNextAvailableDate(),
         time: '',
         symptoms: '',
         // Datos Personales
@@ -81,7 +100,7 @@ export default function PublicAppointmentFormV2() {
             }
         } else {
             setSubmitted(false);
-            setFormData(prev => ({ ...prev, date: '', time: '' })); // Limpiar formulario básico
+            setFormData(prev => ({ ...prev, date: getNextAvailableDate(), time: '' })); // Limpiar formulario básico
         }
     }, [ticketParam, clinicId]);
 
