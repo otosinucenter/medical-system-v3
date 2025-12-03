@@ -11,7 +11,6 @@ import {
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import logger from './utils/logger';
-import { useAppointments } from './hooks/useAppointments';
 
 
 
@@ -40,7 +39,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [dataModalTab, setDataModalTab] = useState('backup'); // 'backup' | 'import'
   const [importPreview, setImportPreview] = useState(null); // { headers: [], rows: [] }
   const [importMode, setImportMode] = useState('merge'); // 'merge' | 'replace'
-  // MOVED: selectedAppointments moved to after hook declaration (line ~125)
+  const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
   const [selectedTriageItems, setSelectedTriageItems] = useState([]); // For bulk delete in Triage
   const [selectedTrashItems, setSelectedTrashItems] = useState([]); // For bulk actions in Trash
 
@@ -109,33 +108,8 @@ export default function MedicalSystem({ user, onLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
-
-  // Declare listDate BEFORE hook (hook needs it as dependency)
-  const getNowDate = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
-
-  // Use custom hook for appointment management
-  const {
-    appointments,
-    dailyList,
-    loading: loadingAppointments,
-    fetchAppointments,
-    fetchDailyAppointments,
-    updateAppointmentField,
-    deleteAppointment: deleteAppointmentHook,
-    bulkDeleteAppointments
-  } = useAppointments(user?.clinicId, view, listDate);
-
-  // Keep local state for UI-specific things
-  const [selectedAppointments, setSelectedAppointments] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [newMember, setNewMember] = useState({ name: '', email: '', password: '', role: 'doctor' });
   const [isAgendaImportOpen, setIsAgendaImportOpen] = useState(false); // New state for Agenda Import
   const [agendaPasteText, setAgendaPasteText] = useState(""); // New state for paste text
@@ -528,14 +502,11 @@ export default function MedicalSystem({ user, onLogout }) {
     );
   };
 
-  // REMOVED: getNowDate - moved earlier (line ~114) before hook declaration
-  /*
   const getNowDate = () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 16);
   };
-  */
 
   // --- DATOS DEL DOCTOR (Para Impresión) ---
   const DOCTOR_INFO = {
@@ -1101,9 +1072,6 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-  // REMOVED: fetchAppointments - now handled by useAppointments hook
-  // The hook automatically fetches appointments based on view and clinicId
-  /*
   const fetchAppointments = async () => {
     if (!user.clinicId) return;
     setLoadingAppointments(true);
@@ -1123,7 +1091,6 @@ export default function MedicalSystem({ user, onLogout }) {
       setLoadingAppointments(false);
     }
   };
-  */
 
   // Auto-fetch appointments when entering Agenda v2
   useEffect(() => {
@@ -1326,9 +1293,9 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
-  // REMOVED: dailyList - now provided by useAppointments hook
-  // REMOVED: listDate - now declared earlier (line ~123) before hook
+  const [dailyList, setDailyList] = useState([]);
   const [trashedAppointments, setTrashedAppointments] = useState([]);
+  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
 
   // Real-time Subscription & Polling for Daily Appointments
@@ -1359,9 +1326,6 @@ export default function MedicalSystem({ user, onLogout }) {
     };
   }, [user?.clinicId, selectedDate]); // Re-subscribe if clinic or date changes
 
-  // REMOVED: fetchDailyAppointments - now handled by useAppointments hook
-  // The hook automatically fetches based on selectedDate (listDate)
-  /*
   const fetchDailyAppointments = async () => {
     if (!user.clinicId) return;
     try {
@@ -1391,7 +1355,6 @@ export default function MedicalSystem({ user, onLogout }) {
       logger.error("Error fetching daily list:", error);
     }
   };
-  */
 
   // Fetch trashed appointments
   const fetchTrashedAppointments = async () => {
@@ -1481,8 +1444,6 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-  // REMOVED: updateAppointmentField - now handled by useAppointments hook
-  /*
   const updateAppointmentField = async (id, field, value) => {
     // Optimistic update
     setDailyList(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
@@ -1496,10 +1457,9 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
     } catch (error) {
       logger.error(`Error updating ${field}:`, error);
-      fetchDailyAppointments(); // Revert
+      fetchDailyAppointments(); // Revert on error
     }
   };
-  */
 
   const handleMoveOrder = async (id, direction) => {
     const currentIndex = dailyList.findIndex(p => p.id === id);
