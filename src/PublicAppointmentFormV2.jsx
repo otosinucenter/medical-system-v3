@@ -95,6 +95,7 @@ export default function PublicAppointmentFormV2() {
     const [clinicName, setClinicName] = useState('');
     const [availableSlots, setAvailableSlots] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
+    const [rawAppointments, setRawAppointments] = useState([]); // Debug state
     const [searchParams, setSearchParams] = useSearchParams();
     const ticketParam = searchParams.get('ticket');
 
@@ -165,9 +166,9 @@ export default function PublicAppointmentFormV2() {
         // Ampliar el rango de búsqueda para asegurar que cubrimos el día en Perú independientemente del timezone local
         // Buscamos desde el día anterior hasta el día siguiente para filtrar luego en memoria con exactitud
         const searchStart = new Date(startOfDay);
-        searchStart.setDate(searchStart.getDate() - 1);
+        searchStart.setDate(searchStart.getDate() - 2); // Widen to 2 days
         const searchEnd = new Date(endOfDay);
-        searchEnd.setDate(searchEnd.getDate() + 1);
+        searchEnd.setDate(searchEnd.getDate() + 2); // Widen to 2 days
 
         // Replace RPC with direct query for reliability
         const { data, error } = await supabase
@@ -185,6 +186,7 @@ export default function PublicAppointmentFormV2() {
 
         if (data) {
             console.log("✅ Citas encontradas:", data.length);
+            setRawAppointments(data); // Store raw data for debug
 
             // Lógica de bloqueo inteligente por duración (20 min)
             const blocked = new Set();
@@ -909,10 +911,7 @@ export default function PublicAppointmentFormV2() {
                 <hr className="border-slate-700 my-2" />
                 <p>Raw Appointments (Last 5):</p>
                 <pre>
-                    {/* We can't easily access 'data' here since it's inside useEffect, 
-                        so we'll just show what we have in state if we refactor, 
-                        but for now let's just show the bookedSlots which is the result */}
-                    To see raw data, please check console or wait for next update.
+                    {JSON.stringify(rawAppointments.slice(0, 5), null, 2)}
                 </pre>
             </div>
         </div >
