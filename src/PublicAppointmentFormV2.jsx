@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus } from 'lucide-react';
+import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus, Info } from 'lucide-react';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -615,7 +615,7 @@ export default function PublicAppointmentFormV2() {
                                                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:border-slate-300'
                                                 }`}
                                         >
-                                            Proponer otro horario
+                                            Solicitar fecha distinta
                                         </button>
                                     </div>
                                 ) : (
@@ -628,22 +628,28 @@ export default function PublicAppointmentFormV2() {
                                                 onClick={() => setFormData({ ...formData, time: 'other' })}
                                                 className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-50 shadow-sm"
                                             >
-                                                Proponer horario manual
+                                                Solicitar fecha distinta
                                             </button>
                                         )}
                                     </div>
                                 )}
 
                                 {formData.time === 'other' && (
-                                    <div className="mt-2 animate-in fade-in slide-in-from-top-2">
-                                        <label className="block text-xs font-bold text-slate-500 mb-1">Ingresa tu hora preferida:</label>
-                                        <input
-                                            type="time"
-                                            required
-                                            className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                                            value={formData.customTime || ''}
-                                            onChange={e => setFormData({ ...formData, customTime: e.target.value })}
-                                        />
+                                    <div className="mt-2 animate-in fade-in slide-in-from-top-2 space-y-2">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1">Ingresa tu hora preferida:</label>
+                                            <input
+                                                type="time"
+                                                required
+                                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                                value={formData.customTime || ''}
+                                                onChange={e => setFormData({ ...formData, customTime: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200 flex items-start gap-2">
+                                            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                                            <span>Nota: Las citas en horarios distintos están sujetas a previa coordinación y aceptación.</span>
+                                        </div>
                                     </div>
                                 )}
 
