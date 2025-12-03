@@ -45,6 +45,19 @@ const getNextAvailableDate = () => {
     return `${year}-${month}-${day}`;
 };
 
+const getNextValidDates = (count = 7) => {
+    const dates = [];
+    let d = new Date();
+    while (dates.length < count) {
+        const day = d.getDay();
+        if ([1, 3, 5].includes(day)) {
+            dates.push(new Date(d));
+        }
+        d.setDate(d.getDate() + 1);
+    }
+    return dates;
+};
+
 export default function PublicAppointmentFormV2() {
     const { clinicId } = useParams();
     const [formData, setFormData] = useState({
@@ -493,14 +506,38 @@ export default function PublicAppointmentFormV2() {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Propuesta</label>
-                                <input
-                                    type="date"
-                                    required
-                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                                    value={formData.date}
-                                    onChange={e => setFormData({ ...formData, date: e.target.value, time: '' })}
-                                />
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona una Fecha</label>
+                                <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+                                    {getNextValidDates().map((dateObj) => {
+                                        // Format YYYY-MM-DD
+                                        const dateStr = dateObj.toISOString().split('T')[0];
+                                        const isSelected = formData.date === dateStr;
+                                        const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' });
+                                        const dayNum = dateObj.getDate();
+                                        const monthName = dateObj.toLocaleDateString('es-ES', { month: 'short' });
+
+                                        return (
+                                            <button
+                                                key={dateStr}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, date: dateStr, time: '' })}
+                                                className={`
+                                                    flex-shrink-0 w-20 h-24 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all snap-start
+                                                    ${isSelected
+                                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105'
+                                                        : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50'
+                                                    }
+                                                `}
+                                            >
+                                                <span className="text-xs font-medium uppercase tracking-wider opacity-80">{dayName}</span>
+                                                <span className="text-2xl font-bold">{dayNum}</span>
+                                                <span className="text-xs font-medium opacity-80">{monthName}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {/* Fallback hidden input for validation if needed, or just keep state */}
+                                <input type="hidden" name="date" value={formData.date} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Hora Propuesta</label>
