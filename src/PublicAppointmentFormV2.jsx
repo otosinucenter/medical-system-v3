@@ -170,14 +170,14 @@ export default function PublicAppointmentFormV2() {
         const searchEnd = new Date(endOfDay);
         searchEnd.setDate(searchEnd.getDate() + 2); // Widen to 2 days
 
-        // Replace RPC with direct query for reliability
+        // Restore RPC to bypass RLS (Security Definer)
+        // We keep the widened search range and Intl logic
         const { data, error } = await supabase
-            .from('appointments')
-            .select('appointment_date') // Use actual column name
-            .eq('clinic_id', clinicId)
-            .gte('appointment_date', searchStart.toISOString())
-            .lte('appointment_date', searchEnd.toISOString())
-            .not('status', 'in', '("cancelled","trash")'); // Filter invalid statuses
+            .rpc('get_booked_slots', {
+                p_clinic_id: clinicId,
+                p_start: searchStart.toISOString(),
+                p_end: searchEnd.toISOString()
+            });
 
         if (error) {
             console.error("Error fetching slots:", error);
@@ -199,7 +199,9 @@ export default function PublicAppointmentFormV2() {
             else if (day === 3 || day === 5) currentSlots = generateSlots("14:20", "20:00", 20);
 
             data.forEach(apt => {
-                const aptDate = new Date(apt.appointment_date);
+                // RPC returns 'booked_date', direct query returned 'appointment_date'
+                // We handle both just in case, but RPC uses booked_date
+                const aptDate = new Date(apt.booked_date || apt.appointment_date);
 
                 // 1. Parse date using Intl to force Peru Time interpretation
                 // This avoids any manual offset math and relies on the browser's robust timezone database
@@ -498,7 +500,7 @@ export default function PublicAppointmentFormV2() {
                         El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
                     <p className="text-white font-medium mt-4 border-t border-indigo-500 pt-4 inline-block px-8">Consultorio Dr. Walter Florez Guerra</p>
-                    <div className="mt-2 text-[10px] text-indigo-300 opacity-70">V 1.5 (Params Check)</div>
+                    <div className="mt-2 text-[10px] text-indigo-300 opacity-70">V 1.6 (RPC Restore)</div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
@@ -905,7 +907,7 @@ export default function PublicAppointmentFormV2() {
 
             {/* DEBUG SECTION - TEMPORARY */}
             <div className="max-w-2xl mx-auto mt-8 p-4 bg-slate-900 text-green-400 rounded-xl font-mono text-xs overflow-x-auto">
-                <h4 className="font-bold text-white mb-2">DEBUG INFO (V 1.5)</h4>
+                <h4 className="font-bold text-white mb-2">DEBUG INFO (V 1.6)</h4>
                 <p>Clinic ID: {clinicId}</p>
                 <p>Selected Date: {formData.date}</p>
                 <p>Booked Slots Count: {bookedSlots.length}</p>
