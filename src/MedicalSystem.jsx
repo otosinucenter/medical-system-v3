@@ -1159,12 +1159,10 @@ export default function MedicalSystem({ user, onLogout }) {
       // Update local state
       setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, ...updates } : a));
 
-      // If we were editing, clear edit state
       if (isEditing) setEditingAppointment(null);
 
       // No alert needed - visual feedback from state change is enough
     } catch (error) {
-      logger.error("Error confirming appointment:", error);
       alert("Error al confirmar cita.");
     }
   };
@@ -1189,7 +1187,7 @@ export default function MedicalSystem({ user, onLogout }) {
         // If patient exists, we must use their data (especially history/consultations)
         // We restore the structure from the 'data' JSONB column if available
         existingPatient = { ...data.data, id: data.id };
-        logger.log("Found existing patient:", existingPatient);
+        // logger.log("Found existing patient:", existingPatient);
 
         if (confirm(`El paciente ${existingPatient.nombre} ya existe en la base de datos (posiblemente en papelera). ¿Desea cargar su historial previo?`)) {
           // If user accepts, we use existing data
@@ -1309,14 +1307,14 @@ export default function MedicalSystem({ user, onLogout }) {
     const subscription = supabase
       .channel('appointments-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, (payload) => {
-        logger.log('Real-time change detected:', payload);
+        // logger.log('Real-time change detected:', payload);
         fetchDailyAppointments();
       })
       .subscribe();
 
     // 3. Polling (Backup every 5 minutes)
     const intervalId = setInterval(() => {
-      logger.log('Auto-refreshing appointments (5 min)...');
+      // logger.log('Auto-refreshing appointments (5 min)...');
       fetchDailyAppointments();
     }, 5 * 60 * 1000);
 
@@ -2899,7 +2897,7 @@ margin: 0;
                                   type="checkbox"
                                   checked={p.payment_status === 'paid'}
                                   onChange={(e) => updateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
-                                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                  className="w-full text-green-600 rounded focus:ring-green-500"
                                 />
                                 <span className={`text-xs font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-gray-400'}`}>
                                   {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente Pago'}
@@ -4235,7 +4233,7 @@ margin: 0;
         </div>
       </main>
       <div className="text-center text-xs text-slate-300 py-4">
-        V 1.9 (Debug Mode)
+        V 1.9 (Stable)
       </div>
     </div>
   );
