@@ -2748,30 +2748,33 @@ margin: 0;
                   </div>
 
                 )}
-                {/* NEW: Card-based layout instead of table */}
-                <div className="p-4 space-y-3">
-                  {dailyList.length === 0 && (
-                    <div className="text-center py-12">
-                      <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                      <p className="text-gray-400 font-medium">No hay citas programadas para este día</p>
-                    </div>
-                  )}
-                  {dailyList.map((p, index) => {
-                    const isEditing = editingAppointment?.id === p.id;
-                    const isArrived = p.triage_status === 'arrived';
-                    const isAttended = p.triage_status === 'attended';
-
-                    return (
-                      <div
-                        key={p.id}
-                        className={`bg-white border-2 rounded-xl p-4 transition-all hover:shadow-lg ${isAttended ? 'border-green-200 bg-green-50/30 opacity-75' :
-                          isArrived ? 'border-yellow-300 bg-yellow-50/30' :
-                            'border-gray-200 hover:border-blue-300'
-                          } ${selectedTriageItems.includes(p.id) ? 'ring-2 ring-blue-400' : ''}`}
-                      >
-                        {/* Header: Checkbox + Orden + Hora + Paciente + Estado */}
-                        <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-100">
-                          <div className="flex items-start gap-3">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-600">
+                      <tr>
+                        <th className="p-4 w-12">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => handleTriageSelectAll(e, dailyList)}
+                            checked={dailyList.length > 0 && selectedTriageItems.length === dailyList.length}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </th>
+                        <th className="p-4 w-16">Orden</th>
+                        <th className="p-4">Hora</th>
+                        <th className="p-4">Paciente</th>
+                        <th className="p-4">Celular</th>
+                        <th className="p-4">Notas</th>
+                        <th className="p-4">Estado / Flujo</th>
+                        <th className="p-4">Gestión (Pagos / Exámenes)</th>
+                        <th className="p-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {dailyList.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas programadas para hoy.</td></tr>}
+                      {dailyList.map((p, index) => (
+                        <tr key={p.id} className={`hover:bg-gray-50 ${p.triage_status === 'attended' ? 'bg-green-50 opacity-60' : ''} ${p.triage_status === 'arrived' ? 'bg-yellow-50' : ''}`}>
+                          <td className="p-4 align-top">
                             <input
                               type="checkbox"
                               checked={selectedTriageItems.includes(p.id)}
@@ -2782,795 +2785,730 @@ margin: 0;
                                   setSelectedTriageItems(selectedTriageItems.filter(id => id !== p.id));
                                 }
                               }}
-                              className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
                             />
-                            <span className="text-sm font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">#{index + 1}</span>
-
-                            {/* Hora - Grande y prominente */}
-                            <div className="min-w-[80px]">
-                              {isEditing ? (
-                                <div className="flex flex-col gap-1">
-                                  <input
-                                    type="date"
-                                    value={editingAppointment.date}
-                                    onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
-                                    className="text-xs border rounded p-1 w-32"
-                                  />
-                                  <input
-                                    type="time"
-                                    value={editingAppointment.time}
-                                    onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
-                                    className="text-xs border rounded p-1 w-32"
-                                    step="300"
-                                  />
-                                  <div className="flex gap-1">
-                                    <button onClick={handleSaveTime} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-200 flex items-center gap-1">
-                                      <Save className="w-3 h-3" /> Guardar
-                                    </button>
-                                    <button onClick={() => setEditingAppointment(null)} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-200">
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </div>
+                          </td>
+                          <td className="p-4 font-bold text-slate-400 text-center">
+                            {index + 1}
+                          </td>
+                          <td className="p-4 text-sm font-mono font-bold text-blue-900">
+                            {editingAppointment?.id === p.id ? (
+                              <div className="flex flex-col gap-1">
+                                <input
+                                  type="date"
+                                  value={editingAppointment.date}
+                                  onChange={e => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
+                                  className="text-xs border rounded p-1"
+                                />
+                                <input
+                                  type="time"
+                                  value={editingAppointment.time}
+                                  onChange={e => setEditingAppointment({ ...editingAppointment, time: e.target.value })}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleSaveTime()}
+                                  className="text-xs border rounded p-1"
+                                  step="300"
+                                />
+                                <div className="flex gap-1 mt-1">
+                                  <button onClick={handleSaveTime} className="bg-green-100 text-green-700 p-1 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                                  <button onClick={() => setEditingAppointment(null)} className="bg-red-100 text-red-700 p-1 rounded hover:bg-red-200"><X className="w-3 h-3" /></button>
                                 </div>
-                              ) : (
-                                <div className="group">
-                                  <div className="text-2xl font-bold text-blue-600 font-mono">
-                                    {new Date(p.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                  </div>
-                                  <button
-                                    onClick={() => {
-                                      const d = new Date(p.appointment_date);
-                                      setEditingAppointment({
-                                        id: p.id,
-                                        date: d.toISOString().split('T')[0],
-                                        time: d.toTimeString().slice(0, 5)
-                                      });
-                                    }}
-                                    className="text-xs text-gray-400 hover:text-blue-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Edit3 className="w-3 h-3" /> Editar
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Info Paciente */}
-                            <div className="flex-1">
-                              <h4 className="font-bold text-gray-900 text-lg">{p.patient_name}</h4>
-                              <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                                <div>📋 DNI: {p.patient_dni || 'N/A'}</div>
-                                <div>🎂 {p.patient_age || 'N/A'} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}</div>
                               </div>
-                            </div>
-                          </div>
-
-                          {/* Badge de Estado */}
-                          <div>
-                            {isAttended ? (
-                              <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border-2 border-green-300 flex items-center gap-1 whitespace-nowrap">
-                                ✅ Atendido
-                              </span>
-                            ) : isArrived ? (
-                              <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border-2 border-yellow-400 flex items-center gap-1 whitespace-nowrap">
-                                🟡 Llegó
-                              </span>
                             ) : (
-                              <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border-2 border-gray-300 flex items-center gap-1 whitespace-nowrap">
-                                ⏳ Pendiente
-                              </span>
+                              <div className="flex items-center gap-2 group">
+                                <span>{new Date(p.appointment_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                <button
+                                  onClick={() => {
+                                    const d = new Date(p.appointment_date);
+                                    setEditingAppointment({
+                                      id: p.id,
+                                      date: d.toISOString().split('T')[0],
+                                      time: d.toTimeString().slice(0, 5)
+                                    });
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
                             )}
-                          </div>
-                        </div>
-
-                        {/* Contenido Principal: Grid de información */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          {/* Celular */}
-                          <div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-gray-800">{p.patient_name}</div>
+                            <div className="text-xs text-gray-500">
+                              DNI: {p.patient_dni} | {p.patient_age} {(p.patient_age && !p.patient_age.toLowerCase().includes('años') && !p.patient_age.toLowerCase().includes('meses')) ? 'años' : ''}
+                            </div>
+                            {p.symptoms && <div className="text-xs text-gray-400 italic mt-1 truncate max-w-[200px]">{p.symptoms}</div>}
+                          </td>
+                          <td className="p-4">
                             {p.patient_phone ? (
                               <a
                                 href={`https://wa.me/51${p.patient_phone.replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-green-600 hover:text-green-800 font-medium text-sm bg-green-50 px-3 py-2 rounded-lg border border-green-200 hover:bg-green-100 transition-colors w-full"
+                                className="flex items-center text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 px-2 py-1 rounded border border-green-200 hover:bg-green-100 transition-colors w-fit"
                               >
-                                <MessageCircle className="w-4 h-4" />
-                                <span>{p.patient_phone}</span>
+                                <Phone className="w-3 h-3 mr-1" />
+                                {p.patient_phone}
                               </a>
                             ) : (
-                              <div className="text-sm text-gray-400 px-3 py-2">📱 Sin teléfono</div>
+                              <span className="text-gray-400 text-xs">-</span>
                             )}
-                          </div>
-
-                          {/* Gestión: Pagos y Exámenes */}
-                          <div className="flex gap-2">
-                            <label className="flex items-center gap-2 text-sm cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-1">
+                          </td>
+                          <td className="p-4">
+                            <textarea
+                              defaultValue={p.notes || ''}
+                              onBlur={(e) => updateAppointmentField(p.id, 'notes', e.target.value)}
+                              className="w-full h-16 text-xs border border-gray-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none bg-yellow-50/30"
+                              placeholder="Agregar nota..."
+                            ></textarea>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'confirmed')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'confirmed' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Confirmó
+                                </button>
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'arrived')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'arrived' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Llegó
+                                </button>
+                                <button
+                                  onClick={() => updateTriageStatus(p.id, 'attended')}
+                                  className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${p.triage_status === 'attended' ? 'bg-green-200 text-green-800 border-green-300' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                  Atendido
+                                </button>
+                              </div>
+                              <div className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-wider">
+                                {p.triage_status === 'pending' ? 'Pendiente' :
+                                  p.triage_status === 'confirmed' ? 'Confirmado' :
+                                    p.triage_status === 'arrived' ? 'En Sala' : 'Finalizado'}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="space-y-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={p.payment_status === 'paid'}
+                                  onChange={(e) => updateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
+                                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                />
+                                <span className={`text-xs font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-gray-400'}`}>
+                                  {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente Pago'}
+                                </span>
+                              </label>
                               <input
-                                type="checkbox"
-                                checked={p.payment_collected || false}
-                                onChange={(e) => updateAppointmentField(p.id, 'payment_collected', e.target.checked)}
-                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                type="text"
+                                placeholder="Exámenes compl..."
+                                value={p.complementary_exams || ''}
+                                onChange={(e) => updateAppointmentField(p.id, 'complementary_exams', e.target.value)}
+                                className="w-full text-xs border border-gray-200 rounded p-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
                               />
-                              <span className="font-medium">💳 Pagado</span>
-                            </label>
-                            <label className="flex items-center gap-2 text-sm cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors flex-1">
-                              <input
-                                type="checkbox"
-                                checked={p.exam_done || false}
-                                onChange={(e) => updateAppointmentField(p.id, 'exam_done', e.target.checked)}
-                                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                              />
-                              <span className="font-medium">🔬 Examen</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* Notas / Síntomas */}
-                        {p.symptoms && (
-                          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-3">
-                            <p className="text-sm text-gray-700 italic">
-                              <span className="font-bold text-blue-700">Motivo:</span> {p.symptoms}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Acciones */}
-                        <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
-                          {/* Marcar Estado */}
-                          <div className="flex gap-1">
-                            {!isArrived && !isAttended && (
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'arrived')}
-                                className="bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-200 transition-colors border border-yellow-300 flex items-center gap-1"
-                              >
-                                🟡 Marcar Llegó
+                            </div>
+                          </td>
+                          <td className="p-4 text-right">
+                            {p.triage_status !== 'attended' && (user.role === 'doctor' || user.role === 'admin') && (
+                              <button onClick={() => { updateTriageStatus(p.id, 'attended'); handleConvertToPatient(p); }} className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700 shadow-sm flex items-center ml-auto">
+                                Atender <ArrowRight className="w-3 h-3 ml-1" />
                               </button>
                             )}
-                            {isArrived && !isAttended && (
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'attended')}
-                                className="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 transition-colors border border-green-300 flex items-center gap-1"
-                              >
-                                ✅ Marcar Atendido
-                              </button>
-                            )}
-                            {(isArrived || isAttended) && (
-                              <button
-                                onClick={() => updateTriageStatus(p.id, 'pending')}
-                                className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors border border-gray-300"
-                              >
-                                ⏳ Volver a Pendiente
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Otras acciones */}
-                          {(user.role === 'doctor' || user.role === 'admin') && (
-                            <button
-                              onClick={() => {
-                                const existingPatient = patients.find(pt => pt.celular === p.patient_phone);
-                                if (existingPatient) {
-                                  prepareFormForNewConsultation(existingPatient);
-                                } else {
-                                  setFormData({
-                                    ...formData,
-                                    nombre: p.patient_name,
-                                    edad: p.patient_age,
-                                    celular: p.patient_phone,
-                                    resumen: p.symptoms
-                                  });
-                                  navigate('form');
-                                }
-                              }}
-                              className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors border border-blue-300 flex items-center gap-1"
-                            >
-                              👨‍⚕️ Atender
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleDeleteAppointment(p.id)}
-                            className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors border border-red-200 flex items-center gap-1 ml-auto"
-                          >
-                            <Trash2 className="w-3 h-3" /> Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
           {/* VISTA PAPELERA */}
-          {
-            view === 'trash' && (
-              <div className="max-w-7xl mx-auto">
-                <div className="bg-white rounded-2xl shadow-lg border border-red-100 overflow-hidden">
-                  <div className="p-6 border-b bg-gradient-to-r from-red-50 to-orange-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Trash2 className="w-6 h-6 text-red-600" />
-                        <div>
-                          <h2 className="text-2xl font-bold text-red-900">Papelera</h2>
-                          <p className="text-sm text-red-600">Citas eliminadas - Puedes restaurarlas o eliminarlas permanentemente</p>
-                        </div>
+          {view === 'trash' && (
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-lg border border-red-100 overflow-hidden">
+                <div className="p-6 border-b bg-gradient-to-r from-red-50 to-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Trash2 className="w-6 h-6 text-red-600" />
+                      <div>
+                        <h2 className="text-2xl font-bold text-red-900">Papelera</h2>
+                        <p className="text-sm text-red-600">Citas eliminadas - Puedes restaurarlas o eliminarlas permanentemente</p>
                       </div>
+                    </div>
+                    <button
+                      onClick={fetchTrashedAppointments}
+                      className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-200 flex items-center"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bulk Actions Bar */}
+                {selectedTrashItems.length > 0 && (
+                  <div className="p-4 bg-blue-50 border-b flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedTrashItems.length} {selectedTrashItems.length === 1 ? 'cita seleccionada' : 'citas seleccionadas'}
+                    </span>
+                    <div className="flex gap-2">
                       <button
-                        onClick={fetchTrashedAppointments}
-                        className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-200 flex items-center"
+                        onClick={handleBulkRestore}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-2"
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Actualizar
+                        <RefreshCw className="w-4 h-4" />
+                        Restaurar Seleccionadas
+                      </button>
+                      <button
+                        onClick={handleBulkPermanentDelete}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar Permanentemente
                       </button>
                     </div>
                   </div>
+                )}
 
-                  {/* Bulk Actions Bar */}
-                  {selectedTrashItems.length > 0 && (
-                    <div className="p-4 bg-blue-50 border-b flex items-center justify-between">
-                      <span className="text-sm font-medium text-blue-900">
-                        {selectedTrashItems.length} {selectedTrashItems.length === 1 ? 'cita seleccionada' : 'citas seleccionadas'}
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleBulkRestore}
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-2"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Restaurar Seleccionadas
-                        </button>
-                        <button
-                          onClick={handleBulkPermanentDelete}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 flex items-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Eliminar Permanentemente
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b">
+                      <tr>
+                        <th className="p-4 w-12">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => handleTrashSelectAll(e, trashedAppointments)}
+                            checked={trashedAppointments.length > 0 && selectedTrashItems.length === trashedAppointments.length}
+                            className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                          />
+                        </th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Fecha Cita</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Paciente</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Motivo</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Eliminado</th>
+                        <th className="text-center p-4 text-sm font-bold text-slate-600">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trashedAppointments.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
+                      {trashedAppointments.map((apt, index) => {
+                        // Group header by date
+                        const showDateHeader = index === 0 ||
+                          (apt.deleted_at && trashedAppointments[index - 1]?.deleted_at &&
+                            new Date(apt.deleted_at).toLocaleDateString() !== new Date(trashedAppointments[index - 1].deleted_at).toLocaleDateString());
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-slate-50 border-b">
-                        <tr>
-                          <th className="p-4 w-12">
-                            <input
-                              type="checkbox"
-                              onChange={(e) => handleTrashSelectAll(e, trashedAppointments)}
-                              checked={trashedAppointments.length > 0 && selectedTrashItems.length === trashedAppointments.length}
-                              className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
-                            />
-                          </th>
-                          <th className="text-left p-4 text-sm font-bold text-slate-600">Fecha Cita</th>
-                          <th className="text-left p-4 text-sm font-bold text-slate-600">Paciente</th>
-                          <th className="text-left p-4 text-sm font-bold text-slate-600">Motivo</th>
-                          <th className="text-left p-4 text-sm font-bold text-slate-600">Eliminado</th>
-                          <th className="text-center p-4 text-sm font-bold text-slate-600">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {trashedAppointments.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
-                        {trashedAppointments.map((apt, index) => {
-                          // Group header by date
-                          const showDateHeader = index === 0 ||
-                            (apt.deleted_at && trashedAppointments[index - 1]?.deleted_at &&
-                              new Date(apt.deleted_at).toLocaleDateString() !== new Date(trashedAppointments[index - 1].deleted_at).toLocaleDateString());
-
-                          return (
-                            <React.Fragment key={apt.id}>
-                              {showDateHeader && apt.deleted_at && (
-                                <tr className="bg-slate-100">
-                                  <td colSpan="6" className="p-3 text-sm font-bold text-slate-700">
-                                    📅 {new Date(apt.deleted_at).toLocaleDateString('es-ES', {
-                                      weekday: 'long',
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric'
-                                    })}
-                                  </td>
-                                </tr>
-                              )}
-                              <tr className="border-b hover:bg-slate-50 transition-colors">
-                                <td className="p-4">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedTrashItems.includes(apt.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedTrashItems([...selectedTrashItems, apt.id]);
-                                      } else {
-                                        setSelectedTrashItems(selectedTrashItems.filter(id => id !== apt.id));
-                                      }
-                                    }}
-                                    className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
-                                  />
-                                </td>
-                                <td className="p-4">
-                                  <div className="text-sm font-medium text-slate-900">
-                                    {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    }) : 'Sin fecha'}
-                                  </div>
-                                </td>
-                                <td className="p-4">
-                                  <div className="text-sm font-medium text-slate-900">{apt.patient_name}</div>
-                                  <div className="text-xs text-slate-500">{apt.patient_phone || 'Sin teléfono'}</div>
-                                </td>
-                                <td className="p-4">
-                                  <div className="text-sm text-slate-600 max-w-md truncate">{apt.patient_reason || apt.symptoms || 'Sin motivo'}</div>
-                                </td>
-                                <td className="p-4">
-                                  <div className="text-xs text-slate-500">
-                                    {apt.deleted_at ? (
-                                      <>
-                                        <div className="font-medium text-red-600">
-                                          🕐 {new Date(apt.deleted_at).toLocaleTimeString('es-ES', {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                          })}
-                                        </div>
-                                        {apt.deleted_from && (
-                                          <div className="text-slate-400 mt-1">
-                                            📍 {apt.deleted_from}
-                                          </div>
-                                        )}
-                                      </>
-                                    ) : (
-                                      <div className="text-slate-400">Sin registro</div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="p-4">
-                                  <div className="flex gap-2 justify-center">
-                                    <button
-                                      onClick={() => restoreAppointment(apt.id)}
-                                      className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 flex items-center gap-1 transition-colors"
-                                    >
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                      Restaurar
-                                    </button>
-                                    <button
-                                      onClick={() => permanentDeleteAppointment(apt.id)}
-                                      className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 flex items-center gap-1 transition-colors"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                      Eliminar
-                                    </button>
-                                  </div>
+                        return (
+                          <React.Fragment key={apt.id}>
+                            {showDateHeader && apt.deleted_at && (
+                              <tr className="bg-slate-100">
+                                <td colSpan="6" className="p-3 text-sm font-bold text-slate-700">
+                                  📅 {new Date(apt.deleted_at).toLocaleDateString('es-ES', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
                                 </td>
                               </tr>
-                            </React.Fragment>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {trashedAppointments.length > 0 && (
-                    <div className="p-4 bg-slate-50 border-t text-center text-sm text-slate-500">
-                      {trashedAppointments.length} {trashedAppointments.length === 1 ? 'cita eliminada' : 'citas eliminadas'}
-                    </div>
-                  )}
+                            )}
+                            <tr className="border-b hover:bg-slate-50 transition-colors">
+                              <td className="p-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTrashItems.includes(apt.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedTrashItems([...selectedTrashItems, apt.id]);
+                                    } else {
+                                      setSelectedTrashItems(selectedTrashItems.filter(id => id !== apt.id));
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                                />
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm font-medium text-slate-900">
+                                  {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  }) : 'Sin fecha'}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm font-medium text-slate-900">{apt.patient_name}</div>
+                                <div className="text-xs text-slate-500">{apt.patient_phone || 'Sin teléfono'}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm text-slate-600 max-w-md truncate">{apt.patient_reason || apt.symptoms || 'Sin motivo'}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-xs text-slate-500">
+                                  {apt.deleted_at ? (
+                                    <>
+                                      <div className="font-medium text-red-600">
+                                        🕐 {new Date(apt.deleted_at).toLocaleTimeString('es-ES', {
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </div>
+                                      {apt.deleted_from && (
+                                        <div className="text-slate-400 mt-1">
+                                          📍 {apt.deleted_from}
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <div className="text-slate-400">Sin registro</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    onClick={() => restoreAppointment(apt.id)}
+                                    className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 flex items-center gap-1 transition-colors"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    Restaurar
+                                  </button>
+                                  <button
+                                    onClick={() => permanentDeleteAppointment(apt.id)}
+                                    className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 flex items-center gap-1 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+
+                {trashedAppointments.length > 0 && (
+                  <div className="p-4 bg-slate-50 border-t text-center text-sm text-slate-500">
+                    {trashedAppointments.length} {trashedAppointments.length === 1 ? 'cita eliminada' : 'citas eliminadas'}
+                  </div>
+                )}
               </div>
-            )
-          }
+            </div>
+          )}
 
           {/* VISTA FORMULARIO */}
-          {
-            view === 'form' && (
-              <div className="max-w-7xl mx-auto flex flex-col gap-6">
-                <div className="flex-1 space-y-6">
-                  {isNewPatient && (
-                    <div className="bg-blue-50 border-dashed border-2 border-blue-200 p-4 rounded-lg text-center no-print">
-                      <p className="text-xs text-blue-600 font-bold mb-2">PEGAR FILA DE EXCEL AQUÍ</p>
-                      <input type="text" className="w-full text-xs border p-1 rounded" value={importText} onChange={handleImport} placeholder="Ctrl + V" />
-                    </div>
-                  )}
+          {view === 'form' && (
+            <div className="max-w-7xl mx-auto flex flex-col gap-6">
+              <div className="flex-1 space-y-6">
+                {isNewPatient && (
+                  <div className="bg-blue-50 border-dashed border-2 border-blue-200 p-4 rounded-lg text-center no-print">
+                    <p className="text-xs text-blue-600 font-bold mb-2">PEGAR FILA DE EXCEL AQUÍ</p>
+                    <input type="text" className="w-full text-xs border p-1 rounded" value={importText} onChange={handleImport} placeholder="Ctrl + V" />
+                  </div>
+                )}
 
-                  <form onSubmit={onFormSubmit} className="bg-white rounded-xl shadow border p-6 space-y-6">
-                    <div className={!isNewPatient ? "opacity-80" : ""}>
-                      <h3 className="font-bold text-blue-800 border-b pb-2 mb-4 flex items-center"><User className="w-4 h-4 mr-2" /> 1. Filiación y Contacto</h3>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="col-span-2"><label className="text-xs font-bold">Nombre Completo</label><input required name="nombre" value={formData.nombre} onChange={handleChange} className="w-full border p-2 rounded" readOnly={!isNewPatient} /></div>
-                        <div><label className="text-xs font-bold">DNI</label><input name="id" value={formData.id} onChange={handleChange} className="w-full border p-2 rounded" readOnly={!isNewPatient} /></div>
-                        <div><label className="text-xs font-bold bg-yellow-100 px-1 rounded">Fecha Cita</label><input type="datetime-local" name="fechaCita" value={formData.fechaCita} onChange={handleChange} className="w-full border p-2 rounded bg-yellow-50 font-bold" /></div>
-                        <div><label className="text-xs font-bold">Edad</label><input name="edad" type="text" value={formData.edad} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ej: 25 Años" /></div>
-                        <div><label className="text-xs font-bold">Fecha Nacimiento</label><input name="fechaNacimiento" type="date" value={formData.fechaNacimiento} onChange={handleChange} className="w-full border p-2 rounded text-sm" /></div>
-                        <div><label className="text-xs font-bold">Celular</label><input name="celular" value={formData.celular} onChange={handleChange} className="w-full border p-2 rounded" /></div>
-                        <div><label className="text-xs font-bold">Ocupación</label><input name="ocupacion" value={formData.ocupacion} onChange={handleChange} className="w-full border p-2 rounded" /></div>
-                        <div><label className="text-xs font-bold">Procedencia</label><input name="procedencia" value={formData.procedencia} onChange={handleChange} className="w-full border p-2 rounded" /></div>
-                        <div>
-                          <label className="text-xs font-bold">Sexo</label>
-                          <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full border p-2 rounded bg-white">
-                            <option value="Mujer">Mujer</option>
-                            <option value="Hombre">Hombre</option>
-                            <option value="Otro">Otro</option>
-                          </select>
-                        </div>
-                        {formData.sexo === 'Mujer' && (
-                          <div><label className="text-xs font-bold text-pink-600">F.U.R (Última Regla)</label><input type="date" name="fur" value={formData.fur} onChange={handleChange} className="w-full border p-2 rounded border-pink-200 bg-pink-50" /></div>
-                        )}
-                        <div className="col-span-2"><label className="text-xs font-bold text-blue-800">Referencia</label><input name="referencia" value={formData.referencia} onChange={handleChange} className="w-full border p-2 rounded" placeholder="¿Cómo nos encontró?" /></div>
-                      </div>
-                    </div>
-
-                    {(user.role === 'doctor' || user.role === 'admin') && (<>
-                      <div className="bg-gray-50 p-4 rounded border">
-                        <h3 className="font-bold text-gray-700 text-sm mb-3 flex items-center"><History className="w-4 h-4 mr-2" /> 2. Antecedentes Médicos</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div><label className="text-xs font-bold text-red-600">Alergias</label><input name="alergias" value={formData.alergias} onChange={handleChange} className="w-full border p-1 rounded text-sm border-red-200" placeholder="Ninguna" /></div>
-                          <div><label className="text-xs font-bold">Enfermedades</label><input name="enfermedades" value={formData.enfermedades} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
-                          <div><label className="text-xs font-bold">Medicamentos Uso</label><input name="medicamentos" value={formData.medicamentos} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
-                          <div><label className="text-xs font-bold">Cirugías</label><input name="cirugias" value={formData.cirugias} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
-                        </div>
-                      </div>
-
+                <form onSubmit={onFormSubmit} className="bg-white rounded-xl shadow border p-6 space-y-6">
+                  <div className={!isNewPatient ? "opacity-80" : ""}>
+                    <h3 className="font-bold text-blue-800 border-b pb-2 mb-4 flex items-center"><User className="w-4 h-4 mr-2" /> 1. Filiación y Contacto</h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="col-span-2"><label className="text-xs font-bold">Nombre Completo</label><input required name="nombre" value={formData.nombre} onChange={handleChange} className="w-full border p-2 rounded" readOnly={!isNewPatient} /></div>
+                      <div><label className="text-xs font-bold">DNI</label><input name="id" value={formData.id} onChange={handleChange} className="w-full border p-2 rounded" readOnly={!isNewPatient} /></div>
+                      <div><label className="text-xs font-bold bg-yellow-100 px-1 rounded">Fecha Cita</label><input type="datetime-local" name="fechaCita" value={formData.fechaCita} onChange={handleChange} className="w-full border p-2 rounded bg-yellow-50 font-bold" /></div>
+                      <div><label className="text-xs font-bold">Edad</label><input name="edad" type="text" value={formData.edad} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ej: 25 Años" /></div>
+                      <div><label className="text-xs font-bold">Fecha Nacimiento</label><input name="fechaNacimiento" type="date" value={formData.fechaNacimiento} onChange={handleChange} className="w-full border p-2 rounded text-sm" /></div>
+                      <div><label className="text-xs font-bold">Celular</label><input name="celular" value={formData.celular} onChange={handleChange} className="w-full border p-2 rounded" /></div>
+                      <div><label className="text-xs font-bold">Ocupación</label><input name="ocupacion" value={formData.ocupacion} onChange={handleChange} className="w-full border p-2 rounded" /></div>
+                      <div><label className="text-xs font-bold">Procedencia</label><input name="procedencia" value={formData.procedencia} onChange={handleChange} className="w-full border p-2 rounded" /></div>
                       <div>
-                        <label className="text-xs font-bold flex items-center mb-1"><Clipboard className="w-3 h-3 mr-1" /> 3. Motivo de Consulta</label>
-                        <textarea name="resumen" value={formData.resumen} onChange={handleChange} rows={3} className="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="Relato del paciente..."></textarea>
+                        <label className="text-xs font-bold">Sexo</label>
+                        <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full border p-2 rounded bg-white">
+                          <option value="Mujer">Mujer</option>
+                          <option value="Hombre">Hombre</option>
+                          <option value="Otro">Otro</option>
+                        </select>
                       </div>
-
-                      <div>
-                        <h3 className="font-bold text-blue-800 border-b pb-2 mb-2 flex items-center"><Stethoscope className="w-4 h-4 mr-2" /> 4. Examen Físico</h3>
-                        <div className="grid grid-cols-1 gap-2">
-                          {['oido', 'nariz', 'garganta'].map(part => (
-                            <div key={part} className="bg-gray-50 p-2 rounded border flex flex-col">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs font-bold uppercase">{part}</span>
-                                <div className="flex gap-1">{EXAM_TEMPLATES[part].map((t, i) => <button type="button" key={i} onClick={() => addExamTemplate('examen' + part.charAt(0).toUpperCase() + part.slice(1), t.text)} className="px-2 py-0.5 bg-white border text-[10px] rounded hover:bg-blue-100">{t.label}</button>)}</div>
-                              </div>
-                              <textarea name={'examen' + part.charAt(0).toUpperCase() + part.slice(1)} value={formData['examen' + part.charAt(0).toUpperCase() + part.slice(1)]} onChange={handleChange} rows={1} className="w-full border p-1 rounded text-sm"></textarea>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <h3 className="font-bold text-blue-800 border-b border-blue-200 pb-2 mb-4 flex items-center"><ListPlus className="w-4 h-4 mr-2" /> 5. Diagnóstico</h3>
-                        <div className="flex gap-2 mb-2">
-                          <select onChange={selectCommonDiagnosis} className="flex-1 p-2 border border-blue-300 rounded text-sm font-bold text-gray-700">
-                            <option value="">-- Diagnósticos Frecuentes --</option>
-                            {Object.entries(DIAGNOSTICOS_COMUNES).map(([categoria, items]) => (
-                              <optgroup key={categoria} label={categoria}>
-                                {items.map((d, i) => <option key={i} value={d.label}>{d.label}</option>)}
-                              </optgroup>
-                            ))}
-                          </select>
-                          <select onChange={selectProtocol} className="flex-1 p-2 border border-blue-300 rounded text-sm font-bold text-gray-700">
-                            <option value="">-- Cargar Protocolo (Receta + Indicaciones) --</option>
-                            {Object.entries(CATALOGO_MEDICO).map(([categoria, items]) => (
-                              <optgroup key={categoria} label={categoria}>
-                                {items.map((p, i) => <option key={i} value={p.label}>{p.label}</option>)}
-                              </optgroup>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="flex gap-2 mb-2">
-
-                          <input placeholder="CIE10" value={diagInput.code} onChange={e => setDiagInput({ ...diagInput, code: e.target.value.toUpperCase() })} className="w-20 border p-2 rounded text-sm" />
-                          <input placeholder="Otro diagnóstico..." value={diagInput.desc} onChange={e => setDiagInput({ ...diagInput, desc: e.target.value })} className="flex-1 border p-2 rounded text-sm" />
-                          <button type="button" onClick={addManualDiagnosis} className="bg-blue-100 px-3 rounded hover:bg-blue-200"><Plus className="w-4 h-4" /></button>
-                        </div>
-                        <div className="space-y-1 mb-4">
-                          {formData.diagnosticos.map((d, i) => (<div key={i} className="flex justify-between bg-white border border-blue-100 p-1 px-2 rounded text-sm"><span className="font-bold mr-2 text-blue-700">{d.code}</span>{d.desc}<button type="button" onClick={() => removeDiagnosis(i)} className="text-red-500 ml-2"><Trash2 className="w-3 h-3" /></button></div>))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-blue-800 border-b pb-2 mb-2 flex items-center"><Pill className="w-4 h-4 mr-2" /> 6. Tratamiento (Receta)</h3>
-
-                        <datalist id="meds-list">
-                          {getFilteredVademecum().map((m, i) => <option key={i} value={m.med} />)}
-                        </datalist>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm border border-gray-200 mb-2">
-                            <thead className="bg-gray-100">
-                              <tr>
-                                <th className="text-left p-2 w-1/3">Medicamento</th>
-                                <th className="text-left p-2 w-16">Cant.</th>
-                                <th className="text-left p-2">Indicaciones</th>
-                                <th className="text-left p-2 w-16">Vía</th>
-                                <th className="text-left p-2 w-20">Duración</th>
-                                <th className="w-8"></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {formData.receta.map((row, idx) => (
-                                <tr key={idx} className="border-b">
-                                  <td className="p-1"><input list="meds-list" className="w-full border p-1" value={row.med} onChange={(e) => updateMedicationRow(idx, 'med', e.target.value)} /></td>
-                                  <td className="p-1"><input className="w-full border p-1" value={row.cant} onChange={(e) => updateMedicationRow(idx, 'cant', e.target.value)} /></td>
-                                  <td className="p-1"><input className="w-full border p-1" value={row.ind} onChange={(e) => updateMedicationRow(idx, 'ind', e.target.value)} /></td>
-                                  <td className="p-1"><input className="w-full border p-1" value={row.via} onChange={(e) => updateMedicationRow(idx, 'via', e.target.value)} /></td>
-                                  <td className="p-1"><input className="w-full border p-1" value={row.dur} onChange={(e) => updateMedicationRow(idx, 'dur', e.target.value)} /></td>
-                                  <td className="p-1 text-center"><button type="button" onClick={() => removeMedicationRow(idx)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button></td>
-                                </tr>
-                              ))}
-                              {formData.receta.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-400 italic">Use el Vademécum lateral para agregar medicamentos</td></tr>}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Vademécum Sugerido (Chips) */}
-                        <div className="mt-2 mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                          <label className="text-xs font-bold text-blue-700 mb-2 block flex items-center"><Pill className="w-3 h-3 mr-1" /> Vademécum Sugerido (Click para agregar)</label>
-                          <div className="flex flex-wrap gap-2">
-                            {getFilteredVademecum().map((m, i) => (
-                              <button key={i} type="button" onClick={() => addMedicationRow(m)} className="text-xs bg-white text-gray-700 px-2 py-1 rounded border border-gray-200 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300 transition-colors shadow-sm">
-                                {m.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <label className="text-xs font-bold text-gray-600">Indicaciones Adicionales</label>
-                          <textarea name="indicaciones" value={formData.indicaciones} onChange={handleChange} rows={2} className="w-full border p-2 rounded text-sm"></textarea>
-                        </div>
-                      </div>
-                    </>)}
-
-                    <div className="flex justify-end gap-3 pt-4 border-t">
-                      <button type="button" onClick={() => navigate('list')} className="px-4 py-2 border rounded text-gray-600">Cancelar</button>
-                      <button type="submit" className="px-6 py-2 bg-blue-700 text-white rounded shadow font-bold hover:bg-blue-800">GUARDAR CONSULTA</button>
-                    </div>
-                  </form>
-                </div>
-
-
-              </div>
-            )
-          }
-
-          {/* VISTA DETALLE (HISTORIAL) */}
-          {
-            view === 'detail' && selectedPatient && (
-              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
-                {/* HEADER: DATOS CLÍNICOS CRÍTICOS */}
-                <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 no-print">
-                  {/* CARD 1: FILIACIÓN */}
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <h3 className="font-bold text-blue-800 flex items-center mb-3"><User className="w-4 h-4 mr-2" /> FILIACIÓN Y CONTACTO</h3>
-                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                      <div className="col-span-2 font-bold text-lg text-gray-800">{selectedPatient.nombre}</div>
-                      <div className="flex items-center text-gray-600"><CalendarDays className="w-3 h-3 mr-2" /> {selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</div>
-                      <div className="flex items-center text-gray-600">
-                        <Phone className="w-3 h-3 mr-2" />
-                        <a href={`https://wa.me/51${selectedPatient.celular?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600 hover:underline">
-                          {selectedPatient.celular}
-                        </a>
-                      </div>
-                      <div className="flex items-center text-gray-600"><Mail className="w-3 h-3 mr-2" /> {selectedPatient.email || '-'}</div>
-                      <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t">Ref: {selectedPatient.referencia}</div>
+                      {formData.sexo === 'Mujer' && (
+                        <div><label className="text-xs font-bold text-pink-600">F.U.R (Última Regla)</label><input type="date" name="fur" value={formData.fur} onChange={handleChange} className="w-full border p-2 rounded border-pink-200 bg-pink-50" /></div>
+                      )}
+                      <div className="col-span-2"><label className="text-xs font-bold text-blue-800">Referencia</label><input name="referencia" value={formData.referencia} onChange={handleChange} className="w-full border p-2 rounded" placeholder="¿Cómo nos encontró?" /></div>
                     </div>
                   </div>
 
-                  {/* CARD 2: ANTECEDENTES */}
-                  <div className="p-4 rounded-lg border shadow-sm bg-white border-gray-200">
-                    <h3 className="font-bold flex items-center mb-3 text-gray-700"><History className="w-4 h-4 mr-2" /> ANTECEDENTES</h3>
-                    <div className="space-y-2 text-sm">
-                      {selectedPatient.alergias && <div className="flex text-red-700 font-bold"><span className="w-24">ALERGIAS:</span> <span>{selectedPatient.alergias}</span></div>}
-                      <div className="flex"><span className="w-24 font-bold text-gray-500">Patologías:</span> {selectedPatient.enfermedades || 'Niega'}</div>
-                      <div className="flex"><span className="w-24 font-bold text-gray-500">Cirugías:</span> {selectedPatient.cirugias || 'Ninguna'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ACTIONS BAR */}
-                <div className="col-span-3 flex justify-end gap-2 mb-2 no-print">
-                  <button onClick={() => prepareFormForNewConsultation(selectedPatient)} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center"><Plus className="w-4 h-4 mr-2" /> NUEVA CONSULTA</button>
-                  <button onClick={() => navigate('list')} className="border px-4 py-2 rounded text-sm hover:bg-gray-50">VOLVER</button>
-                </div>
-
-                {/* COLUMNA IZQUIERDA: HISTORIAL */}
-                <div className="md:col-span-1 bg-white rounded-lg shadow border overflow-y-auto no-print">
-                  <div className="p-3 bg-gray-50 border-b font-bold text-xs text-gray-500 uppercase sticky top-0">Historial</div>
-                  <div className="divide-y">
-                    {(selectedPatient.consultas || [selectedPatient]).map((consulta, idx) => (
-                      <div key={idx} onClick={() => setSelectedConsultationIndex(idx)} className={`p-3 cursor-pointer hover:bg-blue-50 ${selectedConsultationIndex === idx ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}>
-                        <div className="font-bold text-sm text-gray-800 mb-1">{new Date(consulta.fechaCita).toLocaleDateString()}</div>
-                        <div className="text-xs text-blue-700 font-medium mb-1">{consulta.diagnosticos && consulta.diagnosticos.length > 0 ? consulta.diagnosticos[0].desc : 'S/D'}</div>
-                        {consulta.atendidoPor && (
-                          <div className="text-[10px] text-gray-500 flex items-center">
-                            <User className="w-3 h-3 mr-1" /> {consulta.atendidoPor}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* COLUMNA DERECHA: CONSULTA CLÍNICA */}
-                <div className="md:col-span-2 bg-white rounded-lg shadow border flex flex-col overflow-hidden">
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 no-print">
-                    <div className="flex justify-between items-start border-b pb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                          <Clipboard className="w-5 h-5 mr-2 text-teal-600" />
-                          Consulta del {new Date(getDisplayConsultation().fechaCita).toLocaleDateString()}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1"><strong>Motivo:</strong> {getDisplayConsultation().resumen}</p>
-                      </div>
-                      {/* BOTÓN ABRIR RECETA MODAL */}
-                      <button onClick={openPrescriptionModal} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center shadow-lg transform hover:scale-105 transition-all">
-                        <FileText className="w-4 h-4 mr-2" /> 📄 Abrir Receta (A5)
-                      </button>
-                      <button onClick={handleEditConsultation} className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-orange-600 flex items-center shadow-lg transform hover:scale-105 transition-all ml-2">
-                        <Edit3 className="w-4 h-4 mr-2" /> Editar
-                      </button>
-                    </div>
-
-                    {/* Examen Físico */}
-                    <div className="grid grid-cols-1 gap-2">
-                      <h4 className="text-sm font-bold text-gray-700 uppercase border-b pb-1 mb-1">Examen Físico</h4>
-                      <div className="bg-gray-50 p-3 rounded border grid grid-cols-3 gap-4">
-                        <div><strong className="text-xs text-teal-700 block">OÍDO</strong><p className="text-xs">{getDisplayConsultation().examenOido || '-'}</p></div>
-                        <div><strong className="text-xs text-teal-700 block">NARIZ</strong><p className="text-xs">{getDisplayConsultation().examenNariz || '-'}</p></div>
-                        <div><strong className="text-xs text-teal-700 block">GARGANTA</strong><p className="text-xs">{getDisplayConsultation().examenGarganta || '-'}</p></div>
+                  {(user.role === 'doctor' || user.role === 'admin') && (<>
+                    <div className="bg-gray-50 p-4 rounded border">
+                      <h3 className="font-bold text-gray-700 text-sm mb-3 flex items-center"><History className="w-4 h-4 mr-2" /> 2. Antecedentes Médicos</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div><label className="text-xs font-bold text-red-600">Alergias</label><input name="alergias" value={formData.alergias} onChange={handleChange} className="w-full border p-1 rounded text-sm border-red-200" placeholder="Ninguna" /></div>
+                        <div><label className="text-xs font-bold">Enfermedades</label><input name="enfermedades" value={formData.enfermedades} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
+                        <div><label className="text-xs font-bold">Medicamentos Uso</label><input name="medicamentos" value={formData.medicamentos} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
+                        <div><label className="text-xs font-bold">Cirugías</label><input name="cirugias" value={formData.cirugias} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
                       </div>
                     </div>
 
-                    {/* Diagnósticos */}
                     <div>
-                      <h4 className="text-sm font-bold text-gray-700 uppercase border-b pb-1 mb-2">Diagnósticos</h4>
-                      <div className="space-y-1">
-                        {getDisplayConsultation().diagnosticos?.map((d, i) => (
-                          <div key={i} className="flex items-center text-sm">
-                            <span className="bg-teal-100 text-teal-800 text-xs font-bold px-2 py-0.5 rounded mr-2">{d.code}</span>
-                            {d.desc}
+                      <label className="text-xs font-bold flex items-center mb-1"><Clipboard className="w-3 h-3 mr-1" /> 3. Motivo de Consulta</label>
+                      <textarea name="resumen" value={formData.resumen} onChange={handleChange} rows={3} className="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="Relato del paciente..."></textarea>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-blue-800 border-b pb-2 mb-2 flex items-center"><Stethoscope className="w-4 h-4 mr-2" /> 4. Examen Físico</h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {['oido', 'nariz', 'garganta'].map(part => (
+                          <div key={part} className="bg-gray-50 p-2 rounded border flex flex-col">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs font-bold uppercase">{part}</span>
+                              <div className="flex gap-1">{EXAM_TEMPLATES[part].map((t, i) => <button type="button" key={i} onClick={() => addExamTemplate('examen' + part.charAt(0).toUpperCase() + part.slice(1), t.text)} className="px-2 py-0.5 bg-white border text-[10px] rounded hover:bg-blue-100">{t.label}</button>)}</div>
+                            </div>
+                            <textarea name={'examen' + part.charAt(0).toUpperCase() + part.slice(1)} value={formData['examen' + part.charAt(0).toUpperCase() + part.slice(1)]} onChange={handleChange} rows={1} className="w-full border p-1 rounded text-sm"></textarea>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )
-          }
 
-          {/* MODAL RECETA A5 (EDITABLE Y PARA IMPRIMIR) */}
-          {
-            isPrescriptionOpen && selectedPatient && (
-              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
-                <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl relative">
-
-                  {/* Header Modal */}
-                  <div className="flex justify-between items-center p-4 border-b bg-gray-100 rounded-t-lg no-print">
-                    <h3 className="font-bold text-gray-700 flex items-center"><Edit3 className="w-4 h-4 mr-2" /> Vista Previa Receta (A5 Horizontal)</h3>
-                    <div className="flex gap-2">
-                      <button onClick={handleUpdatePrescription} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">Guardar Cambios</button>
-                      <button onClick={() => saveConsultation()} className="bg-blue-800 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-900 flex items-center border border-blue-600"><Save className="w-3 h-3 mr-1" /> Guardar y Finalizar</button>
-                      <button onClick={printPrescription} className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 flex items-center"><Printer className="w-3 h-3 mr-1" /> Imprimir</button>
-                      <button onClick={() => setIsPrescriptionOpen(false)} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
-                    </div>
-                  </div>
-
-                  {/* Contenido A5 (EDITABLE) */}
-                  <div id="printable-area" className="bg-white text-black relative mx-auto flex flex-col overflow-hidden" style={{ width: '210mm', height: '148mm', padding: '5mm 8mm' }}>
-
-                    {/* Encabezado */}
-                    <div className="border-b-[2px] border-blue-900 pb-1 mb-1 flex justify-between items-end">
-                      <div>
-                        <h1 className="text-xl font-bold text-blue-900 uppercase tracking-wide leading-none">{DOCTOR_INFO.nombre}</h1>
-                        <p className="text-xs font-bold text-gray-600 uppercase mt-1 leading-none tracking-wider">{DOCTOR_INFO.especialidad}</p>
-                        <p className="text-[10px] text-gray-500 tracking-widest mt-0.5 leading-none">{DOCTOR_INFO.credenciales}</p>
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                      <h3 className="font-bold text-blue-800 border-b border-blue-200 pb-2 mb-4 flex items-center"><ListPlus className="w-4 h-4 mr-2" /> 5. Diagnóstico</h3>
+                      <div className="flex gap-2 mb-2">
+                        <select onChange={selectCommonDiagnosis} className="flex-1 p-2 border border-blue-300 rounded text-sm font-bold text-gray-700">
+                          <option value="">-- Diagnósticos Frecuentes --</option>
+                          {Object.entries(DIAGNOSTICOS_COMUNES).map(([categoria, items]) => (
+                            <optgroup key={categoria} label={categoria}>
+                              {items.map((d, i) => <option key={i} value={d.label}>{d.label}</option>)}
+                            </optgroup>
+                          ))}
+                        </select>
+                        <select onChange={selectProtocol} className="flex-1 p-2 border border-blue-300 rounded text-sm font-bold text-gray-700">
+                          <option value="">-- Cargar Protocolo (Receta + Indicaciones) --</option>
+                          {Object.entries(CATALOGO_MEDICO).map(([categoria, items]) => (
+                            <optgroup key={categoria} label={categoria}>
+                              {items.map((p, i) => <option key={i} value={p.label}>{p.label}</option>)}
+                            </optgroup>
+                          ))}
+                        </select>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-blue-800 font-bold mb-0.5">{DOCTOR_INFO.contacto}</p>
-                        <div className="font-bold text-xs text-gray-800 leading-none">{new Date(getDisplayConsultation().fechaCita).toLocaleDateString()}</div>
+                      <div className="flex gap-2 mb-2">
+
+                        <input placeholder="CIE10" value={diagInput.code} onChange={e => setDiagInput({ ...diagInput, code: e.target.value.toUpperCase() })} className="w-20 border p-2 rounded text-sm" />
+                        <input placeholder="Otro diagnóstico..." value={diagInput.desc} onChange={e => setDiagInput({ ...diagInput, desc: e.target.value })} className="flex-1 border p-2 rounded text-sm" />
+                        <button type="button" onClick={addManualDiagnosis} className="bg-blue-100 px-3 rounded hover:bg-blue-200"><Plus className="w-4 h-4" /></button>
+                      </div>
+                      <div className="space-y-1 mb-4">
+                        {formData.diagnosticos.map((d, i) => (<div key={i} className="flex justify-between bg-white border border-blue-100 p-1 px-2 rounded text-sm"><span className="font-bold mr-2 text-blue-700">{d.code}</span>{d.desc}<button type="button" onClick={() => removeDiagnosis(i)} className="text-red-500 ml-2"><Trash2 className="w-3 h-3" /></button></div>))}
                       </div>
                     </div>
 
-                    {/* Datos Paciente */}
-                    <div className="mb-1 text-xs border-y border-blue-100 py-0.5 bg-blue-50/30">
-                      <div className="flex justify-between items-center px-2">
-                        <div className="flex-1 flex items-baseline gap-2">
-                          <span className="font-bold text-blue-900 uppercase text-[10px]">PACIENTE:</span>
-                          <span className="font-medium truncate text-xs">{selectedPatient.nombre}</span>
-                        </div>
-                        <div className="w-24 flex items-baseline gap-2 justify-end">
-                          <span className="font-bold text-blue-900 uppercase text-[10px]">EDAD:</span>
-                          <span className="font-medium">{selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</span>
-                        </div>
-                        <div className="w-32 flex items-baseline gap-2 justify-end">
-                          <span className="font-bold text-blue-900 uppercase text-[10px]">DNI:</span>
-                          <span className="font-medium">{selectedPatient.id}</span>
-                        </div>
-                      </div>
-                      <div className="px-2 pt-0.5 flex items-baseline gap-2">
-                        <span className="font-bold text-blue-900 uppercase text-[10px]">DX:</span>
-                        <span className="truncate italic text-gray-700">{getDisplayConsultation().diagnosticos?.map(d => `${d.code} ${d.desc}`).join(' // ')}</span>
-                      </div>
-                    </div>
+                    <div>
+                      <h3 className="font-bold text-blue-800 border-b pb-2 mb-2 flex items-center"><Pill className="w-4 h-4 mr-2" /> 6. Tratamiento (Receta)</h3>
 
-                    {/* Tabla Receta (Inputs editables) */}
-                    <div className="mb-1 flex-1 relative">
-                      {/* Cálculo dinámico de tamaño de letra según cantidad de items */}
-                      <div style={{ fontSize: editableReceta.length > 8 ? '0.65rem' : (editableReceta.length > 6 ? '0.75rem' : '0.85rem') }}>
-                        <table className="w-full border-collapse table-fixed">
-                          <thead>
-                            <tr className="border-b-2 border-blue-900">
-                              <th className="text-left py-0.5 font-bold text-blue-900 w-[30%] uppercase text-[10px] tracking-wider">Medicamento</th>
-                              <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px] tracking-wider">Cant.</th>
-                              <th className="text-left py-0.5 font-bold text-blue-900 w-[44%] uppercase text-[10px] tracking-wider pl-2">Indicaciones</th>
-                              <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px] tracking-wider">Vía</th>
-                              <th className="text-center py-0.5 font-bold text-blue-900 w-[10%] uppercase text-[10px] tracking-wider">Días</th>
+                      <datalist id="meds-list">
+                        {getFilteredVademecum().map((m, i) => <option key={i} value={m.med} />)}
+                      </datalist>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-gray-200 mb-2">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              <th className="text-left p-2 w-1/3">Medicamento</th>
+                              <th className="text-left p-2 w-16">Cant.</th>
+                              <th className="text-left p-2">Indicaciones</th>
+                              <th className="text-left p-2 w-16">Vía</th>
+                              <th className="text-left p-2 w-20">Duración</th>
+                              <th className="w-8"></th>
                             </tr>
                           </thead>
-                          <tbody className="align-top">
-                            {editableReceta.map((item, idx) => (
-                              <tr key={idx} className="border-b border-gray-100">
-                                <td className="py-0 pr-2">
-                                  <textarea
-                                    className="w-full bg-transparent font-bold text-gray-900 outline-none placeholder-gray-300 resize-none overflow-hidden leading-tight py-0.5"
-                                    rows={Math.max(2, Math.ceil(item.med.length / 30))}
-                                    value={item.med}
-                                    onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
-                                    placeholder="Medicamento"
-                                  />
-                                </td>
-                                <td className="py-0 px-1">
-                                  <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.cant} onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }} />
-                                </td>
-                                <td className="py-0 px-2">
-                                  <textarea
-                                    className="w-full bg-transparent outline-none resize-none overflow-hidden whitespace-pre-wrap leading-tight py-0.5"
-                                    rows={Math.max(2, Math.ceil(item.ind.length / 45))}
-                                    value={item.ind}
-                                    onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
-                                  />
-                                </td>
-                                <td className="py-0 px-1">
-                                  <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.via} onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }} />
-                                </td>
-                                <td className="py-0 px-1">
-                                  <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.dur} onChange={(e) => { const n = [...editableReceta]; n[idx].dur = e.target.value; setEditableReceta(n); }} />
-                                </td>
+                          <tbody>
+                            {formData.receta.map((row, idx) => (
+                              <tr key={idx} className="border-b">
+                                <td className="p-1"><input list="meds-list" className="w-full border p-1" value={row.med} onChange={(e) => updateMedicationRow(idx, 'med', e.target.value)} /></td>
+                                <td className="p-1"><input className="w-full border p-1" value={row.cant} onChange={(e) => updateMedicationRow(idx, 'cant', e.target.value)} /></td>
+                                <td className="p-1"><input className="w-full border p-1" value={row.ind} onChange={(e) => updateMedicationRow(idx, 'ind', e.target.value)} /></td>
+                                <td className="p-1"><input className="w-full border p-1" value={row.via} onChange={(e) => updateMedicationRow(idx, 'via', e.target.value)} /></td>
+                                <td className="p-1"><input className="w-full border p-1" value={row.dur} onChange={(e) => updateMedicationRow(idx, 'dur', e.target.value)} /></td>
+                                <td className="p-1 text-center"><button type="button" onClick={() => removeMedicationRow(idx)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button></td>
                               </tr>
                             ))}
-                            {/* Rellenar líneas vacías si hay pocas */}
-                            {Array.from({ length: Math.max(0, 6 - editableReceta.length) }).map((_, i) => (
-                              <tr key={`empty-${i}`} className="border-b border-gray-50 h-2.5">
-                                <td className="py-0"></td>
-                                <td className="py-0"></td>
-                                <td className="py-0"></td>
-                                <td className="py-0"></td>
-                                <td className="py-0"></td>
-                              </tr>
-                            ))}
+                            {formData.receta.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-400 italic">Use el Vademécum lateral para agregar medicamentos</td></tr>}
                           </tbody>
                         </table>
                       </div>
-                    </div>
 
-                    {/* Indicaciones Footer y Sello */}
-                    <div className="mt-auto pt-1 border-t-2 border-dashed border-gray-300 flex gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-xs uppercase mb-1 text-blue-900">INDICACIONES ADICIONALES:</h3>
-                        <textarea
-                          className="w-full text-[6px] resize-none outline-none bg-transparent whitespace-pre-wrap font-medium text-gray-700 leading-tight"
-                          rows={4}
-                          value={editableIndicaciones}
-                          onChange={(e) => setEditableIndicaciones(e.target.value)}
-                          placeholder="• Evitar..."
-                        />
+                      {/* Vademécum Sugerido (Chips) */}
+                      <div className="mt-2 mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                        <label className="text-xs font-bold text-blue-700 mb-2 block flex items-center"><Pill className="w-3 h-3 mr-1" /> Vademécum Sugerido (Click para agregar)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {getFilteredVademecum().map((m, i) => (
+                            <button key={i} type="button" onClick={() => addMedicationRow(m)} className="text-xs bg-white text-gray-700 px-2 py-1 rounded border border-gray-200 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300 transition-colors shadow-sm">
+                              {m.name}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="w-48 h-24 border border-gray-200 rounded flex flex-col items-center justify-end pb-2">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Sello y Firma</span>
+                      <div className="mt-2">
+                        <label className="text-xs font-bold text-gray-600">Indicaciones Adicionales</label>
+                        <textarea name="indicaciones" value={formData.indicaciones} onChange={handleChange} rows={2} className="w-full border p-2 rounded text-sm"></textarea>
                       </div>
+                    </div>
+                  </>)}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onClick={() => navigate('list')} className="px-4 py-2 border rounded text-gray-600">Cancelar</button>
+                    <button type="submit" className="px-6 py-2 bg-blue-700 text-white rounded shadow font-bold hover:bg-blue-800">GUARDAR CONSULTA</button>
+                  </div>
+                </form>
+              </div>
+
+
+            </div>
+          )}
+
+          {/* VISTA DETALLE (HISTORIAL) */}
+          {view === 'detail' && selectedPatient && (
+            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
+              {/* HEADER: DATOS CLÍNICOS CRÍTICOS */}
+              <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 no-print">
+                {/* CARD 1: FILIACIÓN */}
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="font-bold text-blue-800 flex items-center mb-3"><User className="w-4 h-4 mr-2" /> FILIACIÓN Y CONTACTO</h3>
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <div className="col-span-2 font-bold text-lg text-gray-800">{selectedPatient.nombre}</div>
+                    <div className="flex items-center text-gray-600"><CalendarDays className="w-3 h-3 mr-2" /> {selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</div>
+                    <div className="flex items-center text-gray-600">
+                      <Phone className="w-3 h-3 mr-2" />
+                      <a href={`https://wa.me/51${selectedPatient.celular?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600 hover:underline">
+                        {selectedPatient.celular}
+                      </a>
+                    </div>
+                    <div className="flex items-center text-gray-600"><Mail className="w-3 h-3 mr-2" /> {selectedPatient.email || '-'}</div>
+                    <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t">Ref: {selectedPatient.referencia}</div>
+                  </div>
+                </div>
+
+                {/* CARD 2: ANTECEDENTES */}
+                <div className="p-4 rounded-lg border shadow-sm bg-white border-gray-200">
+                  <h3 className="font-bold flex items-center mb-3 text-gray-700"><History className="w-4 h-4 mr-2" /> ANTECEDENTES</h3>
+                  <div className="space-y-2 text-sm">
+                    {selectedPatient.alergias && <div className="flex text-red-700 font-bold"><span className="w-24">ALERGIAS:</span> <span>{selectedPatient.alergias}</span></div>}
+                    <div className="flex"><span className="w-24 font-bold text-gray-500">Patologías:</span> {selectedPatient.enfermedades || 'Niega'}</div>
+                    <div className="flex"><span className="w-24 font-bold text-gray-500">Cirugías:</span> {selectedPatient.cirugias || 'Ninguna'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ACTIONS BAR */}
+              <div className="col-span-3 flex justify-end gap-2 mb-2 no-print">
+                <button onClick={() => prepareFormForNewConsultation(selectedPatient)} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center"><Plus className="w-4 h-4 mr-2" /> NUEVA CONSULTA</button>
+                <button onClick={() => navigate('list')} className="border px-4 py-2 rounded text-sm hover:bg-gray-50">VOLVER</button>
+              </div>
+
+              {/* COLUMNA IZQUIERDA: HISTORIAL */}
+              <div className="md:col-span-1 bg-white rounded-lg shadow border overflow-y-auto no-print">
+                <div className="p-3 bg-gray-50 border-b font-bold text-xs text-gray-500 uppercase sticky top-0">Historial</div>
+                <div className="divide-y">
+                  {(selectedPatient.consultas || [selectedPatient]).map((consulta, idx) => (
+                    <div key={idx} onClick={() => setSelectedConsultationIndex(idx)} className={`p-3 cursor-pointer hover:bg-blue-50 ${selectedConsultationIndex === idx ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}>
+                      <div className="font-bold text-sm text-gray-800 mb-1">{new Date(consulta.fechaCita).toLocaleDateString()}</div>
+                      <div className="text-xs text-blue-700 font-medium mb-1">{consulta.diagnosticos && consulta.diagnosticos.length > 0 ? consulta.diagnosticos[0].desc : 'S/D'}</div>
+                      {consulta.atendidoPor && (
+                        <div className="text-[10px] text-gray-500 flex items-center">
+                          <User className="w-3 h-3 mr-1" /> {consulta.atendidoPor}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* COLUMNA DERECHA: CONSULTA CLÍNICA */}
+              <div className="md:col-span-2 bg-white rounded-lg shadow border flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 no-print">
+                  <div className="flex justify-between items-start border-b pb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                        <Clipboard className="w-5 h-5 mr-2 text-teal-600" />
+                        Consulta del {new Date(getDisplayConsultation().fechaCita).toLocaleDateString()}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1"><strong>Motivo:</strong> {getDisplayConsultation().resumen}</p>
+                    </div>
+                    {/* BOTÓN ABRIR RECETA MODAL */}
+                    <button onClick={openPrescriptionModal} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center shadow-lg transform hover:scale-105 transition-all">
+                      <FileText className="w-4 h-4 mr-2" /> 📄 Abrir Receta (A5)
+                    </button>
+                    <button onClick={handleEditConsultation} className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-orange-600 flex items-center shadow-lg transform hover:scale-105 transition-all ml-2">
+                      <Edit3 className="w-4 h-4 mr-2" /> Editar
+                    </button>
+                  </div>
+
+                  {/* Examen Físico */}
+                  <div className="grid grid-cols-1 gap-2">
+                    <h4 className="text-sm font-bold text-gray-700 uppercase border-b pb-1 mb-1">Examen Físico</h4>
+                    <div className="bg-gray-50 p-3 rounded border grid grid-cols-3 gap-4">
+                      <div><strong className="text-xs text-teal-700 block">OÍDO</strong><p className="text-xs">{getDisplayConsultation().examenOido || '-'}</p></div>
+                      <div><strong className="text-xs text-teal-700 block">NARIZ</strong><p className="text-xs">{getDisplayConsultation().examenNariz || '-'}</p></div>
+                      <div><strong className="text-xs text-teal-700 block">GARGANTA</strong><p className="text-xs">{getDisplayConsultation().examenGarganta || '-'}</p></div>
+                    </div>
+                  </div>
+
+                  {/* Diagnósticos */}
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-700 uppercase border-b pb-1 mb-2">Diagnósticos</h4>
+                    <div className="space-y-1">
+                      {getDisplayConsultation().diagnosticos?.map((d, i) => (
+                        <div key={i} className="flex items-center text-sm">
+                          <span className="bg-teal-100 text-teal-800 text-xs font-bold px-2 py-0.5 rounded mr-2">{d.code}</span>
+                          {d.desc}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
-            )
-          }
+            </div>
+          )}
+
+          {/* MODAL RECETA A5 (EDITABLE Y PARA IMPRIMIR) */}
+          {isPrescriptionOpen && selectedPatient && (
+            <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
+              <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl relative">
+
+                {/* Header Modal */}
+                <div className="flex justify-between items-center p-4 border-b bg-gray-100 rounded-t-lg no-print">
+                  <h3 className="font-bold text-gray-700 flex items-center"><Edit3 className="w-4 h-4 mr-2" /> Vista Previa Receta (A5 Horizontal)</h3>
+                  <div className="flex gap-2">
+                    <button onClick={handleUpdatePrescription} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">Guardar Cambios</button>
+                    <button onClick={() => saveConsultation()} className="bg-blue-800 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-900 flex items-center border border-blue-600"><Save className="w-3 h-3 mr-1" /> Guardar y Finalizar</button>
+                    <button onClick={printPrescription} className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 flex items-center"><Printer className="w-3 h-3 mr-1" /> Imprimir</button>
+                    <button onClick={() => setIsPrescriptionOpen(false)} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
+                  </div>
+                </div>
+
+                {/* Contenido A5 (EDITABLE) */}
+                <div id="printable-area" className="bg-white text-black relative mx-auto flex flex-col overflow-hidden" style={{ width: '210mm', height: '148mm', padding: '5mm 8mm' }}>
+
+                  {/* Encabezado */}
+                  <div className="border-b-[2px] border-blue-900 pb-1 mb-1 flex justify-between items-end">
+                    <div>
+                      <h1 className="text-xl font-bold text-blue-900 uppercase tracking-wide leading-none">{DOCTOR_INFO.nombre}</h1>
+                      <p className="text-xs font-bold text-gray-600 uppercase mt-1 leading-none tracking-wider">{DOCTOR_INFO.especialidad}</p>
+                      <p className="text-[10px] text-gray-500 tracking-widest mt-0.5 leading-none">{DOCTOR_INFO.credenciales}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-blue-800 font-bold mb-0.5">{DOCTOR_INFO.contacto}</p>
+                      <div className="font-bold text-xs text-gray-800 leading-none">{new Date(getDisplayConsultation().fechaCita).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+
+                  {/* Datos Paciente */}
+                  <div className="mb-1 text-xs border-y border-blue-100 py-0.5 bg-blue-50/30">
+                    <div className="flex justify-between items-center px-2">
+                      <div className="flex-1 flex items-baseline gap-2">
+                        <span className="font-bold text-blue-900 uppercase text-[10px]">PACIENTE:</span>
+                        <span className="font-medium truncate text-xs">{selectedPatient.nombre}</span>
+                      </div>
+                      <div className="w-24 flex items-baseline gap-2 justify-end">
+                        <span className="font-bold text-blue-900 uppercase text-[10px]">EDAD:</span>
+                        <span className="font-medium">{selectedPatient.edad} {(!selectedPatient.edad?.toString().toLowerCase().match(/años|meses/)) ? 'años' : ''}</span>
+                      </div>
+                      <div className="w-32 flex items-baseline gap-2 justify-end">
+                        <span className="font-bold text-blue-900 uppercase text-[10px]">DNI:</span>
+                        <span className="font-medium">{selectedPatient.id}</span>
+                      </div>
+                    </div>
+                    <div className="px-2 pt-0.5 flex items-baseline gap-2">
+                      <span className="font-bold text-blue-900 uppercase text-[10px]">DX:</span>
+                      <span className="truncate italic text-gray-700">{getDisplayConsultation().diagnosticos?.map(d => `${d.code} ${d.desc}`).join(' // ')}</span>
+                    </div>
+                  </div>
+
+                  {/* Tabla Receta (Inputs editables) */}
+                  <div className="mb-1 flex-1 relative">
+                    {/* Cálculo dinámico de tamaño de letra según cantidad de items */}
+                    <div style={{ fontSize: editableReceta.length > 8 ? '0.65rem' : (editableReceta.length > 6 ? '0.75rem' : '0.85rem') }}>
+                      <table className="w-full border-collapse table-fixed">
+                        <thead>
+                          <tr className="border-b-2 border-blue-900">
+                            <th className="text-left py-0.5 font-bold text-blue-900 w-[30%] uppercase text-[10px] tracking-wider">Medicamento</th>
+                            <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px] tracking-wider">Cant.</th>
+                            <th className="text-left py-0.5 font-bold text-blue-900 w-[44%] uppercase text-[10px] tracking-wider pl-2">Indicaciones</th>
+                            <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px] tracking-wider">Vía</th>
+                            <th className="text-center py-0.5 font-bold text-blue-900 w-[10%] uppercase text-[10px] tracking-wider">Días</th>
+                          </tr>
+                        </thead>
+                        <tbody className="align-top">
+                          {editableReceta.map((item, idx) => (
+                            <tr key={idx} className="border-b border-gray-100">
+                              <td className="py-0 pr-2">
+                                <textarea
+                                  className="w-full bg-transparent font-bold text-gray-900 outline-none placeholder-gray-300 resize-none overflow-hidden leading-tight py-0.5"
+                                  rows={Math.max(2, Math.ceil(item.med.length / 30))}
+                                  value={item.med}
+                                  onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
+                                  placeholder="Medicamento"
+                                />
+                              </td>
+                              <td className="py-0 px-1">
+                                <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.cant} onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }} />
+                              </td>
+                              <td className="py-0 px-2">
+                                <textarea
+                                  className="w-full bg-transparent outline-none resize-none overflow-hidden whitespace-pre-wrap leading-tight py-0.5"
+                                  rows={Math.max(2, Math.ceil(item.ind.length / 45))}
+                                  value={item.ind}
+                                  onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
+                                />
+                              </td>
+                              <td className="py-0 px-1">
+                                <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.via} onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }} />
+                              </td>
+                              <td className="py-0 px-1">
+                                <input className="w-full bg-transparent text-center outline-none text-gray-600 leading-tight py-0.5" value={item.dur} onChange={(e) => { const n = [...editableReceta]; n[idx].dur = e.target.value; setEditableReceta(n); }} />
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Rellenar líneas vacías si hay pocas */}
+                          {Array.from({ length: Math.max(0, 6 - editableReceta.length) }).map((_, i) => (
+                            <tr key={`empty-${i}`} className="border-b border-gray-50 h-2.5">
+                              <td className="py-0"></td>
+                              <td className="py-0"></td>
+                              <td className="py-0"></td>
+                              <td className="py-0"></td>
+                              <td className="py-0"></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Indicaciones Footer y Sello */}
+                  <div className="mt-auto pt-1 border-t-2 border-dashed border-gray-300 flex gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-xs uppercase mb-1 text-blue-900">INDICACIONES ADICIONALES:</h3>
+                      <textarea
+                        className="w-full text-[6px] resize-none outline-none bg-transparent whitespace-pre-wrap font-medium text-gray-700 leading-tight"
+                        rows={4}
+                        value={editableIndicaciones}
+                        onChange={(e) => setEditableIndicaciones(e.target.value)}
+                        placeholder="• Evitar..."
+                      />
+                    </div>
+                    <div className="w-48 h-24 border border-gray-200 rounded flex flex-col items-center justify-end pb-2">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Sello y Firma</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {
             isPasteModalOpen && (
@@ -4294,11 +4232,11 @@ margin: 0;
               </div>
             )
           }
-        </div >
-      </main >
+        </div>
+      </main>
       <div className="p-4 text-center text-xs text-slate-500">
         V 1.3 (Debug)
       </div>
-    </div >
+    </div>
   );
 }
