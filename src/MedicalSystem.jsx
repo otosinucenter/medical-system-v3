@@ -1043,10 +1043,13 @@ export default function MedicalSystem({ user, onLogout }) {
       return;
     }
 
-    // Construct full date object for confirmation message
+    // Construct full date object
     const fullDate = new Date(`${dateToUse}T${timeToUse}:00`);
 
-    if (!confirm(`¿Confirmar cita para ${apt.patient_name} el ${fullDate.toLocaleDateString()} a las ${timeToUse}? \n\nPasará a la lista de Triaje del día correspondiente.`)) return;
+    // Only ask for confirmation if editing (changing date/time)
+    if (isEditing) {
+      if (!confirm(`¿Confirmar cita para ${apt.patient_name} el ${fullDate.toLocaleDateString()} a las ${timeToUse}? \n\nPasará a la lista de Triaje del día correspondiente.`)) return;
+    }
 
     try {
       // If editing, we need to update date/time AND status
@@ -1072,7 +1075,7 @@ export default function MedicalSystem({ user, onLogout }) {
       // If we were editing, clear edit state
       if (isEditing) setEditingAppointment(null);
 
-      alert("Cita confirmada y movida a Triaje.");
+      // No alert needed - visual feedback from state change is enough
     } catch (error) {
       console.error("Error confirming appointment:", error);
       alert("Error al confirmar cita.");
