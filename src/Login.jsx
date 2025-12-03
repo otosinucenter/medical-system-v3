@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Lock, Stethoscope, Calendar, Building } from 'lucide-react';
 import { supabase } from './supabaseClient';
+import logger from './utils/logger';
 
 export default function Login({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,7 +56,7 @@ export default function Login({ onLogin }) {
         if (profileError) {
           // Si no tiene perfil (usuario antiguo), lo dejamos pasar pero sin clinic_id (modo legacy)
           // O idealmente, forzamos la creación de uno. Por ahora, modo legacy compatible.
-          console.warn("Usuario sin perfil:", profileError);
+          logger.warn("Usuario sin perfil:", profileError);
           const userRole = authData.user.user_metadata?.role || 'doctor';
           onLogin({ username, role: userRole, user: authData.user, clinicId: null });
         } else {
@@ -140,7 +141,7 @@ export default function Login({ onLogin }) {
         }, 1500);
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError(err.message === 'Invalid login credentials' ? 'Usuario o contraseña incorrectos' : err.message);
     } finally {
       setLoading(false);

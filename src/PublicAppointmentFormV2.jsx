@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus, Info } from 'lucide-react';
+import logger from './utils/logger';
+import { getNextAvailableDate, getNextValidDates, formatToPeruDate, formatToPeruTime, createPeruAppointmentDate } from './utils/timezoneHelpers';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -26,37 +28,7 @@ const COUNTRY_CODES = {
     "Otro": { code: "", flag: "🌍" }
 };
 
-const getNextAvailableDate = () => {
-    let date = new Date();
-    // Ajustar a zona horaria local si es necesario, pero new Date() toma la del navegador
-    // Si queremos ser estrictos con la hora del servidor/Perú, habría que manejar offsets.
-    // Por simplicidad y UX, usamos la fecha del navegador del usuario.
-
-    // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
-    // Días permitidos: 1 (Lun), 3 (Mie), 5 (Vie)
-    while (![1, 3, 5].includes(date.getDay())) {
-        date.setDate(date.getDate() + 1);
-    }
-
-    // Formato YYYY-MM-DD
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-const getNextValidDates = (count = 7) => {
-    const dates = [];
-    let d = new Date();
-    while (dates.length < count) {
-        const day = d.getDay();
-        if ([1, 3, 5].includes(day)) {
-            dates.push(new Date(d));
-        }
-        d.setDate(d.getDate() + 1);
-    }
-    return dates;
-};
+// Helper functions moved to utils/timezoneHelpers.js
 
 export default function PublicAppointmentFormV2() {
     const { clinicId } = useParams();
@@ -108,7 +80,7 @@ export default function PublicAppointmentFormV2() {
                     setFormData(parsed);
                     setSubmitted(true);
                 } catch (e) {
-                    console.error("Error parsing saved ticket", e);
+                    logger.error("Error parsing saved ticket", e);
                 }
             }
         } else {
@@ -157,7 +129,7 @@ export default function PublicAppointmentFormV2() {
     const fetchBookedSlots = useCallback(async () => {
         if (!clinicId || !formData.date) return;
 
-        console.log("🔄 Fetching booked slots for:", formData.date);
+        logger.log("🔄 Fetching booked slots for:", formData.date);
 
         const startOfDay = new Date(`${formData.date}T00:00:00`);
         const endOfDay = new Date(`${formData.date}T23:59:59.999`);
@@ -179,12 +151,12 @@ export default function PublicAppointmentFormV2() {
             });
 
         if (error) {
-            console.error("Error fetching slots:", error);
+            logger.error("Error fetching slots:", error);
             return;
         }
 
         if (data) {
-            console.log("✅ Citas encontradas:", data.length);
+            logger.log("✅ Citas encontradas:", data.length);
 
             // Lógica de bloqueo inteligente por duración (20 min)
             const blocked = new Set();
@@ -202,26 +174,14 @@ export default function PublicAppointmentFormV2() {
                 const aptDate = new Date(apt.booked_date || apt.appointment_date);
 
                 // 1. Parse date using Intl to force Peru Time interpretation
-                // This avoids any manual offset math and relies on the browser's robust timezone database
-                const peruDateStr = new Intl.DateTimeFormat('en-CA', { // en-CA gives YYYY-MM-DD
-                    timeZone: 'America/Lima',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                }).format(aptDate);
+                const peruDateStr = formatToPeruDate(aptDate);
 
                 if (peruDateStr !== formData.date) {
                     return; // Ignorar citas de otros días
                 }
 
                 // 2. Parse time using Intl
-                const peruTimeStr = new Intl.DateTimeFormat('en-GB', { // en-GB gives HH:MM
-                    timeZone: 'America/Lima',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                }).format(aptDate);
-
+                const peruTimeStr = formatToPeruTime(aptDate);
                 const [aptH, aptM] = peruTimeStr.split(':').map(Number);
 
                 const aptStartMinutes = aptH * 60 + aptM;
@@ -275,7 +235,7 @@ export default function PublicAppointmentFormV2() {
                 table: 'appointments',
                 filter: `clinic_id=eq.${clinicId}`
             }, (payload) => {
-                console.log("🔔 Cambio detectado en citas, actualizando disponibilidad...", payload);
+                logger.log("🔔 Cambio detectado en citas, actualizando disponibilidad...", payload);
                 fetchBookedSlots();
             })
             .subscribe();
@@ -311,9 +271,7 @@ export default function PublicAppointmentFormV2() {
                 finalTime = formData.customTime || "00:00";
             }
 
-            // Force Peru Timezone (UTC-5) regardless of client location
-            // Appending -05:00 ensures 10:00 becomes 10:00 Peru Time (15:00 UTC)
-            const appointmentDate = new Date(`${formData.date}T${finalTime}:00-05:00`);
+            const appointmentDate = createPeruAppointmentDate(formData.date, finalTime);
 
             // Generar Ticket ID Secuencial (Contar citas existentes + 1)
             const { count, error: countError } = await supabase
@@ -376,7 +334,7 @@ export default function PublicAppointmentFormV2() {
             setSubmitted(true);
             setLoading(false);
         } catch (err) {
-            console.error("Error al agendar:", err);
+            logger.error("Error al agendar:", err);
             setError("Hubo un problema al enviar tu solicitud. Por favor intenta de nuevo.");
             setLoading(false);
         }
