@@ -635,16 +635,28 @@ export default function PublicAppointmentFormV2() {
                                 )}
 
                                 {formData.time === 'other' && (
-                                    <div className="mt-2 animate-in fade-in slide-in-from-top-2 space-y-2">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 mb-1">Ingresa tu hora preferida:</label>
-                                            <input
-                                                type="time"
-                                                required
-                                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                                                value={formData.customTime || ''}
-                                                onChange={e => setFormData({ ...formData, customTime: e.target.value })}
-                                            />
+                                    <div className="mt-2 animate-in fade-in slide-in-from-top-2 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-1">Fecha preferida:</label>
+                                                <input
+                                                    type="date"
+                                                    required
+                                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                                    value={formData.date}
+                                                    onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 mb-1">Hora preferida:</label>
+                                                <input
+                                                    type="time"
+                                                    required
+                                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                                    value={formData.customTime || ''}
+                                                    onChange={e => setFormData({ ...formData, customTime: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200 flex items-start gap-2">
                                             <Info className="w-4 h-4 shrink-0 mt-0.5" />
