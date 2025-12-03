@@ -1091,6 +1091,13 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
+  // Auto-fetch appointments when entering Agenda v2
+  useEffect(() => {
+    if (view === 'agenda-v2') {
+      fetchAppointments();
+    }
+  }, [view, user.clinicId]);
+
   const confirmAppointment = async (apt) => {
     // Check if we are currently editing this appointment
     const isEditing = editingAppointment?.id === apt.id;
@@ -3978,8 +3985,8 @@ margin: 0;
                         <th className="p-4 w-12">
                           <input
                             type="checkbox"
-                            onChange={(e) => handleSelectAll(e, appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket:')))}
-                            checked={appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket:')).length > 0 && selectedAppointments.length === appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket:')).length}
+                            onChange={(e) => handleSelectAll(e, appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed')))}
+                            checked={appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed')).length > 0 && selectedAppointments.length === appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed')).length}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                         </th>
@@ -3991,7 +3998,7 @@ margin: 0;
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed') && a.symptoms && a.symptoms.includes('[Ticket:')).map((apt) => (
+                      {appointments.filter(a => (showConfirmed ? true : a.status !== 'confirmed')).map((apt) => (
                         <tr key={apt.id} className={`hover:bg-indigo-50/30 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''}`}>
                           {/* CHECKBOX */}
                           <td className="p-4 align-top">
