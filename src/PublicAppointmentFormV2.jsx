@@ -177,7 +177,16 @@ export default function PublicAppointmentFormV2() {
 
             data.forEach(apt => {
                 const aptDate = new Date(apt.appointment_date);
-                const aptStartMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
+
+                // Convertir explícitamente a hora de Perú (America/Lima) para evitar problemas de timezone en móviles
+                const peruTime = aptDate.toLocaleTimeString('en-GB', {
+                    timeZone: 'America/Lima',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const [aptH, aptM] = peruTime.split(':').map(Number);
+                const aptStartMinutes = aptH * 60 + aptM;
                 const aptEndMinutes = aptStartMinutes + APPOINTMENT_DURATION;
 
                 currentSlots.forEach(slot => {
