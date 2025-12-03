@@ -111,8 +111,6 @@ export default function MedicalSystem({ user, onLogout }) {
   const [teamLoading, setTeamLoading] = useState(false);
 
   // Declare listDate BEFORE hook (hook needs it as dependency)
-  // REMOVED: getNowDate - now declared earlier (line ~114) before hook
-  /*
   const getNowDate = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -122,7 +120,6 @@ export default function MedicalSystem({ user, onLogout }) {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
-  */
   const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
 
   // Use custom hook for appointment management
