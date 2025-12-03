@@ -1027,7 +1027,18 @@ export default function MedicalSystem({ user, onLogout }) {
     // Check if we are currently editing this appointment
     const isEditing = editingAppointment?.id === apt.id;
     const dateToUse = isEditing ? editingAppointment.date : apt.appointment_date;
-    const timeToUse = isEditing ? editingAppointment.time : apt.appointment_time;
+
+    // Get time - either from editing, from appointment_time field, or extract from appointment_date
+    let timeToUse;
+    if (isEditing) {
+      timeToUse = editingAppointment.time;
+    } else if (apt.appointment_time) {
+      timeToUse = apt.appointment_time;
+    } else if (apt.appointment_date) {
+      // Extract time from appointment_date
+      const d = new Date(apt.appointment_date);
+      timeToUse = d.toTimeString().slice(0, 5);
+    }
 
     if (!dateToUse || !timeToUse) {
       alert("Por favor, asigna una fecha y hora antes de confirmar.");
