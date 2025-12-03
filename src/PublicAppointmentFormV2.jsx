@@ -84,7 +84,6 @@ export default function PublicAppointmentFormV2() {
     const [bookedSlots, setBookedSlots] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
     const ticketParam = searchParams.get('ticket');
-    const [debugLog, setDebugLog] = useState(null); // Estado para logs de depuración
 
     // Verificar si hay un ticket en la URL para mostrar la pantalla de éxito
     useEffect(() => {
@@ -166,20 +165,11 @@ export default function PublicAppointmentFormV2() {
 
         if (error) {
             console.error("Error fetching slots:", error);
-            setDebugLog({ error: error.message });
             return;
         }
 
         if (data) {
             console.log("✅ Citas encontradas:", data.length);
-
-            // Capture debug info for the first appointment if exists
-            const debugInfo = {
-                totalRaw: data.length,
-                firstRawDate: data.length > 0 ? data[0].booked_date : 'N/A',
-                comparisonDate: formData.date,
-                serverTime: new Date().toISOString()
-            };
 
             // Lógica de bloqueo inteligente por duración (20 min)
             const blocked = new Set();
@@ -228,14 +218,6 @@ export default function PublicAppointmentFormV2() {
             });
 
             setBookedSlots(Array.from(blocked));
-            setDebugLog({
-                totalRaw: data.length,
-                firstRawDate: data.length > 0 ? data[0].booked_date : 'N/A',
-                comparisonDate: formData.date,
-                serverTime: new Date().toISOString(),
-                blockedCount: blocked.size,
-                blockedSlots: Array.from(blocked)
-            });
         }
     }, [clinicId, formData.date]);
 
@@ -488,7 +470,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.7 (SQL Fix)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">v3.0 (Stable)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
@@ -852,23 +834,7 @@ export default function PublicAppointmentFormV2() {
                 </form>
             </div>
 
-            {/* DEBUG SECTION - SOLO VISIBLE SI HAY PARAMETRO ?debug=true */}
-            {
-                searchParams.get('debug') === 'true' && (
-                    <div className="mt-8 p-4 bg-gray-100 rounded text-xs font-mono overflow-x-auto max-w-2xl mx-auto">
-                        <h3 className="font-bold mb-2">Debug Info (v2.6)</h3>
-                        <p>Clinic ID: {clinicId}</p>
-                        <p>Selected Date: {formData.date}</p>
-                        <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
-                        <p>Available Slots: {JSON.stringify(availableSlots)}</p>
-                        <p>User Agent: {navigator.userAgent}</p>
-                        <div className="mt-2 border-t pt-2">
-                            <p className="font-bold">Deep Debug:</p>
-                            <pre>{JSON.stringify(debugLog, null, 2)}</pre>
-                        </div>
-                    </div>
-                )
-            }
+
         </div >
     );
 }
