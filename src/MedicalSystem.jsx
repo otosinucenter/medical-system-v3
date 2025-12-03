@@ -109,6 +109,22 @@ export default function MedicalSystem({ user, onLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
+
+  // Declare listDate BEFORE hook (hook needs it as dependency)
+  // REMOVED: getNowDate - now declared earlier (line ~114) before hook
+  /*
+  const getNowDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+  */
+  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
+
   // Use custom hook for appointment management
   const {
     appointments,
@@ -515,11 +531,14 @@ export default function MedicalSystem({ user, onLogout }) {
     );
   };
 
+  // REMOVED: getNowDate - moved earlier (line ~114) before hook declaration
+  /*
   const getNowDate = () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 16);
   };
+  */
 
   // --- DATOS DEL DOCTOR (Para Impresión) ---
   const DOCTOR_INFO = {
@@ -1311,8 +1330,8 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
   // REMOVED: dailyList - now provided by useAppointments hook
+  // REMOVED: listDate - now declared earlier (line ~123) before hook
   const [trashedAppointments, setTrashedAppointments] = useState([]);
-  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
 
   // Real-time Subscription & Polling for Daily Appointments
