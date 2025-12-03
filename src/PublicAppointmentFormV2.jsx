@@ -176,7 +176,7 @@ export default function PublicAppointmentFormV2() {
             // Capture debug info for the first appointment if exists
             const debugInfo = {
                 totalRaw: data.length,
-                firstRawDate: data.length > 0 ? data[0].appointment_date : 'N/A',
+                firstRawDate: data.length > 0 ? data[0].booked_date : 'N/A',
                 comparisonDate: formData.date,
                 serverTime: new Date().toISOString()
             };
@@ -192,7 +192,7 @@ export default function PublicAppointmentFormV2() {
             else if (day === 3 || day === 5) currentSlots = generateSlots("14:20", "20:00", 20);
 
             data.forEach(apt => {
-                const aptDate = new Date(apt.appointment_date);
+                const aptDate = new Date(apt.booked_date);
 
                 // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú UTC-5)
                 // Manual Offset Calculation: UTC - 5 hours
@@ -230,7 +230,7 @@ export default function PublicAppointmentFormV2() {
             setBookedSlots(Array.from(blocked));
             setDebugLog({
                 totalRaw: data.length,
-                firstRawDate: data.length > 0 ? data[0].appointment_date : 'N/A',
+                firstRawDate: data.length > 0 ? data[0].booked_date : 'N/A',
                 comparisonDate: formData.date,
                 serverTime: new Date().toISOString(),
                 blockedCount: blocked.size,
@@ -488,7 +488,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.6 (Debug UI Fixed)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.7 (SQL Fix)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
