@@ -498,6 +498,7 @@ export default function PublicAppointmentFormV2() {
                         El presente es para ser llenado previa a la cita, el objetivo es tener información organizada y detallada previa a su evaluación.
                     </p>
                     <p className="text-white font-medium mt-4 border-t border-indigo-500 pt-4 inline-block px-8">Consultorio Dr. Walter Florez Guerra</p>
+                    <div className="mt-2 text-[10px] text-indigo-300 opacity-70">V 1.5 (Params Check)</div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
@@ -904,7 +905,8 @@ export default function PublicAppointmentFormV2() {
 
             {/* DEBUG SECTION - TEMPORARY */}
             <div className="max-w-2xl mx-auto mt-8 p-4 bg-slate-900 text-green-400 rounded-xl font-mono text-xs overflow-x-auto">
-                <h4 className="font-bold text-white mb-2">DEBUG INFO (V 1.3)</h4>
+                <h4 className="font-bold text-white mb-2">DEBUG INFO (V 1.5)</h4>
+                <p>Clinic ID: {clinicId}</p>
                 <p>Selected Date: {formData.date}</p>
                 <p>Booked Slots Count: {bookedSlots.length}</p>
                 <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
