@@ -109,82 +109,6 @@ export default function PublicAppointmentFormV2() {
         }
     }, [formData.country]);
 
-    // Lógica de horarios inteligentes
-    useEffect(() => {
-        if (!formData.date) {
-            setAvailableSlots([]);
-            setBookedSlots([]); // Clear booked slots if no date
-            return;
-        }
-
-        const date = new Date(formData.date + 'T00:00:00');
-        const day = date.getDay(); // 0 = Domingo, 1 = Lunes, ...
-        let slots = [];
-
-        // Lunes: 10:20 a.m. a 15.00h
-        if (day === 1) {
-            slots = generateSlots("10:20", "15:00", 20);
-        }
-        // Miércoles (3) y Viernes (5): 14.20 h a 20.00 h
-        else if (day === 3 || day === 5) {
-            slots = generateSlots("14:20", "20:00", 20);
-        }
-
-        setAvailableSlots(slots);
-        // Reset time if not valid for new date
-        if (formData.time && !slots.includes(formData.time) && formData.time !== 'other') {
-            setFormData(prev => ({ ...prev, time: '' }));
-        }
-
-        // Fetch booked slots
-        const fetchBookedSlots = async () => {
-            if (!clinicId || !formData.date) return;
-
-            // Crear rango de búsqueda en UTC para cubrir todo el día local
-            // Ejemplo: 00:00 local -> 05:00 UTC
-            // 23:59 local -> 04:59 UTC (del día siguiente)
-            const startOfDay = new Date(`${formData.date}T00:00:00`);
-            const endOfDay = new Date(`${formData.date}T23:59:59`);
-
-            const { data, error } = await supabase
-                .from('appointments')
-                .select('appointment_date')
-                .eq('clinic_id', clinicId)
-                .gte('appointment_date', startOfDay.toISOString())
-                .lte('appointment_date', endOfDay.toISOString())
-                .neq('status', 'cancelled')
-                .neq('status', 'trash'); // Papelera también libera cupo
-
-            if (data) {
-                // Lógica de bloqueo inteligente por duración (20 min)
-                const blocked = new Set();
-                const APPOINTMENT_DURATION = 20; // minutos
-
-                data.forEach(apt => {
-                    const aptDate = new Date(apt.appointment_date);
-                    const aptStartMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
-                    const aptEndMinutes = aptStartMinutes + APPOINTMENT_DURATION;
-
-                    // Verificar colisión con cada slot disponible
-                    slots.forEach(slot => {
-                        const [h, m] = slot.split(':').map(Number);
-                        const slotStartMinutes = h * 60 + m;
-                        const slotEndMinutes = slotStartMinutes + APPOINTMENT_DURATION;
-
-                        // Hay solapamiento si: (StartA < EndB) y (EndA > StartB)
-                        if (slotStartMinutes < aptEndMinutes && slotEndMinutes > aptStartMinutes) {
-                            blocked.add(slot);
-                        }
-                    });
-                });
-
-                setBookedSlots(Array.from(blocked));
-            }
-        };
-
-        fetchBookedSlots();
-    }, [formData.date, clinicId]);
-
     const generateSlots = (start, end, intervalMinutes) => {
         const slots = [];
         let current = new Date(`2000-01-01T${start}:00`);
@@ -196,6 +120,104 @@ export default function PublicAppointmentFormV2() {
         }
         return slots;
     };
+
+    // Fetch booked slots
+    const fetchBookedSlots = useCallback(async () => {
+        if (!clinicId || !formData.date) return;
+
+        console.log("🔄 Fetching booked slots for:", formData.date);
+
+        const startOfDay = new Date(`${formData.date}T00:00:00`);
+        const endOfDay = new Date(`${formData.date}T23:59:59.999`);
+
+        const { data, error } = await supabase
+            .from('appointments')
+            .select('appointment_date')
+            .eq('clinic_id', clinicId)
+            .gte('appointment_date', startOfDay.toISOString())
+            .lte('appointment_date', endOfDay.toISOString())
+            .neq('status', 'cancelled')
+            .neq('status', 'trash');
+
+        if (error) {
+            console.error("Error fetching slots:", error);
+            return;
+        }
+
+        if (data) {
+            console.log("✅ Citas encontradas:", data.length);
+            // Lógica de bloqueo inteligente por duración (20 min)
+            const blocked = new Set();
+            const APPOINTMENT_DURATION = 20; // minutos
+
+            // Regenerar slots para asegurar consistencia
+            const day = new Date(formData.date + 'T00:00:00').getDay();
+            let currentSlots = [];
+            if (day === 1) currentSlots = generateSlots("10:20", "15:00", 20);
+            else if (day === 3 || day === 5) currentSlots = generateSlots("14:20", "20:00", 20);
+
+            data.forEach(apt => {
+                const aptDate = new Date(apt.appointment_date);
+                const aptStartMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
+                const aptEndMinutes = aptStartMinutes + APPOINTMENT_DURATION;
+
+                currentSlots.forEach(slot => {
+                    const [h, m] = slot.split(':').map(Number);
+                    const slotStartMinutes = h * 60 + m;
+                    const slotEndMinutes = slotStartMinutes + APPOINTMENT_DURATION;
+
+                    if (slotStartMinutes < aptEndMinutes && slotEndMinutes > aptStartMinutes) {
+                        blocked.add(slot);
+                    }
+                });
+            });
+
+            setBookedSlots(Array.from(blocked));
+        }
+    }, [clinicId, formData.date]);
+
+    // Efecto para calcular slots disponibles y suscribirse a cambios
+    useEffect(() => {
+        if (!formData.date) {
+            setAvailableSlots([]);
+            setBookedSlots([]);
+            return;
+        }
+
+        const date = new Date(formData.date + 'T00:00:00');
+        const day = date.getDay();
+        let slots = [];
+
+        if (day === 1) slots = generateSlots("10:20", "15:00", 20);
+        else if (day === 3 || day === 5) slots = generateSlots("14:20", "20:00", 20);
+
+        setAvailableSlots(slots);
+
+        if (formData.time && !slots.includes(formData.time) && formData.time !== 'other') {
+            setFormData(prev => ({ ...prev, time: '' }));
+        }
+
+        // Cargar ocupados iniciales
+        fetchBookedSlots();
+
+        // Suscripción Realtime para actualizaciones instantáneas
+        const channel = supabase
+            .channel('public_appointments_availability')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'appointments',
+                filter: `clinic_id=eq.${clinicId}`
+            }, (payload) => {
+                console.log("🔔 Cambio detectado en citas, actualizando disponibilidad...", payload);
+                fetchBookedSlots();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [formData.date, clinicId, fetchBookedSlots]);
 
     const handleCheckboxChange = (value) => {
         const current = formData.referral_source;
