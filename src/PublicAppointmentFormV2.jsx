@@ -488,7 +488,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.5 (RPC Fix)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.6 (Debug UI Fixed)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
@@ -856,25 +856,16 @@ export default function PublicAppointmentFormV2() {
             {
                 searchParams.get('debug') === 'true' && (
                     <div className="mt-8 p-4 bg-gray-100 rounded text-xs font-mono overflow-x-auto max-w-2xl mx-auto">
-                        <h3 className="font-bold mb-2">Debug Info (v2.3)</h3>
+                        <h3 className="font-bold mb-2">Debug Info (v2.6)</h3>
                         <p>Clinic ID: {clinicId}</p>
                         <p>Selected Date: {formData.date}</p>
                         <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
                         <p>Available Slots: {JSON.stringify(availableSlots)}</p>
                         <p>User Agent: {navigator.userAgent}</p>
-                    </div>
-                )
-            }
-            {/* DEBUG SECTION - SOLO VISIBLE SI HAY PARAMETRO ?debug=true */}
-            {
-                searchParams.get('debug') === 'true' && (
-                    <div className="mt-8 p-4 bg-gray-100 rounded text-xs font-mono overflow-x-auto max-w-2xl mx-auto">
-                        <h3 className="font-bold mb-2">Debug Info (v2.3)</h3>
-                        <p>Clinic ID: {clinicId}</p>
-                        <p>Selected Date: {formData.date}</p>
-                        <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
-                        <p>Available Slots: {JSON.stringify(availableSlots)}</p>
-                        <p>User Agent: {navigator.userAgent}</p>
+                        <div className="mt-2 border-t pt-2">
+                            <p className="font-bold">Deep Debug:</p>
+                            <pre>{JSON.stringify(debugLog, null, 2)}</pre>
+                        </div>
                     </div>
                 )
             }
