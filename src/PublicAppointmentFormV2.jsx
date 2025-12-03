@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabaseClient'; // Use shared instance
 import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus, Info } from 'lucide-react';
 import logger from './utils/logger';
 import { getNextAvailableDate, getNextValidDates, formatToPeruDate, formatToPeruTime, createPeruAppointmentDate } from './utils/timezoneHelpers';
-
-// Cliente Supabase temporal (público)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const COUNTRIES = [
     "Perú", "Chile", "Colombia", "México", "Argentina", "España", "Estados Unidos", "Ecuador", "Bolivia", "Venezuela", "Otro"
