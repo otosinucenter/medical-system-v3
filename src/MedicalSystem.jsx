@@ -1218,6 +1218,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
   const [dailyList, setDailyList] = useState([]);
+  const [trashedAppointments, setTrashedAppointments] = useState([]);
   const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
 
@@ -1279,6 +1280,64 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
+  // Fetch trashed appointments
+  const fetchTrashedAppointments = async () => {
+    if (!user.clinicId) return;
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('clinic_id', user.clinicId)
+        .eq('status', 'trash')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setTrashedAppointments(data || []);
+    } catch (error) {
+      console.error("Error fetching trashed appointments:", error);
+    }
+  };
+
+  // Restore appointment from trash
+  const restoreAppointment = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'pending' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrashedAppointments(prev => prev.filter(a => a.id !== id));
+      fetchAppointments(); // Refresh appointments list
+    } catch (error) {
+      console.error("Error restoring appointment:", error);
+      alert("Error al restaurar la cita.");
+    }
+  };
+
+  // Permanently delete appointment
+  const permanentDeleteAppointment = async (id) => {
+    if (!confirm("¿Estás seguro de eliminar permanentemente esta cita? Esta acción no se puede deshacer.")) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrashedAppointments(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+      console.error("Error permanently deleting appointment:", error);
+      alert("Error al eliminar la cita.");
+    }
+  };
+
+
   // Re-fetch when selectedDate changes
   useEffect(() => {
     if (view === 'triage') {
@@ -1289,6 +1348,9 @@ export default function MedicalSystem({ user, onLogout }) {
   useEffect(() => {
     if (view === 'triage') {
       fetchDailyAppointments();
+    }
+    if (view === 'trash') {
+      fetchTrashedAppointments();
     }
   }, [view]);
 
@@ -2399,6 +2461,14 @@ margin: 0;
               <span className="font-medium">Agenda v2.0</span>
             </button>
 
+            <button
+              onClick={() => { setView('trash'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'trash' ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+            >
+              <Trash2 className="w-5 h-5 mr-3" />
+              <span className="font-medium">Papelera</span>
+            </button>
+
             {(user.role === 'admin') && (
               <button onClick={() => setIsTeamModalOpen(true)} className="w-full flex items-center p-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
                 <UserPlus className="w-5 h-5 mr-3" />
@@ -2721,6 +2791,94 @@ margin: 0;
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* VISTA PAPELERA */}
+          {view === 'trash' && (
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-lg border border-red-100 overflow-hidden">
+                <div className="p-6 border-b bg-gradient-to-r from-red-50 to-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Trash2 className="w-6 h-6 text-red-600" />
+                      <div>
+                        <h2 className="text-2xl font-bold text-red-900">Papelera</h2>
+                        <p className="text-sm text-red-600">Citas eliminadas - Puedes restaurarlas o eliminarlas permanentemente</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={fetchTrashedAppointments}
+                      className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-200 flex items-center"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b">
+                      <tr>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Fecha Cita</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Paciente</th>
+                        <th className="text-left p-4 text-sm font-bold text-slate-600">Motivo</th>
+                        <th className="text-center p-4 text-sm font-bold text-slate-600">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trashedAppointments.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-gray-400">No hay citas en la papelera.</td></tr>}
+                      {trashedAppointments.map((apt) => (
+                        <tr key={apt.id} className="border-b hover:bg-slate-50 transition-colors">
+                          <td className="p-4">
+                            <div className="text-sm font-medium text-slate-900">
+                              {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'Sin fecha'}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm font-medium text-slate-900">{apt.patient_name}</div>
+                            <div className="text-xs text-slate-500">{apt.patient_phone || 'Sin teléfono'}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm text-slate-600 max-w-md truncate">{apt.patient_reason || apt.symptoms || 'Sin motivo'}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => restoreAppointment(apt.id)}
+                                className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-200 flex items-center gap-1 transition-colors"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Restaurar
+                              </button>
+                              <button
+                                onClick={() => permanentDeleteAppointment(apt.id)}
+                                className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 flex items-center gap-1 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {trashedAppointments.length > 0 && (
+                  <div className="p-4 bg-slate-50 border-t text-center text-sm text-slate-500">
+                    {trashedAppointments.length} {trashedAppointments.length === 1 ? 'cita eliminada' : 'citas eliminadas'}
+                  </div>
+                )}
               </div>
             </div>
           )}
