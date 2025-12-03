@@ -567,8 +567,13 @@ export default function PublicAppointmentFormV2() {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento (Aprox)</label>
-                                <input type="date" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-slate-100" value={formData.dob} readOnly />
-                                <p className="text-xs text-slate-500 mt-1">Calculada automáticamente según edad.</p>
+                                <input
+                                    type="date"
+                                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                                    value={formData.dob}
+                                    onChange={e => setFormData({ ...formData, dob: e.target.value })}
+                                />
+                                <p className="text-xs text-slate-500 mt-1">Calculada automáticamente según edad. Puedes editarla si es necesario.</p>
                             </div>
                         </div>
 
