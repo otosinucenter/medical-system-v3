@@ -4232,9 +4232,7 @@ margin: 0;
           }
         </div>
       </main>
-      <div className="text-center text-xs text-slate-300 py-4">
-        V 1.9 (Stable)
-      </div>
+
     </div>
   );
 }
