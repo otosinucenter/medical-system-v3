@@ -915,16 +915,69 @@ export default function MedicalSystem({ user, onLogout }) {
 
   const handleAgendaImport = async () => {
     if (!agendaImportText.trim()) return;
-    const lines = agendaImportText.trim().split('\n');
+
+    // ROBUST PARSER: Handles newlines inside quoted strings (Excel format)
+    const parseTSV = (text) => {
+      const rows = [];
+      let currentRow = [];
+      let currentField = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            // Escaped quote ("") -> add single quote
+            currentField += '"';
+            i++; // Skip next quote
+          } else {
+            // Toggle quote state
+            inQuotes = !inQuotes;
+          }
+        } else if (char === '\t' && !inQuotes) {
+          // Tab delimiter (outside quotes) -> End field
+          currentRow.push(currentField);
+          currentField = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          // Newline (outside quotes) -> End row
+          // Handle \r\n or just \n
+          if (char === '\r' && nextChar === '\n') i++;
+
+          currentRow.push(currentField);
+          if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+            rows.push(currentRow);
+          }
+          currentRow = [];
+          currentField = '';
+        } else {
+          // Regular character
+          currentField += char;
+        }
+      }
+
+      // Push last field/row if exists
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+      }
+
+      return rows;
+    };
+
+    const rows = parseTSV(agendaImportText.trim());
     const newAppointments = [];
 
-    for (const line of lines) {
-      const cols = line.split('\t');
+    for (const cols of rows) {
       if (cols.length < 2) continue; // Relaxed: Only need Date and Time minimum
 
       try {
         // 1. Parse Date (DD/MM/YYYY -> YYYY-MM-DD)
-        const [d, m, y] = cols[0].trim().split('/');
+        const datePart = cols[0]?.trim();
+        if (!datePart || !datePart.includes('/')) continue;
+
+        const [d, m, y] = datePart.split('/');
         const dateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 
         // 2. Parse Time (2.2 -> 14:20, 3 -> 15:00)
@@ -961,11 +1014,14 @@ export default function MedicalSystem({ user, onLogout }) {
         const phone = cols[9]?.trim() || '';
         const email = cols[10]?.trim() || '';
         // New columns for History and Reference
-        const referral = cols[11]?.trim() || '';
-        const illness = cols[12]?.trim() || '';
-        const meds = cols[13]?.trim() || '';
-        const allergies = cols[14]?.trim() || '';
-        const surgeries = cols[15]?.trim() || '';
+        const dob = cols[11]?.trim() || ''; // Fecha Nacimiento (Col 11 in user data?)
+        // User data: 18/12/1985 (Col 11)
+
+        const chronic = cols[12]?.trim() || ''; // Enfermedades? No, user data: "No"
+        const meds = cols[13]?.trim() || ''; // Medicamentos
+        const allergies = cols[14]?.trim() || ''; // Alergias
+        const surgeries = cols[15]?.trim() || ''; // Cirugias
+        const referral = cols[16]?.trim() || ''; // Referencia (Google)
 
         // 5. Construct Symptoms String (Keep for display in Agenda)
         const details = [
@@ -983,8 +1039,9 @@ export default function MedicalSystem({ user, onLogout }) {
           patient_occupation: occupation, // Mapped
           patient_district: district, // Mapped
           patient_email: email,       // Mapped
+          patient_dob: dob ? parseDate(dob) : '', // Mapped
           referral_source: referral,  // Mapped
-          chronic_illnesses: illness, // Mapped
+          chronic_illnesses: chronic, // Mapped
           medications: meds,          // Mapped
           allergies: allergies,       // Mapped
           surgeries: surgeries,       // Mapped
@@ -995,7 +1052,7 @@ export default function MedicalSystem({ user, onLogout }) {
         });
 
       } catch (e) {
-        console.error("Error parsing line:", line, e);
+        console.error("Error parsing line:", cols, e);
       }
     }
 
