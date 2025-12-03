@@ -149,12 +149,19 @@ export default function PublicAppointmentFormV2() {
         const startOfDay = new Date(`${formData.date}T00:00:00`);
         const endOfDay = new Date(`${formData.date}T23:59:59.999`);
 
+        // Ampliar el rango de búsqueda para asegurar que cubrimos el día en Perú independientemente del timezone local
+        // Buscamos desde el día anterior hasta el día siguiente para filtrar luego en memoria con exactitud
+        const searchStart = new Date(startOfDay);
+        searchStart.setDate(searchStart.getDate() - 1);
+        const searchEnd = new Date(endOfDay);
+        searchEnd.setDate(searchEnd.getDate() + 1);
+
         const { data, error } = await supabase
             .from('appointments')
             .select('appointment_date')
             .eq('clinic_id', clinicId)
-            .gte('appointment_date', startOfDay.toISOString())
-            .lte('appointment_date', endOfDay.toISOString())
+            .gte('appointment_date', searchStart.toISOString())
+            .lte('appointment_date', searchEnd.toISOString())
             .neq('status', 'cancelled')
             .neq('status', 'trash');
 
@@ -178,7 +185,17 @@ export default function PublicAppointmentFormV2() {
             data.forEach(apt => {
                 const aptDate = new Date(apt.appointment_date);
 
-                // Convertir explícitamente a hora de Perú (America/Lima) para evitar problemas de timezone en móviles
+                // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú)
+                // Usamos 'en-CA' para formato YYYY-MM-DD
+                const peruDate = aptDate.toLocaleDateString('en-CA', {
+                    timeZone: 'America/Lima'
+                });
+
+                if (peruDate !== formData.date) {
+                    return; // Ignorar citas de otros días (por el rango ampliado)
+                }
+
+                // 2. Convertir hora a Perú
                 const peruTime = aptDate.toLocaleTimeString('en-GB', {
                     timeZone: 'America/Lima',
                     hour: '2-digit',
@@ -453,7 +470,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.1 (Mobile Fix)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.2 (Timezone Fix)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
