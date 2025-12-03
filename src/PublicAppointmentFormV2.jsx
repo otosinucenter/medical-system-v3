@@ -41,6 +41,7 @@ export default function PublicAppointmentFormV2() {
         sex: '',
         occupation: '',
         country: 'Perú',
+        customCountry: '',
         district: '',
         phone: '',
         phoneCode: '+51',
@@ -227,7 +228,9 @@ export default function PublicAppointmentFormV2() {
                     patient_age: `${formData.age} ${formData.ageUnit}`,
                     patient_sex: formData.sex,
                     patient_occupation: formData.occupation,
-                    patient_district: formData.district,
+                    patient_district: formData.country === 'Otro' && formData.customCountry
+                        ? `${formData.customCountry}, ${formData.district}`
+                        : `${formData.country}, ${formData.district}`,
                     patient_email: formData.email,
                     patient_dob: formData.dob, // Already calculated in handleAgeChange
                     referral_source: formData.referral_source.join(', '), // Save as string
@@ -611,6 +614,16 @@ export default function PublicAppointmentFormV2() {
                                     >
                                         {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
+                                    {formData.country === 'Otro' && (
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="¿Qué país?"
+                                            className="w-full p-3 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-indigo-50"
+                                            value={formData.customCountry || ''}
+                                            onChange={e => setFormData({ ...formData, customCountry: e.target.value })}
+                                        />
+                                    )}
                                     <input
                                         type="text"
                                         required
