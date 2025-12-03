@@ -10,11 +10,12 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
+import logger from './utils/logger';
 
 
 
 export default function MedicalSystem({ user, onLogout }) {
-  console.log("MedicalSystem user prop:", user);
+  logger.log("MedicalSystem user prop:", user);
   const [view, setView] = useState('triage'); // triage, patients, history, agenda, agenda-v2
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -55,7 +56,7 @@ export default function MedicalSystem({ user, onLogout }) {
       setDirectoryHandle(handle);
       alert("Carpeta conectada exitosamente. Ahora puedes guardar y cargar datos directamente.");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       alert("No se pudo conectar a la carpeta (o el usuario canceló).");
     }
   };
@@ -72,7 +73,7 @@ export default function MedicalSystem({ user, onLogout }) {
       await writable.close();
       alert("Datos guardados exitosamente en 'patients.json'.");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       alert("Error al guardar en la carpeta.");
     }
   };
@@ -96,7 +97,7 @@ export default function MedicalSystem({ user, onLogout }) {
         alert("El archivo patients.json no tiene el formato correcto.");
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       alert("No se encontró 'patients.json' en la carpeta o hubo un error al leer.");
     }
   };
@@ -157,7 +158,7 @@ export default function MedicalSystem({ user, onLogout }) {
       setNewMember({ name: '', email: '', password: '', role: 'doctor' });
 
     } catch (error) {
-      console.error("Error creando miembro:", error);
+      logger.error("Error creando miembro:", error);
       alert("Error: " + error.message);
     } finally {
       setTeamLoading(false);
@@ -263,7 +264,7 @@ export default function MedicalSystem({ user, onLogout }) {
         }
 
       } catch (error) {
-        console.error("Error fetching trash:", error);
+        logger.error("Error fetching trash:", error);
       } finally {
         setLoading(false);
       }
@@ -313,7 +314,7 @@ export default function MedicalSystem({ user, onLogout }) {
         setSelectedIds(new Set());
         fetchTrash();
       } catch (error) {
-        console.error("Error restoring:", error);
+        logger.error("Error restoring:", error);
         alert("Error al restaurar.");
       }
     };
@@ -334,7 +335,7 @@ export default function MedicalSystem({ user, onLogout }) {
         setSelectedAppointments([]);
         fetchAppointments();
       } catch (error) {
-        console.error("Error deleting appointments:", error);
+        logger.error("Error deleting appointments:", error);
         alert("Error al eliminar citas.");
       }
     };
@@ -358,7 +359,7 @@ export default function MedicalSystem({ user, onLogout }) {
         setSelectedIds(new Set());
         fetchTrash();
       } catch (error) {
-        console.error("Error deleting:", error);
+        logger.error("Error deleting:", error);
         alert("Error al eliminar.");
       }
     };
@@ -1052,7 +1053,7 @@ export default function MedicalSystem({ user, onLogout }) {
         });
 
       } catch (e) {
-        console.error("Error parsing line:", cols, e);
+        logger.error("Error parsing line:", cols, e);
       }
     }
 
@@ -1085,7 +1086,7 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
       setAppointments(data || []);
     } catch (error) {
-      console.error("Error fetching appointments:", error);
+      logger.error("Error fetching appointments:", error);
     } finally {
       setLoadingAppointments(false);
     }
@@ -1163,7 +1164,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
       // No alert needed - visual feedback from state change is enough
     } catch (error) {
-      console.error("Error confirming appointment:", error);
+      logger.error("Error confirming appointment:", error);
       alert("Error al confirmar cita.");
     }
   };
@@ -1188,7 +1189,7 @@ export default function MedicalSystem({ user, onLogout }) {
         // If patient exists, we must use their data (especially history/consultations)
         // We restore the structure from the 'data' JSONB column if available
         existingPatient = { ...data.data, id: data.id };
-        console.log("Found existing patient:", existingPatient);
+        logger.log("Found existing patient:", existingPatient);
 
         if (confirm(`El paciente ${existingPatient.nombre} ya existe en la base de datos (posiblemente en papelera). ¿Desea cargar su historial previo?`)) {
           // If user accepts, we use existing data
@@ -1284,7 +1285,7 @@ export default function MedicalSystem({ user, onLogout }) {
         setPatients(loadedPatients);
       }
     } catch (error) {
-      console.error("Error al cargar pacientes:", error);
+      logger.error("Error al cargar pacientes:", error);
       alert("Error al sincronizar con la nube. Verifique su conexión.");
     } finally {
       setLoading(false);
@@ -1308,14 +1309,14 @@ export default function MedicalSystem({ user, onLogout }) {
     const subscription = supabase
       .channel('appointments-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, (payload) => {
-        console.log('Real-time change detected:', payload);
+        logger.log('Real-time change detected:', payload);
         fetchDailyAppointments();
       })
       .subscribe();
 
     // 3. Polling (Backup every 5 minutes)
     const intervalId = setInterval(() => {
-      console.log('Auto-refreshing appointments (5 min)...');
+      logger.log('Auto-refreshing appointments (5 min)...');
       fetchDailyAppointments();
     }, 5 * 60 * 1000);
 
@@ -1351,7 +1352,7 @@ export default function MedicalSystem({ user, onLogout }) {
       const [y, m, d] = dateToQuery.split('-');
       setListDate(`${d}/${m}/${y}`);
     } catch (error) {
-      console.error("Error fetching daily list:", error);
+      logger.error("Error fetching daily list:", error);
     }
   };
 
@@ -1369,7 +1370,7 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
       setTrashedAppointments(data || []);
     } catch (error) {
-      console.error("Error fetching trashed appointments:", error);
+      logger.error("Error fetching trashed appointments:", error);
     }
   };
 
@@ -1387,7 +1388,7 @@ export default function MedicalSystem({ user, onLogout }) {
       setTrashedAppointments(prev => prev.filter(a => a.id !== id));
       fetchAppointments(); // Refresh appointments list
     } catch (error) {
-      console.error("Error restoring appointment:", error);
+      logger.error("Error restoring appointment:", error);
       alert("Error al restaurar la cita.");
     }
   };
@@ -1407,7 +1408,7 @@ export default function MedicalSystem({ user, onLogout }) {
       // Update local state
       setTrashedAppointments(prev => prev.filter(a => a.id !== id));
     } catch (error) {
-      console.error("Error permanently deleting appointment:", error);
+      logger.error("Error permanently deleting appointment:", error);
       alert("Error al eliminar la cita.");
     }
   };
@@ -1439,7 +1440,7 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
       fetchDailyAppointments(); // Refresh list
     } catch (error) {
-      console.error("Error updating status:", error);
+      logger.error("Error updating status:", error);
     }
   };
 
@@ -1455,7 +1456,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (error) throw error;
     } catch (error) {
-      console.error(`Error updating ${field}:`, error);
+      logger.error(`Error updating ${field}:`, error);
       fetchDailyAppointments(); // Revert on error
     }
   };
@@ -1487,7 +1488,7 @@ export default function MedicalSystem({ user, onLogout }) {
         .upsert(updates.map(u => ({ id: u.id, queue_order: u.queue_order })));
       if (error) throw error;
     } catch (error) {
-      console.error("Error reordering:", error);
+      logger.error("Error reordering:", error);
       fetchDailyAppointments(); // Revert
     }
   };
@@ -1535,7 +1536,7 @@ export default function MedicalSystem({ user, onLogout }) {
         fetchDailyAppointments(); // Refresh lists
         fetchAppointments();
       } catch (error) {
-        console.error("Error duplicating appointment:", error);
+        logger.error("Error duplicating appointment:", error);
         alert("Error al crear nueva cita.");
       }
       return;
@@ -1573,7 +1574,7 @@ export default function MedicalSystem({ user, onLogout }) {
       // Re-fetch to ensure consistency (optional but safer)
       // fetchDailyAppointments(); 
     } catch (error) {
-      console.error("Error updating time:", error);
+      logger.error("Error updating time:", error);
       fetchDailyAppointments(); // Revert
       fetchAppointments(); // Revert
     }
@@ -1625,7 +1626,7 @@ export default function MedicalSystem({ user, onLogout }) {
         fetchTrashedAppointments();
       }
     } catch (error) {
-      console.error("Error deleting appointment:", error);
+      logger.error("Error deleting appointment:", error);
       fetchDailyAppointments(); // Revert
       fetchAppointments(); // Revert
     }
@@ -1692,7 +1693,7 @@ export default function MedicalSystem({ user, onLogout }) {
         fetchTrashedAppointments();
       }
     } catch (error) {
-      console.error("Error bulk deleting:", error);
+      logger.error("Error bulk deleting:", error);
       fetchAppointments();
       fetchDailyAppointments();
     }
@@ -1719,7 +1720,7 @@ export default function MedicalSystem({ user, onLogout }) {
       fetchAppointments();
       fetchDailyAppointments();
     } catch (error) {
-      console.error("Error deleting triage items:", error);
+      logger.error("Error deleting triage items:", error);
       alert("Error al eliminar pacientes.");
     }
   };
@@ -1757,7 +1758,7 @@ export default function MedicalSystem({ user, onLogout }) {
       fetchTrashedAppointments();
       fetchAppointments();
     } catch (error) {
-      console.error("Error restoring appointments:", error);
+      logger.error("Error restoring appointments:", error);
       alert("Error al restaurar las citas.");
     }
   };
@@ -1777,7 +1778,7 @@ export default function MedicalSystem({ user, onLogout }) {
       setSelectedTrashItems([]);
       fetchTrashedAppointments();
     } catch (error) {
-      console.error("Error permanently deleting appointments:", error);
+      logger.error("Error permanently deleting appointments:", error);
       alert("Error al eliminar las citas.");
     }
   };
@@ -1797,7 +1798,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error deleting patient:", error);
+      logger.error("Error deleting patient:", error);
       fetchPatients(); // Revert
       alert("Error al eliminar paciente.");
     }
@@ -2117,7 +2118,7 @@ export default function MedicalSystem({ user, onLogout }) {
       navigate('list');
 
     } catch (error) {
-      console.error("Error al guardar en Supabase:", error);
+      logger.error("Error al guardar en Supabase:", error);
       alert("Error al guardar en la nube. Los datos están en local pero podrían perderse si recargas.");
     }
   };
@@ -2307,7 +2308,7 @@ export default function MedicalSystem({ user, onLogout }) {
           fileName: file.name
         });
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         alert("Error al leer el archivo Excel.");
       }
     };
@@ -3800,7 +3801,7 @@ margin: 0;
                                       setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
 
                                       supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                                        if (error) { console.error(error); fetchAppointments(); }
+                                        if (error) { logger.error(error); fetchAppointments(); }
                                       });
                                     }
                                   }}
@@ -3822,7 +3823,7 @@ margin: 0;
                                       setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
 
                                       supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                                        if (error) { console.error(error); fetchAppointments(); }
+                                        if (error) { logger.error(error); fetchAppointments(); }
                                       });
                                     }
                                   }}
@@ -4019,7 +4020,7 @@ margin: 0;
                                     const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
                                     setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
                                     supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                                      if (error) console.error(error);
+                                      if (error) logger.error(error);
                                       fetchAppointments();
                                     });
                                   }
@@ -4044,7 +4045,7 @@ margin: 0;
                                     const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
                                     setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
                                     supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                                      if (error) { console.error(error); fetchAppointments(); }
+                                      if (error) { logger.error(error); fetchAppointments(); }
                                     });
                                   }
                                 }}
