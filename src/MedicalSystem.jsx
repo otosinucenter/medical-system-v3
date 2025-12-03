@@ -1584,20 +1584,22 @@ export default function MedicalSystem({ user, onLogout }) {
 
     if (!apt) return;
 
-    // PROTECCIÓN ESTRICTA: No permitir borrar si está en Triaje
+    // PROTECCIÓN ESTRICTA: Advertencia si está en Triaje
     const protectedStatuses = ['confirmed', 'arrived', 'attended'];
     if (protectedStatuses.includes(apt.status)) {
-      alert("🚫 ACCIÓN BLOQUEADA\n\nNo se puede eliminar esta cita desde la Agenda porque ya se encuentra en Triaje (Confirmado, En Sala o Atendido).\n\nPara eliminarla, debe hacerlo desde la vista de Triaje o cambiar su estado.");
-      return;
+      if (!confirm("⚠️ ADVERTENCIA: Esta cita ya está en Triaje (Confirmado/En Sala/Atendido).\n\n¿Seguro que deseas eliminarla? Se moverá a la papelera.")) {
+        return;
+      }
     }
 
-    // PROTECCIÓN HISTÓRICA: No permitir borrar citas pasadas
+    // PROTECCIÓN HISTÓRICA: Advertencia si es pasada
     const today = new Date().toISOString().split('T')[0];
     const aptDate = new Date(apt.appointment_date).toISOString().split('T')[0];
 
     if (aptDate < today) {
-      alert("🚫 ACCIÓN BLOQUEADA\n\nNo se puede eliminar esta cita porque pertenece al historial (fecha pasada).\n\nLas citas de días anteriores se conservan como registro histórico.");
-      return;
+      if (!confirm("⚠️ ADVERTENCIA: Esta cita es del historial (fecha pasada).\n\n¿Seguro que deseas eliminarla?")) {
+        return;
+      }
     }
 
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta solicitud?")) return;
@@ -1650,31 +1652,23 @@ export default function MedicalSystem({ user, onLogout }) {
     const protectedStatuses = ['confirmed', 'arrived', 'attended'];
     const today = new Date().toISOString().split('T')[0];
 
-    // Filtramos las citas que son seguras de borrar (NO están en Triaje Y NO son pasadas)
-    const safeToDelete = appointments.filter(a => {
+    // Identificar citas "peligrosas" (Triaje o Pasadas)
+    const dangerousToDelete = appointments.filter(a => {
       if (!selectedAppointments.includes(a.id)) return false;
-
       const isTriage = protectedStatuses.includes(a.status);
       const isPast = new Date(a.appointment_date).toISOString().split('T')[0] < today;
+      return isTriage || isPast;
+    });
 
-      return !isTriage && !isPast;
-    }).map(a => a.id);
-
-    const skippedCount = selectedAppointments.length - safeToDelete.length;
-
-    if (safeToDelete.length === 0) {
-      alert("🚫 ACCIÓN BLOQUEADA\n\nTodas las citas seleccionadas están protegidas (Triaje o Historial) y no se pueden eliminar desde aquí.");
-      return;
+    if (dangerousToDelete.length > 0) {
+      if (!confirm(`⚠️ ADVERTENCIA: Has seleccionado ${dangerousToDelete.length} citas que están en Triaje o son del Historial.\n\n¿Estás seguro de que deseas eliminarlas todas?`)) {
+        return;
+      }
     }
 
-    let warningMessage = "";
-    if (skippedCount > 0) {
-      warningMessage = `⚠️ ATENCIÓN: Se omitirán ${skippedCount} citas protegidas (Triaje o Historial).\n\n`;
-    }
+    if (!window.confirm(`¿Estás seguro de eliminar las ${selectedAppointments.length} solicitudes seleccionadas?`)) return;
 
-    if (!window.confirm(`${warningMessage}¿Estás seguro de eliminar las ${safeToDelete.length} solicitudes restantes?`)) return;
-
-    const itemsToDelete = safeToDelete;
+    const itemsToDelete = selectedAppointments;
 
     // Optimistic Update
     setAppointments(prev => prev.filter(a => !itemsToDelete.includes(a.id)));
