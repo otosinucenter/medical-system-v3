@@ -99,6 +99,16 @@ export default function PublicAppointmentFormV2() {
         fetchClinic();
     }, [clinicId]);
 
+    // Auto-actualizar código de teléfono según país seleccionado
+    useEffect(() => {
+        if (formData.country && COUNTRY_CODES[formData.country]) {
+            const countryData = COUNTRY_CODES[formData.country];
+            if (countryData.code && formData.phoneCode !== countryData.code) {
+                setFormData(prev => ({ ...prev, phoneCode: countryData.code }));
+            }
+        }
+    }, [formData.country]);
+
     // Lógica de horarios inteligentes
     useEffect(() => {
         if (!formData.date) {
