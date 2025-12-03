@@ -199,24 +199,28 @@ export default function PublicAppointmentFormV2() {
             data.forEach(apt => {
                 const aptDate = new Date(apt.appointment_date);
 
-                // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú UTC-5)
-                // Manual Offset Calculation: UTC - 5 hours
-                const PERU_OFFSET = 5 * 60 * 60 * 1000;
-                const peruDateObj = new Date(aptDate.getTime() - PERU_OFFSET);
+                // 1. Parse date using Intl to force Peru Time interpretation
+                // This avoids any manual offset math and relies on the browser's robust timezone database
+                const peruDateStr = new Intl.DateTimeFormat('en-CA', { // en-CA gives YYYY-MM-DD
+                    timeZone: 'America/Lima',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(aptDate);
 
-                // Formato YYYY-MM-DD usando métodos UTC del objeto desplazado
-                const pYear = peruDateObj.getUTCFullYear();
-                const pMonth = String(peruDateObj.getUTCMonth() + 1).padStart(2, '0');
-                const pDay = String(peruDateObj.getUTCDate()).padStart(2, '0');
-                const calculatedPeruDate = `${pYear}-${pMonth}-${pDay}`;
-
-                if (calculatedPeruDate !== formData.date) {
+                if (peruDateStr !== formData.date) {
                     return; // Ignorar citas de otros días
                 }
 
-                // 2. Obtener hora en Perú (UTC-5)
-                const aptH = peruDateObj.getUTCHours();
-                const aptM = peruDateObj.getUTCMinutes();
+                // 2. Parse time using Intl
+                const peruTimeStr = new Intl.DateTimeFormat('en-GB', { // en-GB gives HH:MM
+                    timeZone: 'America/Lima',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(aptDate);
+
+                const [aptH, aptM] = peruTimeStr.split(':').map(Number);
 
                 const aptStartMinutes = aptH * 60 + aptM;
                 const aptEndMinutes = aptStartMinutes + APPOINTMENT_DURATION;
@@ -896,7 +900,21 @@ export default function PublicAppointmentFormV2() {
                 </form>
             </div>
 
-
+            {/* DEBUG SECTION - TEMPORARY */}
+            <div className="max-w-2xl mx-auto mt-8 p-4 bg-slate-900 text-green-400 rounded-xl font-mono text-xs overflow-x-auto">
+                <h4 className="font-bold text-white mb-2">DEBUG INFO (V 1.3)</h4>
+                <p>Selected Date: {formData.date}</p>
+                <p>Booked Slots Count: {bookedSlots.length}</p>
+                <p>Booked Slots: {JSON.stringify(bookedSlots)}</p>
+                <hr className="border-slate-700 my-2" />
+                <p>Raw Appointments (Last 5):</p>
+                <pre>
+                    {/* We can't easily access 'data' here since it's inside useEffect, 
+                        so we'll just show what we have in state if we refactor, 
+                        but for now let's just show the bookedSlots which is the result */}
+                    To see raw data, please check console or wait for next update.
+                </pre>
+            </div>
         </div >
     );
 }
