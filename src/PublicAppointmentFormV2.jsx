@@ -84,6 +84,7 @@ export default function PublicAppointmentFormV2() {
     const [bookedSlots, setBookedSlots] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
     const ticketParam = searchParams.get('ticket');
+    const [debugLog, setDebugLog] = useState(null); // Estado para logs de depuración
 
     // Verificar si hay un ticket en la URL para mostrar la pantalla de éxito
     useEffect(() => {
@@ -167,11 +168,21 @@ export default function PublicAppointmentFormV2() {
 
         if (error) {
             console.error("Error fetching slots:", error);
+            setDebugLog({ error: error.message });
             return;
         }
 
         if (data) {
             console.log("✅ Citas encontradas:", data.length);
+
+            // Capture debug info for the first appointment if exists
+            const debugInfo = {
+                totalRaw: data.length,
+                firstRawDate: data.length > 0 ? data[0].appointment_date : 'N/A',
+                comparisonDate: formData.date,
+                serverTime: new Date().toISOString()
+            };
+
             // Lógica de bloqueo inteligente por duración (20 min)
             const blocked = new Set();
             const APPOINTMENT_DURATION = 20; // minutos
@@ -219,6 +230,14 @@ export default function PublicAppointmentFormV2() {
             });
 
             setBookedSlots(Array.from(blocked));
+            setDebugLog({
+                totalRaw: data.length,
+                firstRawDate: data.length > 0 ? data[0].appointment_date : 'N/A',
+                comparisonDate: formData.date,
+                serverTime: new Date().toISOString(),
+                blockedCount: blocked.size,
+                blockedSlots: Array.from(blocked)
+            });
         }
     }, [clinicId, formData.date]);
 
@@ -471,7 +490,7 @@ export default function PublicAppointmentFormV2() {
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-center">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.3 (Manual Offset)</span>
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">BETA v2.4 (Deep Debug)</span>
                     <h1 className="text-2xl font-bold text-white">Solicitud de Agenda de Cita</h1>
                     <p className="text-indigo-100 mt-2 text-sm px-4">
                         Versión de prueba con selección inteligente de horarios.
