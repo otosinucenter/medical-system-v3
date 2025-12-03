@@ -169,12 +169,14 @@ export default function PublicAppointmentFormV2() {
         const searchEnd = new Date(endOfDay);
         searchEnd.setDate(searchEnd.getDate() + 1);
 
+        // Replace RPC with direct query for reliability
         const { data, error } = await supabase
-            .rpc('get_booked_slots', {
-                p_clinic_id: clinicId,
-                p_start: searchStart.toISOString(),
-                p_end: searchEnd.toISOString()
-            });
+            .from('appointments')
+            .select('appointment_date') // Use actual column name
+            .eq('clinic_id', clinicId)
+            .gte('appointment_date', searchStart.toISOString())
+            .lte('appointment_date', searchEnd.toISOString())
+            .not('status', 'in', '("cancelled","trash")'); // Filter invalid statuses
 
         if (error) {
             console.error("Error fetching slots:", error);
@@ -195,7 +197,7 @@ export default function PublicAppointmentFormV2() {
             else if (day === 3 || day === 5) currentSlots = generateSlots("14:20", "20:00", 20);
 
             data.forEach(apt => {
-                const aptDate = new Date(apt.booked_date);
+                const aptDate = new Date(apt.appointment_date);
 
                 // 1. Verificar que la fecha corresponda al día seleccionado (en Hora Perú UTC-5)
                 // Manual Offset Calculation: UTC - 5 hours
@@ -511,8 +513,12 @@ export default function PublicAppointmentFormV2() {
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona una Fecha</label>
                                 <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
                                     {getNextValidDates().map((dateObj) => {
-                                        // Format YYYY-MM-DD
-                                        const dateStr = dateObj.toISOString().split('T')[0];
+                                        // Format YYYY-MM-DD using Local Time to avoid timezone shifts
+                                        const year = dateObj.getFullYear();
+                                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                        const day = String(dateObj.getDate()).padStart(2, '0');
+                                        const dateStr = `${year}-${month}-${day}`;
+
                                         const isSelected = formData.date === dateStr;
                                         const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' });
                                         const dayNum = dateObj.getDate();

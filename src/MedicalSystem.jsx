@@ -4233,6 +4233,9 @@ margin: 0;
           }
         </div>
       </main>
+      <div className="p-4 text-center text-xs text-slate-500">
+        V 1.2 (Direct Query)
+      </div>
     </div>
   );
 }
