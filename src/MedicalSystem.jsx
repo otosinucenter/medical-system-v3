@@ -1249,9 +1249,9 @@ export default function MedicalSystem({ user, onLogout }) {
         .from('appointments')
         .select('*')
         .eq('clinic_id', user.clinicId)
+        .eq('status', 'confirmed') // Only show confirmed appointments
         .gte('appointment_date', startOfDay.toISOString())
         .lte('appointment_date', endOfDay.toISOString())
-        .neq('status', 'trash') // Exclude trash
         .order('appointment_date', { ascending: true }) // Sort by time automatically
         .order('queue_order', { ascending: true });
 
