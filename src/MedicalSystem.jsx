@@ -4234,8 +4234,8 @@ margin: 0;
           }
         </div>
       </main>
-      <div className="p-4 text-center text-xs text-slate-500">
-        V 1.3 (Debug)
+      <div className="text-center text-xs text-slate-300 py-4">
+        V 1.9 (Debug Mode)
       </div>
     </div>
   );
