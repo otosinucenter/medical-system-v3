@@ -1686,7 +1686,17 @@ export default function MedicalSystem({ user, onLogout }) {
       const isTriage = protectedStatuses.includes(a.status);
       const isPast = new Date(a.appointment_date).toISOString().split('T')[0] < today;
       return isTriage || isPast;
+      return isTriage || isPast;
     });
+
+    // Identificar citas con Ticket (Web)
+    const ticketedToDelete = appointments.filter(a => selectedAppointments.includes(a.id) && a.symptoms?.includes('[Ticket: #'));
+
+    if (ticketedToDelete.length > 0) {
+      if (!confirm(`⚠️ ADVERTENCIA DE SEGURIDAD\n\nHas seleccionado ${ticketedToDelete.length} citas que tienen TICKET (Solicitud Web).\n\n¿Confirmas que deseas eliminarlas permanentemente?`)) {
+        return;
+      }
+    }
 
     if (dangerousToDelete.length > 0) {
       if (!confirm(`⚠️ ADVERTENCIA: Has seleccionado ${dangerousToDelete.length} citas que están en Triaje o son del Historial.\n\n¿Estás seguro de que deseas eliminarlas todas?`)) {
