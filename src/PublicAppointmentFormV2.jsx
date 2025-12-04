@@ -34,7 +34,7 @@ export default function PublicAppointmentFormV2() {
     const { clinicId } = useParams();
     const [formData, setFormData] = useState({
         // Cita
-        date: getNextAvailableDate(),
+        date: '', // Initialize empty, will be set after settings load
         time: '',
         symptoms: '',
         // Datos Personales
@@ -67,6 +67,7 @@ export default function PublicAppointmentFormV2() {
     const [clinicName, setClinicName] = useState('');
     const [availableSlots, setAvailableSlots] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
+    const [clinicSettings, setClinicSettings] = useState(null); // Nuevo estado para configuración
     const [searchParams, setSearchParams] = useSearchParams();
     const ticketParam = searchParams.get('ticket');
 
@@ -85,7 +86,8 @@ export default function PublicAppointmentFormV2() {
             }
         } else {
             setSubmitted(false);
-            setFormData(prev => ({ ...prev, date: getNextAvailableDate(), time: '' })); // Limpiar formulario básico
+            // Reset to empty, effect will set date once settings load
+            setFormData(prev => ({ ...prev, date: '', time: '' }));
         }
     }, [ticketParam, clinicId]);
 
@@ -94,14 +96,70 @@ export default function PublicAppointmentFormV2() {
             if (!clinicId) return;
             const { data, error } = await supabase
                 .from('clinics')
-                .select('name')
+                .select('name, settings') // Fetch settings too
                 .eq('id', clinicId)
                 .single();
 
-            if (data) setClinicName(data.name);
+            if (data) {
+                setClinicName(data.name);
+                if (data.settings?.availability) {
+                    setClinicSettings(data.settings.availability);
+                }
+            }
         };
         fetchClinic();
     }, [clinicId]);
+
+    // Helper to get valid dates based on settings
+    const getDynamicValidDates = useCallback((count = 7) => {
+        const dates = [];
+        let current = new Date();
+
+        // Safety break
+        let attempts = 0;
+        while (dates.length < count && attempts < 100) {
+            const dayIndex = current.getDay();
+            const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayKey = daysMap[dayIndex];
+
+            let isValid = false;
+
+            if (clinicSettings) {
+                // Use dynamic settings
+                if (clinicSettings[dayKey]?.active) {
+                    isValid = true;
+                }
+            } else {
+                // Fallback legacy logic (Mon, Wed, Fri)
+                if ([1, 3, 5].includes(dayIndex)) {
+                    isValid = true;
+                }
+            }
+
+            if (isValid) {
+                dates.push(new Date(current));
+            }
+
+            current.setDate(current.getDate() + 1);
+            attempts++;
+        }
+        return dates;
+    }, [clinicSettings]);
+
+    // Set initial date once settings are loaded
+    useEffect(() => {
+        if (!formData.date && (clinicSettings || !loading)) {
+            const validDates = getDynamicValidDates(1);
+            if (validDates.length > 0) {
+                const dateObj = validDates[0];
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                setFormData(prev => ({ ...prev, date: dateStr }));
+            }
+        }
+    }, [clinicSettings, getDynamicValidDates, loading]);
 
     // Auto-actualizar código de teléfono según país seleccionado
     useEffect(() => {
@@ -163,10 +221,20 @@ export default function PublicAppointmentFormV2() {
             const APPOINTMENT_DURATION = 20; // minutos
 
             // Regenerar slots para asegurar consistencia
-            const day = new Date(formData.date + 'T00:00:00').getDay();
+            const dayIndex = new Date(formData.date + 'T00:00:00').getDay();
+            const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayKey = daysMap[dayIndex];
+
             let currentSlots = [];
-            if (day === 1) currentSlots = generateSlots("10:20", "15:00", 20);
-            else if (day === 3 || day === 5) currentSlots = generateSlots("14:20", "20:00", 20);
+
+            if (clinicSettings && clinicSettings[dayKey]?.active) {
+                const { start, end } = clinicSettings[dayKey];
+                currentSlots = generateSlots(start, end, 20);
+            } else {
+                // Fallback legacy logic
+                if (dayIndex === 1) currentSlots = generateSlots("10:20", "15:00", 20);
+                else if (dayIndex === 3 || dayIndex === 5) currentSlots = generateSlots("14:20", "20:00", 20);
+            }
 
             data.forEach(apt => {
                 // RPC returns 'booked_date', direct query returned 'appointment_date'
@@ -211,11 +279,22 @@ export default function PublicAppointmentFormV2() {
         }
 
         const date = new Date(formData.date + 'T00:00:00');
-        const day = date.getDay();
+        const dayIndex = date.getDay();
+        const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayKey = daysMap[dayIndex];
         let slots = [];
 
-        if (day === 1) slots = generateSlots("10:20", "15:00", 20);
-        else if (day === 3 || day === 5) slots = generateSlots("14:20", "20:00", 20);
+        if (clinicSettings) {
+            // Use dynamic settings
+            if (clinicSettings[dayKey]?.active) {
+                const { start, end } = clinicSettings[dayKey];
+                slots = generateSlots(start, end, 20);
+            }
+        } else {
+            // Fallback legacy logic
+            if (dayIndex === 1) slots = generateSlots("10:20", "15:00", 20);
+            else if (dayIndex === 3 || dayIndex === 5) slots = generateSlots("14:20", "20:00", 20);
+        }
 
         setAvailableSlots(slots);
 
@@ -243,7 +322,7 @@ export default function PublicAppointmentFormV2() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [formData.date, clinicId, fetchBookedSlots]);
+    }, [formData.date, clinicId, fetchBookedSlots, clinicSettings]);
 
     const handleCheckboxChange = (value) => {
         const current = formData.referral_source;
@@ -476,7 +555,7 @@ export default function PublicAppointmentFormV2() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona una Fecha</label>
                                 <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
-                                    {getNextValidDates().map((dateObj) => {
+                                    {getDynamicValidDates().map((dateObj) => {
                                         // Format YYYY-MM-DD using Local Time to avoid timezone shifts
                                         const year = dateObj.getFullYear();
                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -521,20 +600,33 @@ export default function PublicAppointmentFormV2() {
                                                 if (isBooked) return false; // 1. Ocultar ocupados
 
                                                 // Definir si es "Borde" (Temprano/Tarde) o "Centro"
-                                                // Lunes: 10:20-15:00. Centro: 11:00-14:00
-                                                // Mié/Vie: 14:20-20:00. Centro: 15:00-19:00
+                                                // Lógica dinámica basada en settings o fallback
                                                 let isEdge = false;
-                                                const day = new Date(formData.date + 'T00:00:00').getDay();
+                                                const dayIndex = new Date(formData.date + 'T00:00:00').getDay();
+                                                const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                                const dayKey = daysMap[dayIndex];
 
-                                                if (day === 1) { // Lunes
-                                                    if (slot < "11:00" || slot >= "14:20") isEdge = true;
-                                                } else { // Mié/Vie
-                                                    if (slot < "15:00" || slot >= "19:00") isEdge = true;
+                                                let startLimit, endLimit;
+
+                                                if (clinicSettings && clinicSettings[dayKey]) {
+                                                    // Calcular centro dinámico (aprox 1 hora después del inicio y 1 hora antes del fin)
+                                                    // Simplificación: Usar lógica fija si no hay cálculo complejo
+                                                    // Por ahora mantenemos la lógica visual de "bordes" solo si coincide con los horarios legacy para no romper el diseño
+                                                    // O mejor: deshabilitamos la lógica de bordes para horarios custom para evitar ocultar slots válidos
+                                                    isEdge = false;
+                                                } else {
+                                                    // Legacy logic
+                                                    if (dayIndex === 1) { // Lunes
+                                                        if (slot < "11:00" || slot >= "14:20") isEdge = true;
+                                                    } else { // Mié/Vie
+                                                        if (slot < "15:00" || slot >= "19:00") isEdge = true;
+                                                    }
                                                 }
 
                                                 // Calcular saturación del Centro
                                                 const coreSlots = availableSlots.filter(s => {
-                                                    if (day === 1) return s >= "11:00" && s < "14:20";
+                                                    if (clinicSettings) return true; // Si es dinámico, todo cuenta como core para simplificar
+                                                    if (dayIndex === 1) return s >= "11:00" && s < "14:20";
                                                     return s >= "15:00" && s < "19:00";
                                                 });
                                                 const bookedCore = coreSlots.filter(s => bookedSlots.includes(s));

@@ -6,7 +6,7 @@ import {
   Trash2, ListPlus, Pill, Ear, Smile, Mic2, Printer, Baby, Info,
   HelpCircle, Download, AlertCircle, History, Clock, Eye, MapPin,
   Briefcase, Mail, AlertTriangle, CalendarDays, FileSignature, Edit3, X, LogOut, MessageCircle, Link,
-  RefreshCw, ChevronUp, ChevronDown, ArrowRight, CheckCircle2
+  RefreshCw, ChevronUp, ChevronDown, ArrowRight, CheckCircle2, Settings
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
@@ -14,9 +14,11 @@ import logger from './utils/logger';
 
 
 
+import ConfiguracionHorarios from './ConfiguracionHorarios';
+
 export default function MedicalSystem({ user, onLogout }) {
   logger.log("MedicalSystem user prop:", user);
-  const [view, setView] = useState('triage'); // triage, patients, history, agenda, agenda-v2
+  const [view, setView] = useState('triage'); // triage, patients, history, agenda, agenda-v2, config
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [importText, setImportText] = useState('');
@@ -497,6 +499,26 @@ export default function MedicalSystem({ user, onLogout }) {
               )}
             </>
           )}
+
+          {/* VISTA CONFIGURACIÓN */}
+          {view === 'config' && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                  <div className="bg-blue-50 p-3 rounded-full">
+                    <Settings className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Horarios de Atención</h2>
+                    <p className="text-sm text-slate-500">Configura los días y horas disponibles para citas online.</p>
+                  </div>
+                </div>
+
+                <ConfiguracionHorarios clinicId={user.clinicId} />
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     );
@@ -2612,6 +2634,12 @@ margin: 0;
               <Briefcase className="w-5 h-5 mr-3" />
               <span className="font-medium text-sm">Gestión de Datos</span>
             </button>
+            {(user.role === 'admin' || user.role === 'doctor') && (
+              <button onClick={() => { navigate('config'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'config' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                <Settings className="w-5 h-5 mr-3" />
+                <span className="font-medium text-sm">Configuración</span>
+              </button>
+            )}
           </div>
         </nav>
 
@@ -2641,6 +2669,7 @@ margin: 0;
               {view === 'agenda-v2' && 'Agenda v2.0'}
               {view === 'form' && 'Ficha de Ingreso'}
               {view === 'detail' && 'Historia Clínica'}
+              {view === 'config' && 'Configuración'}
             </span>
           </div>
           <div className="w-8"></div> {/* Espaciador para centrar */}
@@ -2653,7 +2682,9 @@ margin: 0;
               {view === 'list' && 'Base de Datos de Pacientes'}
               {view === 'form' && (isNewPatient ? 'Ficha de Ingreso' : (editingConsultationIndex !== null ? 'Editar Consulta' : 'Nueva Consulta Médica'))}
               {view === 'detail' && 'Historia Clínica Digital'}
+              {view === 'detail' && 'Historia Clínica Digital'}
               {view === 'triage' && 'Triaje y Lista de Espera'}
+              {view === 'config' && 'Configuración del Consultorio'}
             </h1>
           </header>
 
@@ -3154,6 +3185,25 @@ margin: 0;
                     {trashedAppointments.length} {trashedAppointments.length === 1 ? 'cita eliminada' : 'citas eliminadas'}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* VISTA CONFIGURACIÓN */}
+          {view === 'config' && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                  <div className="bg-blue-50 p-3 rounded-full">
+                    <Settings className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Horarios de Atención</h2>
+                    <p className="text-sm text-slate-500">Configura los días y horas disponibles para citas online.</p>
+                  </div>
+                </div>
+
+                <ConfiguracionHorarios clinicId={user.clinicId} />
               </div>
             </div>
           )}
