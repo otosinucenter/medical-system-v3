@@ -230,6 +230,9 @@ export default function MedicalSystem({ user, onLogout }) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [patients]); // Dependencia 'patients' para re-intentar buscar si cargan tarde
 
+
+
+
   // --- EFECTOS ---
   // --- UTILS ---
   const TrashView = ({ user }) => {
@@ -1268,6 +1271,9 @@ export default function MedicalSystem({ user, onLogout }) {
       setIsNewPatient(true);
     }
 
+    // CLEAR DRAFT to ensure we start fresh with this patient
+    clearDraft();
+
     navigate('form');
   };
 
@@ -1275,6 +1281,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
 
   // Cargar pacientes al inicio
+
   useEffect(() => {
     if (user?.clinicId) {
       fetchPatients();
@@ -1834,6 +1841,39 @@ export default function MedicalSystem({ user, onLogout }) {
     receta: [],
     indicaciones: ''
   });
+
+  // --- PERSISTENCIA DEL FORMULARIO ---
+  // Cargar borrador al iniciar
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('medical_form_draft');
+    if (savedDraft && view === 'form' && isNewPatient) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        // Solo restaurar si parece válido y tiene datos
+        if (parsed && (parsed.nombre || parsed.resumen || parsed.diagnosticos?.length > 0)) {
+          logger.log("Restoring draft from localStorage");
+          setFormData(parsed);
+        }
+      } catch (e) {
+        console.error("Error parsing draft", e);
+      }
+    }
+  }, [view, isNewPatient]); // Re-run when view changes (e.g. after URL sync)
+
+  // Guardar borrador automáticamente
+  useEffect(() => {
+    if (view === 'form') {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem('medical_form_draft', JSON.stringify(formData));
+      }, 500); // Debounce de 500ms
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, view]);
+
+  // Limpiar borrador explícitamente
+  const clearDraft = () => {
+    localStorage.removeItem('medical_form_draft');
+  };
 
   const parseDate = (dateString) => {
     if (!dateString) return '';
@@ -2586,6 +2626,7 @@ margin: 0;
             <button onClick={() => {
               setIsNewPatient(true);
               setEditingConsultationIndex(null);
+              clearDraft(); // CLEAR DRAFT for new patient
               setFormData({
                 id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
                 celular: '', email: '', fechaNacimiento: '',
