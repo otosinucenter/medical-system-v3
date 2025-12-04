@@ -1842,6 +1842,24 @@ export default function MedicalSystem({ user, onLogout }) {
     indicaciones: ''
   });
 
+  // Helper for auto-resizing textareas
+  const autoResize = (el) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  };
+
+  // Effect to auto-resize on data load
+  useEffect(() => {
+    if (view === 'form') {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('textarea.auto-resize');
+        textareas.forEach(el => autoResize(el));
+      }, 100);
+    }
+  }, [formData, view]);
+
   // --- PERSISTENCIA DEL FORMULARIO ---
   // Cargar borrador al iniciar
   useEffect(() => {
@@ -3291,10 +3309,47 @@ margin: 0;
                     <div className="bg-gray-50 p-4 rounded border">
                       <h3 className="font-bold text-gray-700 text-sm mb-3 flex items-center"><History className="w-4 h-4 mr-2" /> 2. Antecedentes Médicos</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div><label className="text-xs font-bold text-red-600">Alergias</label><input name="alergias" value={formData.alergias} onChange={handleChange} className="w-full border p-1 rounded text-sm border-red-200" placeholder="Ninguna" /></div>
-                        <div><label className="text-xs font-bold">Enfermedades</label><input name="enfermedades" value={formData.enfermedades} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
-                        <div><label className="text-xs font-bold">Medicamentos Uso</label><input name="medicamentos" value={formData.medicamentos} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
-                        <div><label className="text-xs font-bold">Cirugías</label><input name="cirugias" value={formData.cirugias} onChange={handleChange} className="w-full border p-1 rounded text-sm" /></div>
+                        <div>
+                          <label className="text-xs font-bold text-red-600">Alergias</label>
+                          <textarea
+                            name="alergias"
+                            value={formData.alergias}
+                            onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                            rows={1}
+                            className="w-full border p-1 rounded text-sm border-red-200 auto-resize overflow-hidden resize-none"
+                            placeholder="Ninguna"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold">Enfermedades</label>
+                          <textarea
+                            name="enfermedades"
+                            value={formData.enfermedades}
+                            onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                            rows={1}
+                            className="w-full border p-1 rounded text-sm auto-resize overflow-hidden resize-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold">Medicamentos Uso</label>
+                          <textarea
+                            name="medicamentos"
+                            value={formData.medicamentos}
+                            onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                            rows={1}
+                            className="w-full border p-1 rounded text-sm auto-resize overflow-hidden resize-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold">Cirugías</label>
+                          <textarea
+                            name="cirugias"
+                            value={formData.cirugias}
+                            onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                            rows={1}
+                            className="w-full border p-1 rounded text-sm auto-resize overflow-hidden resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
 
