@@ -85,14 +85,40 @@ const TriageView = ({
                         <p className="text-slate-400 font-medium">No hay citas programadas para este día.</p>
                     </div>
                 ) : (
-                    dailyList.map((p, index) => (
+                    [...dailyList].sort((a, b) => {
+                        // Priority order: arrived_ontime > arrived_late > on_way > confirmed > no_response > pending > cancelled > attended
+                        const priority = {
+                            'arrived_ontime': 1,
+                            'arrived_late': 2,
+                            'on_way': 3,
+                            'confirmed': 4,
+                            'no_response': 5,
+                            'pending': 6,
+                            undefined: 6,
+                            null: 6,
+                            '': 6,
+                            'cancelled': 7,
+                            'attended': 8
+                        };
+                        const aPriority = priority[a.triage_status] ?? 6;
+                        const bPriority = priority[b.triage_status] ?? 6;
+                        if (aPriority !== bPriority) return aPriority - bPriority;
+                        // Same priority: sort by appointment time
+                        return new Date(a.appointment_date) - new Date(b.appointment_date);
+                    }).map((p, index) => (
                         <div
                             key={p.id}
                             className={`
-                group relative bg-white rounded-2xl border transition-all duration-300
-                ${p.triage_status === 'attended' ? 'border-green-100 bg-green-50/30' : 'border-slate-100 hover:border-blue-200 hover:shadow-md'}
-                ${p.triage_status === 'arrived' ? 'border-yellow-200 bg-yellow-50/30 ring-1 ring-yellow-100' : ''}
-              `}
+                                group relative bg-white rounded-2xl border transition-all duration-300
+                                ${p.triage_status === 'attended' ? 'border-emerald-200 bg-emerald-50/30 opacity-60' : ''}
+                                ${p.triage_status === 'arrived_ontime' ? 'border-green-300 bg-green-50/50 ring-2 ring-green-200 shadow-lg' : ''}
+                                ${p.triage_status === 'arrived_late' ? 'border-yellow-300 bg-yellow-50/40 ring-1 ring-yellow-200' : ''}
+                                ${p.triage_status === 'on_way' ? 'border-purple-200 bg-purple-50/30' : ''}
+                                ${p.triage_status === 'no_response' ? 'border-orange-200 bg-orange-50/30' : ''}
+                                ${p.triage_status === 'cancelled' ? 'border-red-200 bg-red-50/30 opacity-50' : ''}
+                                ${p.triage_status === 'confirmed' ? 'border-blue-200 bg-blue-50/20' : ''}
+                                ${!p.triage_status || p.triage_status === 'pending' ? 'border-slate-100 hover:border-blue-200 hover:shadow-md' : ''}
+                            `}
                         >
                             {/* Selection Checkbox (Absolute) */}
                             <div className="absolute top-4 left-4 z-10">
@@ -241,44 +267,91 @@ const TriageView = ({
                                 </div>
 
                                 {/* Right Column: Status & Actions */}
-                                <div className="p-5 md:w-56 bg-slate-50/50 border-t md:border-t-0 md:border-l border-slate-100 rounded-b-2xl md:rounded-r-2xl md:rounded-bl-none flex flex-col justify-between gap-4">
+                                <div className="p-5 md:w-64 bg-slate-50/50 border-t md:border-t-0 md:border-l border-slate-100 rounded-b-2xl md:rounded-r-2xl md:rounded-bl-none flex flex-col justify-between gap-4">
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">Estado del Paciente</p>
-                                        <div className="grid grid-cols-1 gap-2">
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            {/* Confirmó */}
                                             <button
                                                 onClick={() => onUpdateTriageStatus(p.id, 'confirmed')}
-                                                className={`w-full px-3 py-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2
-                                    ${p.triage_status === 'confirmed'
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'confirmed'
                                                         ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm'
                                                         : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                                             >
-                                                <div className={`w-2 h-2 rounded-full ${p.triage_status === 'confirmed' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'confirmed' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                                                 Confirmó
                                             </button>
+                                            {/* No Responde */}
                                             <button
-                                                onClick={() => onUpdateTriageStatus(p.id, 'arrived')}
-                                                className={`w-full px-3 py-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2
-                                    ${p.triage_status === 'arrived'
-                                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm ring-1 ring-yellow-200'
+                                                onClick={() => onUpdateTriageStatus(p.id, 'no_response')}
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'no_response'
+                                                        ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-sm'
                                                         : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                                             >
-                                                <div className={`w-2 h-2 rounded-full ${p.triage_status === 'arrived' ? 'bg-yellow-500' : 'bg-slate-300'}`}></div>
-                                                Llegó
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'no_response' ? 'bg-orange-500' : 'bg-slate-300'}`}></div>
+                                                No Responde
                                             </button>
+                                            {/* En Camino */}
                                             <button
-                                                onClick={() => onUpdateTriageStatus(p.id, 'attended')}
-                                                className={`w-full px-3 py-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2
-                                    ${p.triage_status === 'attended'
-                                                        ? 'bg-green-100 text-green-700 border-green-200 shadow-sm'
+                                                onClick={() => onUpdateTriageStatus(p.id, 'on_way')}
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'on_way'
+                                                        ? 'bg-purple-100 text-purple-700 border-purple-200 shadow-sm'
                                                         : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                                             >
-                                                <div className={`w-2 h-2 rounded-full ${p.triage_status === 'attended' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                                Atendido
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'on_way' ? 'bg-purple-500' : 'bg-slate-300'}`}></div>
+                                                En Camino
+                                            </button>
+                                            {/* Canceló */}
+                                            <button
+                                                onClick={() => onUpdateTriageStatus(p.id, 'cancelled')}
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'cancelled'
+                                                        ? 'bg-red-100 text-red-700 border-red-200 shadow-sm'
+                                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                            >
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'cancelled' ? 'bg-red-500' : 'bg-slate-300'}`}></div>
+                                                Canceló
+                                            </button>
+                                            {/* Llegó Puntual */}
+                                            <button
+                                                onClick={() => onUpdateTriageStatus(p.id, 'arrived_ontime')}
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'arrived_ontime'
+                                                        ? 'bg-green-100 text-green-700 border-green-200 shadow-sm ring-1 ring-green-200'
+                                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                            >
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'arrived_ontime' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                Llegó ⭐
+                                            </button>
+                                            {/* Llegó Tarde */}
+                                            <button
+                                                onClick={() => onUpdateTriageStatus(p.id, 'arrived_late')}
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                    ${p.triage_status === 'arrived_late'
+                                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm'
+                                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                            >
+                                                <div className={`w-1.5 h-1.5 rounded-full ${p.triage_status === 'arrived_late' ? 'bg-yellow-500' : 'bg-slate-300'}`}></div>
+                                                Llegó Tarde
                                             </button>
                                         </div>
+                                        {/* Atendido - Full width */}
+                                        <button
+                                            onClick={() => onUpdateTriageStatus(p.id, 'attended')}
+                                            className={`w-full px-3 py-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 mt-2
+                                                ${p.triage_status === 'attended'
+                                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm'
+                                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                        >
+                                            <div className={`w-2 h-2 rounded-full ${p.triage_status === 'attended' ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                            Atendido
+                                        </button>
                                     </div>
 
-                                    {p.triage_status !== 'attended' && (user.role === 'doctor' || user.role === 'admin') && (
+                                    {(p.triage_status === 'arrived_ontime' || p.triage_status === 'arrived_late') && (user.role === 'doctor' || user.role === 'admin') && (
                                         <button
                                             onClick={() => { onUpdateTriageStatus(p.id, 'attended'); onConvertToPatient(p); }}
                                             className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center justify-center group/btn mt-auto"
@@ -291,8 +364,8 @@ const TriageView = ({
                         </div>
                     ))
                 )}
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
