@@ -169,17 +169,24 @@ const TriageView = ({
                                         </div>
 
                                         <div className="flex flex-wrap gap-2 mt-3">
-                                            {p.patient_phone ? (
-                                                <a
-                                                    href={`https://wa.me/51${p.patient_phone.replace(/\D/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-100 hover:bg-green-100 transition-colors"
-                                                >
-                                                    <Phone className="w-3.5 h-3.5" />
-                                                    {p.patient_phone}
-                                                </a>
-                                            ) : (
+                                            {p.patient_phone ? (() => {
+                                                let phone = p.patient_phone.replace(/\D/g, '');
+                                                // Only add 51 if it's a 9-digit number starting with 9 (Peru mobile)
+                                                if (phone.length === 9 && phone.startsWith('9')) {
+                                                    phone = '51' + phone;
+                                                }
+                                                return (
+                                                    <a
+                                                        href={`https://wa.me/${phone}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-100 hover:bg-green-100 transition-colors"
+                                                    >
+                                                        <Phone className="w-3.5 h-3.5" />
+                                                        {p.patient_phone}
+                                                    </a>
+                                                );
+                                            })() : (
                                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-xs font-bold border border-slate-100">
                                                     <Phone className="w-3.5 h-3.5" />
                                                     Sin celular
