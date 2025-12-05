@@ -84,7 +84,7 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-  const loadFromFolder = async () => {
+  const _loadFromFolder = async () => {
     if (!directoryHandle) {
       alert("Primero debes conectar una carpeta.");
       return;
@@ -110,7 +110,7 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- BASE DE DATOS (SUPABASE) ---
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
@@ -510,7 +510,7 @@ export default function MedicalSystem({ user, onLogout }) {
       if (isEditing) setEditingAppointment(null);
 
       // No alert needed - visual feedback from state change is enough
-    } catch (error) {
+    } catch {
       alert("Error al confirmar cita.");
     }
   };
@@ -525,7 +525,7 @@ export default function MedicalSystem({ user, onLogout }) {
     // 1. Check if patient already exists (even in trash) to avoid overwriting history
     let existingPatient = null;
     if (apt.patient_dni) {
-      const { data, error } = await supabase
+      const { data, error: _fetchError } = await supabase
         .from('patients')
         .select('*')
         .eq('id', apt.patient_dni)
@@ -645,7 +645,7 @@ export default function MedicalSystem({ user, onLogout }) {
   // --- TRIAJE LOGIC (DB INTEGRATED) ---
   const [dailyList, setDailyList] = useState([]);
   const [trashedAppointments, setTrashedAppointments] = useState([]);
-  const [listDate, setListDate] = useState(getNowDate().split('T')[0]);
+  const [_listDate, setListDate] = useState(getNowDate().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getNowDate().split('T')[0]);
 
   // Real-time Subscription & Polling for Daily Appointments
@@ -658,7 +658,7 @@ export default function MedicalSystem({ user, onLogout }) {
     // 2. Real-time Subscription
     const subscription = supabase
       .channel('appointments-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${user.clinicId}` }, () => {
         // logger.log('Real-time change detected:', payload);
         fetchDailyAppointments();
       })
@@ -811,7 +811,7 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-  const handleMoveOrder = async (id, direction) => {
+  const _handleMoveOrder = async (id, direction) => {
     const currentIndex = dailyList.findIndex(p => p.id === id);
     if (currentIndex === -1) return;
 
@@ -863,10 +863,10 @@ export default function MedicalSystem({ user, onLogout }) {
 
       // Create NEW appointment
       // 1. Destructure to remove ID and other fields we don't want to copy directly
-      const { id, created_at, ...rest } = originalApt;
+      const { id: _id, created_at: _created_at, ...rest } = originalApt;
 
       try {
-        const { data, error } = await supabase
+        const { data: _insertData, error } = await supabase
           .from('appointments')
           .insert([{
             ...rest,
@@ -1008,7 +1008,6 @@ export default function MedicalSystem({ user, onLogout }) {
       if (!selectedAppointments.includes(a.id)) return false;
       const isTriage = protectedStatuses.includes(a.status);
       const isPast = new Date(a.appointment_date).toISOString().split('T')[0] < today;
-      return isTriage || isPast;
       return isTriage || isPast;
     });
 
@@ -1794,7 +1793,7 @@ export default function MedicalSystem({ user, onLogout }) {
           alert("Backup fusionado correctamente.");
           setIsDataModalOpen(false);
         }
-      } catch (err) {
+      } catch {
         alert("Error al leer el archivo JSON.");
       }
     };
@@ -1844,7 +1843,7 @@ export default function MedicalSystem({ user, onLogout }) {
   };
 
   // Renderizado de la tabla de receta (MODO LECTURA / IMPRESIÓN)
-  const renderRecetaTable = (recetaItems) => {
+  const _renderRecetaTable = (recetaItems) => {
     if (!recetaItems || recetaItems.length === 0) return <p className="text-gray-400 italic text-xs">Sin receta.</p>;
     return (
       <table className="w-full text-xs border-collapse">
