@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, FileText, Link, RefreshCw, Phone, User, CheckCircle2, X } from 'lucide-react';
+import { Trash2, FileText, Link, RefreshCw, Phone, User, CheckCircle2, X, MessageCircle } from 'lucide-react';
 
 const AgendaView = ({
     user,
@@ -196,13 +196,97 @@ const AgendaView = ({
                                 {/* ACCIONES */}
                                 <td className="p-4 align-top text-right">
                                     <div className="flex justify-end items-center gap-2">
+                                        {/* Unified Confirm + WhatsApp Button */}
                                         {apt.status !== 'confirmed' && (
                                             <button
-                                                onClick={() => confirmAppointment(apt)}
-                                                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                                title="Confirmar y Mover a Triaje"
+                                                onClick={() => {
+                                                    // 1. Confirm appointment
+                                                    confirmAppointment(apt);
+
+                                                    // 2. Open WhatsApp if phone available
+                                                    if (apt.patient_phone) {
+                                                        const aptDate = new Date(apt.appointment_date);
+                                                        const dateStr = aptDate.toLocaleDateString('es-PE', {
+                                                            weekday: 'long',
+                                                            day: 'numeric',
+                                                            month: 'long'
+                                                        });
+                                                        const timeStr = aptDate.toLocaleTimeString('es-PE', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: true
+                                                        });
+
+                                                        const message = `Hola ${apt.patient_name?.split(' ')[0] || ''}!
+
+*Tu cita esta confirmada* ✅
+Te esperamos el ${dateStr} a las ${timeStr}
+
+*Recomendaciones:*
+• Traer examenes previos u ordenes medicas si tiene.
+• Llegar 5 minutos antes de la hora reservada.
+• Pueden acudir maximo 1 acompañante.
+• Preferimos pago en EFECTIVO (tarjeta tiene 5% recargo). Aceptamos yape, plin o transferencias.
+
+Nos vemos pronto!`;
+
+                                                        let phone = apt.patient_phone.replace(/\D/g, '');
+                                                        if (phone.length === 9 && phone.startsWith('9')) {
+                                                            phone = '51' + phone;
+                                                        }
+
+                                                        const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                                                        window.open(waLink, '_blank');
+                                                    }
+                                                }}
+                                                className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+                                                title="Confirmar y Enviar WhatsApp"
                                             >
-                                                <CheckCircle2 className="w-5 h-5" />
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                <MessageCircle className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {/* WhatsApp only for already confirmed */}
+                                        {apt.status === 'confirmed' && apt.patient_phone && (
+                                            <button
+                                                onClick={() => {
+                                                    const aptDate = new Date(apt.appointment_date);
+                                                    const dateStr = aptDate.toLocaleDateString('es-PE', {
+                                                        weekday: 'long',
+                                                        day: 'numeric',
+                                                        month: 'long'
+                                                    });
+                                                    const timeStr = aptDate.toLocaleTimeString('es-PE', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        hour12: true
+                                                    });
+
+                                                    const message = `Hola ${apt.patient_name?.split(' ')[0] || ''}!
+
+*Tu cita esta confirmada* ✅
+Te esperamos el ${dateStr} a las ${timeStr}
+
+*Recomendaciones:*
+• Traer examenes previos u ordenes medicas si tiene.
+• Llegar 5 minutos antes de la hora reservada.
+• Pueden acudir maximo 1 acompañante.
+• Preferimos pago en EFECTIVO (tarjeta tiene 5% recargo). Aceptamos yape, plin o transferencias.
+
+Nos vemos pronto!`;
+
+                                                    let phone = apt.patient_phone.replace(/\D/g, '');
+                                                    if (phone.length === 9 && phone.startsWith('9')) {
+                                                        phone = '51' + phone;
+                                                    }
+
+                                                    const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                                                    window.open(waLink, '_blank');
+                                                }}
+                                                className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                                title="Reenviar WhatsApp"
+                                            >
+                                                <MessageCircle className="w-5 h-5" />
                                             </button>
                                         )}
                                         <button

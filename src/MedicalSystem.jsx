@@ -1064,6 +1064,23 @@ export default function MedicalSystem({ user, onLogout }) {
 
   const handleTriageBulkDelete = async () => {
     if (selectedTriageItems.length === 0) return;
+
+    // Check for appointments with tickets (web requests)
+    const ticketedToDelete = dailyList.filter(a =>
+      selectedTriageItems.includes(a.id) && a.symptoms?.includes('[Ticket:')
+    );
+
+    if (ticketedToDelete.length > 0) {
+      // First confirmation for ticketed items
+      if (!window.confirm(`⚠️ ADVERTENCIA\\n\\nHas seleccionado ${ticketedToDelete.length} paciente(s) con TICKET (Solicitud Web/Import).\\n\\n¿Estás seguro de que deseas eliminarlos?`)) {
+        return;
+      }
+      // Second confirmation for extra safety
+      if (!window.confirm(`⚠️ SEGUNDA CONFIRMACIÓN\\n\\nEsto eliminará pacientes REALES que agendaron por la web.\\n\\n¿Confirmas la eliminación de ${ticketedToDelete.length} paciente(s)?`)) {
+        return;
+      }
+    }
+
     if (!window.confirm(`¿Estás seguro de eliminar ${selectedTriageItems.length} pacientes de la lista de triaje? Esta acción moverá las citas a la papelera.`)) return;
 
     try {
