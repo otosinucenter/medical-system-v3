@@ -48,7 +48,30 @@ const ConfiguracionHorarios = ({ clinicId }) => {
         }
     };
 
+
     const handleSave = async () => {
+        // Validate time ranges before saving
+        const invalidDays = [];
+        const dayLabels = {
+            monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miércoles',
+            thursday: 'Jueves', friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo'
+        };
+
+        Object.entries(settings.availability).forEach(([day, config]) => {
+            if (config.active) {
+                const startMinutes = parseInt(config.start.split(':')[0]) * 60 + parseInt(config.start.split(':')[1]);
+                const endMinutes = parseInt(config.end.split(':')[0]) * 60 + parseInt(config.end.split(':')[1]);
+                if (endMinutes <= startMinutes) {
+                    invalidDays.push(dayLabels[day]);
+                }
+            }
+        });
+
+        if (invalidDays.length > 0) {
+            alert(`⚠️ ERROR DE HORARIO\n\nLos siguientes días tienen hora de fin ANTES de la hora de inicio:\n\n${invalidDays.join(', ')}\n\nPor favor corrige las horas antes de guardar.`);
+            return;
+        }
+
         setSaving(true);
         try {
             // First get existing settings to merge
