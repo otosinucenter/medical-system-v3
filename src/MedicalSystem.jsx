@@ -20,6 +20,7 @@ import PrescriptionModal from './components/PrescriptionModal';
 import TriageView from './components/TriageView';
 import AgendaView from './components/AgendaView';
 import PatientHistoryView from './components/PatientHistoryView';
+import PatientListView from './components/PatientListView';
 import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
@@ -2063,51 +2064,16 @@ margin: 0;
         <div className="p-4 md:p-8">
           {/* VISTA LISTA */}
           {view === 'list' && (
-            <div className="space-y-6">
-              <div className="flex gap-4 items-center justify-between flex-wrap">
-                <div className="relative max-w-xl flex-1 min-w-[300px]">
-                  <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
-                  <input type="text" placeholder="Buscar por nombre o DNI..." className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                </div>
-                <div className="flex gap-2 no-print">
-                  <button onClick={() => setIsDataModalOpen(true)} className="flex items-center bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 shadow transition-all transform hover:scale-105">
-                    <Briefcase className="w-4 h-4 mr-2" /> Gestionar Datos / Backup
-                  </button>
-                  <button onClick={exportToCSV} className="flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 shadow transition-all transform hover:scale-105">
-                    <FileText className="w-4 h-4 mr-2" /> Reporte Excel (CSV)
-                  </button>
-                </div>
-
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-600">
-                    <tr><th className="p-4">Paciente</th><th className="p-4">Última Cita</th><th className="p-4">Acción</th></tr>
-                  </thead>
-                  <tbody>
-                    {filteredPatients.map((p, idx) => {
-                      const lastDate = p.consultas && p.consultas.length > 0 ? p.consultas[0].fechaCita : p.fechaCita;
-                      return (
-                        <tr key={idx} className="border-b hover:bg-gray-50">
-                          <td className="p-4 font-medium">{p.nombre} <br /><span className="text-xs text-gray-500">DNI: {p.id}</span></td>
-                          <td className="p-4 text-sm">{new Date(lastDate).toLocaleDateString()} <span className="text-gray-400 text-xs">{new Date(lastDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></td>
-                          <td className="p-4">
-                            {(user.role === 'doctor' || user.role === 'admin') && (
-                              <div className="flex items-center gap-2">
-                                <button onClick={() => { setSelectedPatient(p); setSelectedConsultationIndex(0); navigate('detail', { patientId: p.id }); }} className="text-teal-600 hover:underline text-sm font-bold">Ver Historia</button>
-                                <button onClick={() => deletePatient(p)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" title="Mover a Papelera">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <PatientListView
+              user={user}
+              patients={patients}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onOpenDataModal={() => setIsDataModalOpen(true)}
+              onExportCSV={exportToCSV}
+              onViewHistory={(p) => { setSelectedPatient(p); setSelectedConsultationIndex(0); navigate('detail', { patientId: p.id }); }}
+              onDeletePatient={deletePatient}
+            />
           )}
 
           {/* VISTA TRIAJE */}
