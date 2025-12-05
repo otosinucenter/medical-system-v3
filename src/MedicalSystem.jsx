@@ -21,6 +21,10 @@ import TriageView from './components/TriageView';
 import AgendaView from './components/AgendaView';
 import PatientHistoryView from './components/PatientHistoryView';
 import PatientListView from './components/PatientListView';
+import DataManagementModal from './components/DataManagementModal';
+import SidebarNav from './components/SidebarNav';
+import TeamModal from './components/TeamModal';
+import AgendaImportModal from './components/AgendaImportModal';
 import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
@@ -1916,114 +1920,32 @@ margin: 0;
       )}
 
       {/* SIDEBAR (Navegación) */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out shadow-2xl
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:sticky md:top-0 md:h-screen md:shadow-none
-      `}>
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Activity className="w-6 h-6 text-blue-400" />
-              <h1 className="text-xl font-bold tracking-tight">DrListo</h1>
-            </div>
-            <div className="mt-2">
-              <p className="text-sm text-blue-100 font-medium">¡Hola, {user.user?.user_metadata?.full_name?.split(' ')[0] || 'Doctor'}!</p>
-              <p className="text-xs text-slate-400 break-words">{user.user?.email}</p>
-            </div>
-          </div>
-          {/* Botón cerrar en móvil */}
-          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-180px)]">
-
-
-
-          <button onClick={() => { navigate('list'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'list' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <Users className="w-5 h-5 mr-3" />
-            <span className="font-medium">Pacientes</span>
-          </button>
-
-          <button onClick={() => { navigate('triage'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'triage' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <Clipboard className="w-5 h-5 mr-3" />
-            <span className="font-medium">Triaje / Lista</span>
-          </button>
-
-          {(user.role === 'doctor' || user.role === 'admin') && (
-            <button onClick={() => {
-              setIsNewPatient(true);
-              setEditingConsultationIndex(null);
-              clearDraft(); // CLEAR DRAFT for new patient
-              setFormData({
-                id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
-                celular: '', email: '', fechaNacimiento: '',
-                referencia: '', enfermedades: '', medicamentos: '', alergias: '', cirugias: '',
-                fechaCita: getNowDate(), resumen: '',
-                examenOido: '', examenNariz: '', examenGarganta: '',
-                diagnosticos: [],
-                receta: [],
-                indicaciones: ''
-              });
-              navigate('form');
-              setIsMobileMenuOpen(false);
-            }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'form' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 hover:text-blue-300 border border-blue-900/50'}`}>
-              <UserPlus className="w-5 h-5 mr-3" />
-              <span className="font-medium">Nuevo Paciente</span>
-            </button>
-          )}
-
-          <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
-            <button
-              onClick={() => { navigate('agenda-v2'); setIsMobileMenuOpen(false); }}
-              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'agenda-v2' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
-            >
-              <div className="relative mr-3">
-                <CalendarDays className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              </div>
-              <span className="font-medium">Agenda v2.0</span>
-            </button>
-
-            <button
-              onClick={() => { navigate('trash'); setIsMobileMenuOpen(false); }}
-              className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'trash' ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
-            >
-              <Trash2 className="w-5 h-5 mr-3" />
-              <span className="font-medium">Papelera</span>
-            </button>
-
-            {(user.role === 'admin') && (
-              <button onClick={() => navigate(view, { modal: 'team' })} className="w-full flex items-center p-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
-                <UserPlus className="w-5 h-5 mr-3" />
-                <span className="font-medium text-sm">Gestionar Equipo</span>
-              </button>
-            )}
-            <button onClick={() => navigate(view, { modal: 'data' })} className="w-full flex items-center p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-              <Briefcase className="w-5 h-5 mr-3" />
-              <span className="font-medium text-sm">Gestión de Datos</span>
-            </button>
-            {(user.role === 'admin' || user.role === 'doctor') && (
-              <button onClick={() => { navigate('config'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center p-3 rounded-lg transition-all ${view === 'config' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                <Settings className="w-5 h-5 mr-3" />
-                <span className="font-medium text-sm">Configuración</span>
-              </button>
-            )}
-          </div>
-        </nav>
-
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-slate-900 border-t border-slate-800">
-          <button onClick={onLogout} className="flex items-center text-slate-400 hover:text-red-400 transition-colors text-sm font-medium w-full mb-3">
-            <LogOut className="w-5 h-5 mr-3" />
-            Cerrar Sesión
-          </button>
-          <div className="text-center">
-            <span className="text-[10px] text-slate-600 font-medium">V 1.0 (stable)</span>
-          </div>
-        </div>
-      </aside>
+      <SidebarNav
+        user={user}
+        view={view}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onNavigate={navigate}
+        onNewPatient={() => {
+          setIsNewPatient(true);
+          setEditingConsultationIndex(null);
+          clearDraft();
+          setFormData({
+            id: '', nombre: '', edad: '', sexo: 'Mujer', ocupacion: '', procedencia: '',
+            celular: '', email: '', fechaNacimiento: '',
+            referencia: '', enfermedades: '', medicamentos: '', alergias: '', cirugias: '',
+            fechaCita: getNowDate(), resumen: '',
+            examenOido: '', examenNariz: '', examenGarganta: '',
+            diagnosticos: [],
+            receta: [],
+            indicaciones: ''
+          });
+          navigate('form');
+        }}
+        onOpenTeamModal={() => navigate(view, { modal: 'team' })}
+        onOpenDataModal={() => navigate(view, { modal: 'data' })}
+        onLogout={onLogout}
+      />
 
       {/* MAIN CONTENT */}
       <main className="flex-1 h-screen overflow-y-auto bg-slate-50 relative w-full">
@@ -2543,154 +2465,24 @@ margin: 0;
             )
           }
 
-          {/* MODAL GESTIÓN DE DATOS (NUEVO) */}
-          {
-            isDataModalOpen && (
-              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-                <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                  <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
-                    <h3 className="font-bold text-lg flex items-center"><Briefcase className="w-5 h-5 mr-2" /> Gestión de Datos y Respaldos</h3>
-                    <button onClick={() => navigate(view, { modal: null })} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
-                  </div>
-
-                  <div className="flex border-b">
-                    <button onClick={() => setDataModalTab('backup')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'backup' ? 'border-b-4 border-blue-600 text-blue-800 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                      COPIA DE SEGURIDAD
-                    </button>
-                    <button onClick={() => setDataModalTab('import')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'import' ? 'border-b-4 border-green-600 text-green-800 bg-green-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                      IMPORTAR DATOS (EXCEL)
-                    </button>
-                    <button onClick={() => setDataModalTab('trash')} className={`flex-1 py-3 font-bold text-sm ${dataModalTab === 'trash' ? 'border-b-4 border-red-600 text-red-800 bg-red-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                      PAPELERA
-                    </button>
-                  </div>
-                  <div className="p-6 overflow-y-auto flex-1">
-                    {dataModalTab === 'backup' && (
-                      <div className="space-y-6">
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                          <h4 className="font-bold text-blue-900 mb-2 flex items-center"><Save className="w-4 h-4 mr-2" /> Exportar / Guardar Backup</h4>
-                          <p className="text-sm text-gray-600 mb-4">Descarga una copia completa de tu base de datos en formato JSON. Guarda este archivo en un lugar seguro (USB, Drive).</p>
-                          <div className="flex gap-3">
-                            <button onClick={exportToJSON} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center">
-                              <Download className="w-4 h-4 mr-2" /> Descargar Backup (.json)
-                            </button>
-                            {directoryHandle ? (
-                              <button onClick={saveToFolder} className="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 shadow flex items-center">
-                                <Save className="w-4 h-4 mr-2" /> Guardar en Carpeta Conectada
-                              </button>
-                            ) : (
-                              <button onClick={handleConnectFolder} className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 shadow flex items-center">
-                                <Briefcase className="w-4 h-4 mr-2" /> Conectar Carpeta Local
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                          <h4 className="font-bold text-orange-900 mb-2 flex items-center"><History className="w-4 h-4 mr-2" /> Restaurar Backup</h4>
-                          <p className="text-sm text-gray-600 mb-3">Recupera tus datos desde un archivo `.json` previamente guardado.</p>
-
-                          <div className="flex items-center gap-4 mb-4 bg-white p-3 rounded border">
-                            <span className="text-sm font-bold text-gray-700">Modo de Restauración:</span>
-                            <label className="flex items-center text-sm cursor-pointer">
-                              <input type="radio" name="restoreMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-1" />
-                              <span className="font-bold text-blue-700">Fusión (Merge)</span>
-                              <span className="text-xs text-gray-500 ml-1">- Agrega nuevos, mantiene existentes.</span>
-                            </label>
-                            <label className="flex items-center text-sm cursor-pointer">
-                              <input type="radio" name="restoreMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-1" />
-                              <span className="font-bold text-red-600">Reemplazo Total</span>
-                              <span className="text-xs text-gray-500 ml-1">- BORRA TODO y restaura.</span>
-                            </label>
-                          </div>
-
-                          <label className="block w-full border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:bg-orange-100 transition-colors">
-                            <Download className="w-8 h-8 mx-auto text-orange-400 mb-2" />
-                            <span className="font-bold text-orange-800 block">Click para seleccionar archivo backup (.json)</span>
-                            <input type="file" accept=".json" onChange={handleRestoreBackupFile} className="hidden" />
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {dataModalTab === 'import' && (
-                      <div className="space-y-4">
-                        {!importPreview ? (
-                          <>
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                              <h4 className="font-bold text-green-900 mb-2">Importar desde Excel</h4>
-                              <p className="text-sm text-gray-600 mb-4">Sube tu archivo Excel con la lista de pacientes. El sistema intentará detectar automáticamente las columnas.</p>
-                              <label className="block w-full border-2 border-dashed border-green-300 rounded-lg p-8 text-center cursor-pointer hover:bg-green-100 transition-colors">
-                                <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                                <span className="font-bold text-green-800 block">Click para subir Excel (.xlsx)</span>
-                                <input type="file" accept=".xlsx, .xls" onChange={handlePreviewExcel} className="hidden" />
-                              </label>
-                            </div>
-                            <div className="text-center text-gray-400 text-xs font-bold uppercase my-2">- O -</div>
-                            <button onClick={() => { navigate(view, { modal: null }); setIsPasteModalOpen(true); }} className="w-full py-3 border-2 border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-50 flex justify-center items-center">
-                              <Clipboard className="w-4 h-4 mr-2" /> Pegar datos desde Portapapeles (Ctrl+V)
-                            </button>
-                          </>
-                        ) : (
-                          <div className="flex flex-col h-full">
-                            <div className="flex justify-between items-center mb-4">
-                              <h4 className="font-bold text-gray-800">Vista Previa ({importPreview.fileName})</h4>
-                              <button onClick={() => setImportPreview(null)} className="text-red-500 text-xs font-bold hover:underline">Cancelar / Volver</button>
-                            </div>
-
-                            <div className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-4 border">
-                              <table className="w-full whitespace-nowrap">
-                                <thead>
-                                  <tr className="bg-gray-200">
-                                    {importPreview.headers.map((h, i) => <th key={i} className="p-2 text-left border-r border-gray-300">{h}</th>)}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {importPreview.previewRows.map((row, i) => (
-                                    <tr key={i} className="border-b border-gray-200 bg-white">
-                                      {row.map((cell, j) => <td key={j} className="p-2 border-r border-gray-100">{cell}</td>)}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                              <p className="text-center text-gray-400 italic mt-2">Mostrando 5 primeros registros...</p>
-                            </div>
-
-                            <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-                              <h5 className="font-bold text-yellow-800 mb-2 text-sm">Opciones de Importación</h5>
-                              <div className="flex items-center gap-6 mb-4">
-                                <label className="flex items-center text-sm cursor-pointer">
-                                  <input type="radio" name="importMode" checked={importMode === 'merge'} onChange={() => setImportMode('merge')} className="mr-2" />
-                                  <div>
-                                    <span className="font-bold text-gray-800 block">Fusionar (Recomendado)</span>
-                                    <span className="text-xs text-gray-500">Agrega pacientes nuevos. No borra los existentes.</span>
-                                  </div>
-                                </label>
-                                <label className="flex items-center text-sm cursor-pointer">
-                                  <input type="radio" name="importMode" checked={importMode === 'replace'} onChange={() => setImportMode('replace')} className="mr-2" />
-                                  <div>
-                                    <span className="font-bold text-red-600 block">Reemplazar Todo</span>
-                                    <span className="text-xs text-gray-500">Borra la base de datos actual y carga el Excel.</span>
-                                  </div>
-                                </label>
-                              </div>
-                              <button onClick={processImport} className="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg">
-                                CONFIRMAR IMPORTACIÓN ({importPreview.fullData.length} Registros)
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {dataModalTab === 'trash' && (
-                      <TrashView user={user} />
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          }
+          {/* MODAL GESTIÓN DE DATOS */}
+          <DataManagementModal
+            isOpen={isDataModalOpen}
+            onClose={() => navigate(view, { modal: null })}
+            user={user}
+            onExportJSON={exportToJSON}
+            onSaveToFolder={saveToFolder}
+            onConnectFolder={handleConnectFolder}
+            directoryHandle={directoryHandle}
+            importMode={importMode}
+            onSetImportMode={setImportMode}
+            onRestoreBackup={handleRestoreBackupFile}
+            importPreview={importPreview}
+            onSetImportPreview={setImportPreview}
+            onPreviewExcel={handlePreviewExcel}
+            onProcessImport={processImport}
+            onOpenPasteModal={() => { navigate(view, { modal: null }); setIsPasteModalOpen(true); }}
+          />
           {/* VISTA AGENDA */}
           {
             view === 'agenda' && (
@@ -2948,81 +2740,24 @@ margin: 0;
             )
           }
 
-          {/* MODAL DE GESTIÓN DE EQUIPO */}
-          {
-            isTeamModalOpen && (
-              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-                <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
-                  <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
-                    <h3 className="font-bold text-lg flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Agregar Miembro al Equipo</h3>
-                    <button onClick={() => navigate(view, { modal: null })} className="hover:text-gray-300"><X className="w-6 h-6" /></button>
-                  </div>
+          {/* MODAL EQUIPO */}
+          <TeamModal
+            isOpen={isTeamModalOpen}
+            onClose={() => navigate(view, { modal: null })}
+            newMember={newMember}
+            onNewMemberChange={setNewMember}
+            onSubmit={handleCreateTeamMember}
+            isLoading={teamLoading}
+          />
 
-                  <form onSubmit={handleCreateTeamMember} className="p-6 space-y-4">
-                    <div className="bg-blue-50 p-3 rounded border border-blue-100 text-sm text-blue-800 mb-4">
-                      Crearás una cuenta vinculada a tu consultorio. Tú defines la contraseña inicial.
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
-                      <input required type="text" value={newMember.name} onChange={e => setNewMember({ ...newMember, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Dr. Ejemplo" />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
-                      <input required type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full border p-2 rounded" placeholder="usuario@medsys.local" />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
-                      <input required type="text" value={newMember.password} onChange={e => setNewMember({ ...newMember, password: e.target.value })} className="w-full border p-2 rounded bg-yellow-50" placeholder="Mínimo 6 caracteres" />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Rol</label>
-                      <select value={newMember.role} onChange={e => setNewMember({ ...newMember, role: e.target.value })} className="w-full border p-2 rounded">
-                        <option value="doctor">Médico</option>
-                        <option value="assistant">Asistente / Recepción</option>
-                      </select>
-                    </div>
-
-                    <div className="pt-4 flex gap-3">
-                      <button type="button" onClick={() => navigate(view, { modal: null })} className="flex-1 py-2 border rounded text-gray-600 font-bold">Cancelar</button>
-                      <button type="submit" disabled={teamLoading} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow disabled:opacity-50">
-                        {teamLoading ? 'Creando...' : 'Crear Cuenta'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )
-          }
           {/* MODAL IMPORTACIÓN AGENDA */}
-          {
-            isAgendaImportOpen && (
-              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-                <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Importar Citas a la Agenda</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Copia y pega las filas desde Excel. El sistema detectará automáticamente las columnas buscando el <strong>DNI (8 dígitos)</strong>.
-                  </p>
-                  <div className="bg-blue-50 p-3 rounded border border-blue-100 text-xs text-blue-800 mb-4">
-                    <strong>Formato esperado:</strong> Fecha | Hora (ej: 11.2, 1) | Síntomas | <strong>DNI</strong> | Nombre ...
-                  </div>
-                  <textarea
-                    className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Pega aquí las filas de Excel..."
-                    value={agendaPasteText}
-                    onChange={(e) => setAgendaPasteText(e.target.value)}
-                  ></textarea>
-                  <div className="flex justify-end gap-3 mt-4">
-                    <button onClick={() => setIsAgendaImportOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
-                    <button onClick={handleAgendaImport} className="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700">Procesar Importación</button>
-                  </div>
-                </div>
-              </div>
-            )
-          }
+          <AgendaImportModal
+            isOpen={isAgendaImportOpen}
+            onClose={() => setIsAgendaImportOpen(false)}
+            pasteText={agendaPasteText}
+            onPasteTextChange={setAgendaPasteText}
+            onImport={handleAgendaImport}
+          />
         </div>
       </main>
 
