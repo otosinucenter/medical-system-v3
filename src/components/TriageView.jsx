@@ -349,9 +349,20 @@ const TriageView = ({
                                             <div className={`w-2 h-2 rounded-full ${p.triage_status === 'attended' ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
                                             Atendido
                                         </button>
+
+                                        {/* Undo button for attended/cancelled */}
+                                        {(p.triage_status === 'attended' || p.triage_status === 'cancelled') && (
+                                            <button
+                                                onClick={() => onUpdateTriageStatus(p.id, 'confirmed')}
+                                                className="w-full px-3 py-1.5 rounded-lg text-[10px] font-bold border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 transition-all flex items-center justify-center gap-1 mt-1"
+                                            >
+                                                ↩ Deshacer
+                                            </button>
+                                        )}
                                     </div>
 
-                                    {(p.triage_status === 'arrived_ontime' || p.triage_status === 'arrived_late') && (user.role === 'doctor' || user.role === 'admin') && (
+                                    {/* Atender button - show for doctor/admin when not attended */}
+                                    {p.triage_status !== 'attended' && p.triage_status !== 'cancelled' && (user.role === 'doctor' || user.role === 'admin') && (
                                         <button
                                             onClick={() => { onUpdateTriageStatus(p.id, 'attended'); onConvertToPatient(p); }}
                                             className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center justify-center group/btn mt-auto"
