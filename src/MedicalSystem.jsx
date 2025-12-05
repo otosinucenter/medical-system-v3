@@ -1072,11 +1072,11 @@ export default function MedicalSystem({ user, onLogout }) {
 
     if (ticketedToDelete.length > 0) {
       // First confirmation for ticketed items
-      if (!window.confirm(`⚠️ ADVERTENCIA\\n\\nHas seleccionado ${ticketedToDelete.length} paciente(s) con TICKET (Solicitud Web/Import).\\n\\n¿Estás seguro de que deseas eliminarlos?`)) {
+      if (!window.confirm(`⚠️ ADVERTENCIA DE SEGURIDAD\n\nHas seleccionado ${ticketedToDelete.length} paciente(s) con TICKET (Solicitud Web/Import).\n\n¿Estás seguro de que deseas eliminarlos?`)) {
         return;
       }
       // Second confirmation for extra safety
-      if (!window.confirm(`⚠️ SEGUNDA CONFIRMACIÓN\\n\\nEsto eliminará pacientes REALES que agendaron por la web.\\n\\n¿Confirmas la eliminación de ${ticketedToDelete.length} paciente(s)?`)) {
+      if (!window.confirm(`⚠️ SEGUNDA CONFIRMACIÓN\n\nEsto eliminará pacientes REALES que agendaron por la web.\n\n¿Confirmas la eliminación de ${ticketedToDelete.length} paciente(s)?`)) {
         return;
       }
     }
