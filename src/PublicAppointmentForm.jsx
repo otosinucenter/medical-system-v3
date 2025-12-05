@@ -49,7 +49,7 @@ export default function PublicAppointmentForm() {
     useEffect(() => {
         const fetchClinic = async () => {
             if (!clinicId) return;
-            const { data, error } = await supabase
+            const { data, error: _fetchError } = await supabase
                 .from('clinics')
                 .select('name')
                 .eq('id', clinicId)

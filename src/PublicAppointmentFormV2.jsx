@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { Calendar, User, Phone, FileText, CheckCircle, AlertCircle, Clock, MapPin, Mail, Activity, Pill, Scissors, HelpCircle, Globe, Sparkles, Heart, UserPlus, Info } from 'lucide-react';
 import logger from './utils/logger';
-import { getNextAvailableDate, getNextValidDates, formatToPeruDate, formatToPeruTime, createPeruAppointmentDate } from './utils/timezoneHelpers';
+import { formatToPeruDate, formatToPeruTime, createPeruAppointmentDate } from './utils/timezoneHelpers';
 
 // Cliente Supabase temporal (público)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -94,7 +94,7 @@ export default function PublicAppointmentFormV2() {
     useEffect(() => {
         const fetchClinic = async () => {
             if (!clinicId) return;
-            const { data, error } = await supabase
+            const { data, error: _fetchError } = await supabase
                 .from('clinics')
                 .select('name, settings') // Fetch settings too
                 .eq('id', clinicId)
@@ -606,7 +606,7 @@ export default function PublicAppointmentFormV2() {
                                                 const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                                                 const dayKey = daysMap[dayIndex];
 
-                                                let startLimit, endLimit;
+                                                let _startLimit, _endLimit;
 
                                                 if (clinicSettings && clinicSettings[dayKey]) {
                                                     // Calcular centro dinámico (aprox 1 hora después del inicio y 1 hora antes del fin)

@@ -47,7 +47,6 @@ export default function MedicalSystem({ user, onLogout }) {
 
   // --- GESTIÓN DE DATOS (NUEVO) ---
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
-  const [dataModalTab, setDataModalTab] = useState('backup'); // 'backup' | 'import'
   const [importPreview, setImportPreview] = useState(null); // { headers: [], rows: [] }
   const [importMode, setImportMode] = useState('merge'); // 'merge' | 'replace'
   const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
@@ -1537,11 +1536,6 @@ export default function MedicalSystem({ user, onLogout }) {
       alert("Error al guardar en la nube. Los datos están en local pero podrían perderse si recargas.");
     }
   };
-
-  const filteredPatients = patients.filter(p =>
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.includes(searchTerm)
-  );
-
   const openPrescriptionModal = () => {
     setIsPrescriptionOpen(true);
   };

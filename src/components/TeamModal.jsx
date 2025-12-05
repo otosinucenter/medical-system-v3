@@ -56,7 +56,7 @@ const TeamModal = ({
                         <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial</label>
                         <input
                             required
-                            type="text"
+                            type="password"
                             value={newMember.password}
                             onChange={e => onNewMemberChange({ ...newMember, password: e.target.value })}
                             className="w-full border p-2 rounded bg-yellow-50"
