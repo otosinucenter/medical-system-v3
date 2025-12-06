@@ -39,7 +39,8 @@ const PrescriptionModal = ({
     // Calcular tamaño de fuente adaptativo - más compacto cuando hay muchos
     const count = editableReceta.length;
     const tableFontSize = count > 9 ? '9px' : count > 7 ? '10px' : count > 5 ? '11px' : '12px';
-    const rowPadding = count > 7 ? 'py-0' : 'py-0.5';
+    const rowPadding = count > 6 ? 'py-0' : 'py-0.5';
+    const lineHeight = count > 7 ? '1.1' : '1.3';
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
@@ -147,7 +148,7 @@ const PrescriptionModal = ({
                                         <td className={`${rowPadding} px-2`}>
                                             <textarea
                                                 className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
-                                                style={{ minHeight: '1.2em' }}
+                                                style={{ minHeight: '1em', lineHeight }}
                                                 rows={Math.max(1, Math.ceil(item.med.length / 25))}
                                                 value={item.med}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
@@ -163,7 +164,7 @@ const PrescriptionModal = ({
                                         <td className={`${rowPadding} px-2`}>
                                             <textarea
                                                 className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
-                                                style={{ minHeight: '1.2em' }}
+                                                style={{ minHeight: '1em', lineHeight }}
                                                 rows={Math.max(1, Math.ceil(item.ind.length / 50))}
                                                 value={item.ind}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
