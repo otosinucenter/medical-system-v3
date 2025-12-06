@@ -513,6 +513,9 @@ export default function MedicalSystem({ user, onLogout }) {
 
       if (isEditing) setEditingAppointment(null);
 
+      // Refresh triage list so confirmed appointment appears there
+      fetchDailyAppointments();
+
       // No alert needed - visual feedback from state change is enough
     } catch {
       alert("Error al confirmar cita.");
