@@ -36,9 +36,10 @@ const PrescriptionModal = ({
 
     if (!isOpen || !patient) return null;
 
-    // Calcular tamaño de fuente adaptativo
+    // Calcular tamaño de fuente adaptativo - más compacto cuando hay muchos
     const count = editableReceta.length;
-    const tableFontSize = count > 10 ? '10px' : count > 8 ? '11px' : count > 6 ? '12px' : '13px';
+    const tableFontSize = count > 9 ? '9px' : count > 7 ? '10px' : count > 5 ? '11px' : '12px';
+    const rowPadding = count > 7 ? 'py-0' : 'py-0.5';
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
@@ -143,7 +144,7 @@ const PrescriptionModal = ({
                             <tbody className="align-top">
                                 {editableReceta.map((item, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
-                                        <td className="py-1 px-2">
+                                        <td className={`${rowPadding} px-2`}>
                                             <textarea
                                                 className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
                                                 style={{ minHeight: '1.2em' }}
@@ -152,14 +153,14 @@ const PrescriptionModal = ({
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-1 text-center align-top">
+                                        <td className={`${rowPadding} text-center align-top`}>
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.cant}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-1 px-2">
+                                        <td className={`${rowPadding} px-2`}>
                                             <textarea
                                                 className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
                                                 style={{ minHeight: '1.2em' }}
@@ -168,14 +169,14 @@ const PrescriptionModal = ({
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-1 text-center align-top">
+                                        <td className={`${rowPadding} text-center align-top`}>
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.via}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-1 text-center align-top">
+                                        <td className={`${rowPadding} text-center align-top`}>
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700 font-medium"
                                                 value={item.dur}
