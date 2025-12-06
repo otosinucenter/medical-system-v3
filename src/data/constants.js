@@ -2,7 +2,9 @@ export const DOCTOR_INFO = {
     nombre: "Dr. Walter J. Florez Guerra",
     especialidad: "Médico Cirujano - Otorrinolaringólogo",
     credenciales: "CMP 64028 - RNE 34394",
-    contacto: "wflorez16@gmail.com - 955449503"
+    contacto: "wflorez16@gmail.com - 955449503",
+    firma: "/assets/firma_dr_florez.jpg",
+    clinica: "" // Dejar vacío para no mostrar, o poner nombre ej: "Consultorio ORL Centro"
 };
 
 // Catálogo de Servicios Médicos con precios base

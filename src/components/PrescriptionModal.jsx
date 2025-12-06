@@ -39,7 +39,7 @@ const PrescriptionModal = ({
     // Calcular tamaño de fuente basado en cantidad de medicamentos
     const count = editableReceta.length;
     const tableFontSize = count > 8 ? '11px' : count > 6 ? '12px' : '13px';
-    const tableRowHeight = count > 8 ? '22px' : count > 6 ? '26px' : '30px';
+    const tableRowHeight = count > 8 ? '20px' : count > 6 ? '24px' : '28px';
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
@@ -66,108 +66,115 @@ const PrescriptionModal = ({
                     </div>
                 </div>
 
-                {/* Contenido A5 - Siempre completo */}
+                {/* Contenido A5 - Optimizado para impresión */}
                 <div
                     id="printable-area"
                     className="bg-white text-black relative mx-auto flex flex-col"
                     style={{
                         width: '210mm',
                         height: '148mm',
-                        padding: '5mm 8mm',
+                        padding: '4mm 8mm',
                     }}
                 >
 
-                    {/* Encabezado - SIEMPRE COMPLETO */}
+                    {/* Clínica (opcional) */}
+                    {doctorInfo.clinica && (
+                        <div className="text-center mb-0.5">
+                            <span className="text-sm font-bold text-gray-600 uppercase tracking-widest">{doctorInfo.clinica}</span>
+                        </div>
+                    )}
+
+                    {/* Encabezado Doctor */}
                     <div className="pb-1 mb-1 flex justify-between items-start" style={{ borderBottom: '3px solid #1e40af' }}>
                         <div>
-                            <h1 className="text-2xl font-black text-blue-900 uppercase tracking-tight leading-none" style={{ fontFamily: 'system-ui' }}>
+                            <h1 className="text-xl font-black text-blue-900 uppercase tracking-tight leading-none" style={{ fontFamily: 'system-ui' }}>
                                 {doctorInfo.nombre}
                             </h1>
-                            <p className="text-sm font-bold text-blue-700 uppercase mt-0.5 tracking-wider">
+                            <p className="text-xs font-bold text-blue-700 uppercase mt-0.5 tracking-wider">
                                 {doctorInfo.especialidad}
                             </p>
-                            <p className="text-xs text-gray-500 tracking-widest">
+                            <p className="text-[10px] text-gray-500 tracking-widest">
                                 {doctorInfo.credenciales}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-blue-600 font-semibold">{doctorInfo.contacto}</p>
-                            <div className="font-bold text-xl text-gray-800 mt-0.5">
+                            <p className="text-[10px] text-blue-600 font-semibold">{doctorInfo.contacto}</p>
+                            <div className="font-bold text-lg text-gray-800 mt-0.5">
                                 {new Date(consultation.fechaCita).toLocaleDateString('es-PE')}
                             </div>
                         </div>
                     </div>
 
-                    {/* Datos Paciente - SIEMPRE COMPLETO */}
-                    <div className="mb-1 rounded-lg overflow-hidden" style={{ border: '1px solid #dbeafe', background: 'linear-gradient(to right, #eff6ff, #f8fafc)' }}>
-                        <div className="flex justify-between items-center px-3 py-1">
-                            <div className="flex-1 flex items-baseline gap-2">
-                                <span className="font-bold text-blue-800 uppercase text-xs tracking-wide">PACIENTE:</span>
-                                <span className="font-semibold text-gray-800 text-sm">{patient.nombre}</span>
+                    {/* Datos Paciente */}
+                    <div className="mb-1 rounded overflow-hidden" style={{ border: '1px solid #dbeafe', background: 'linear-gradient(to right, #eff6ff, #f8fafc)' }}>
+                        <div className="flex justify-between items-center px-2 py-0.5">
+                            <div className="flex-1 flex items-baseline gap-1">
+                                <span className="font-bold text-blue-800 uppercase text-[10px]">PACIENTE:</span>
+                                <span className="font-semibold text-gray-800 text-xs">{patient.nombre}</span>
                             </div>
-                            <div className="flex items-baseline gap-1 px-4">
-                                <span className="font-bold text-blue-800 uppercase text-xs tracking-wide">EDAD:</span>
-                                <span className="font-semibold text-gray-800 text-sm">{patient.edad}</span>
+                            <div className="flex items-baseline gap-1 px-3">
+                                <span className="font-bold text-blue-800 uppercase text-[10px]">EDAD:</span>
+                                <span className="font-semibold text-gray-800 text-xs">{patient.edad}</span>
                             </div>
                             <div className="flex items-baseline gap-1">
-                                <span className="font-bold text-blue-800 uppercase text-xs tracking-wide">DNI:</span>
-                                <span className="font-semibold text-gray-800 text-sm">{patient.id}</span>
+                                <span className="font-bold text-blue-800 uppercase text-[10px]">DNI:</span>
+                                <span className="font-semibold text-gray-800 text-xs">{patient.id}</span>
                             </div>
                         </div>
-                        <div className="px-3 py-0.5 bg-blue-50/50 border-t border-blue-100">
-                            <div className="flex items-baseline gap-2">
-                                <span className="font-bold text-blue-800 uppercase text-xs tracking-wide">DX:</span>
-                                <span className="italic text-gray-700 text-xs">{consultation.diagnosticos?.map(d => `${d.code} ${d.desc}`).join(' // ')}</span>
+                        <div className="px-2 py-0.5 bg-blue-50/50 border-t border-blue-100">
+                            <div className="flex items-baseline gap-1">
+                                <span className="font-bold text-blue-800 uppercase text-[10px]">DX:</span>
+                                <span className="italic text-gray-700 text-[10px]">{consultation.diagnosticos?.map(d => `${d.code} ${d.desc}`).join(' // ')}</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Tabla Receta - FLEX GROW para aprovechar espacio */}
+                    {/* Tabla Receta */}
                     <div className="flex-1 overflow-hidden mb-1">
-                        <table className="w-full border-collapse table-fixed h-full" style={{ fontSize: tableFontSize }}>
+                        <table className="w-full border-collapse table-fixed" style={{ fontSize: tableFontSize }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #1e40af', background: '#f8fafc' }}>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[27%] uppercase text-xs">Medicamento</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[7%] uppercase text-xs">Cant.</th>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[46%] uppercase text-xs">Indicaciones</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[8%] uppercase text-xs">Vía</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[12%] uppercase text-xs">Días</th>
+                                    <th className="text-left py-0.5 px-1 font-bold text-blue-900 w-[27%] uppercase text-[10px]">Medicamento</th>
+                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[7%] uppercase text-[10px]">Cant.</th>
+                                    <th className="text-left py-0.5 px-1 font-bold text-blue-900 w-[46%] uppercase text-[10px]">Indicaciones</th>
+                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px]">Vía</th>
+                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[12%] uppercase text-[10px]">Días</th>
                                 </tr>
                             </thead>
                             <tbody className="align-top">
                                 {editableReceta.map((item, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', height: tableRowHeight }}>
-                                        <td className="py-0.5 px-2">
+                                        <td className="py-0 px-1">
                                             <textarea
-                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-snug"
+                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
                                                 rows={1}
                                                 value={item.med}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-0 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.cant}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 px-2">
+                                        <td className="py-0 px-1">
                                             <textarea
-                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-snug text-gray-700"
+                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
                                                 rows={1}
                                                 value={item.ind}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-0 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.via}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-0 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700 font-medium"
                                                 value={item.dur}
@@ -180,14 +187,14 @@ const PrescriptionModal = ({
                         </table>
                     </div>
 
-                    {/* Footer - Indicaciones, Control y Firma */}
+                    {/* Footer */}
                     <div className="mt-auto pt-1 border-t-2 border-dashed border-gray-300">
-                        <div className="flex gap-4">
-                            {/* Indicaciones Adicionales */}
+                        {/* Indicaciones + Firma */}
+                        <div className="flex gap-3">
                             <div className="flex-1">
-                                <h3 className="font-bold text-xs uppercase text-blue-900 tracking-wide mb-0.5">INDICACIONES ADICIONALES:</h3>
+                                <h3 className="font-bold text-[10px] uppercase text-blue-900 tracking-wide">INDICACIONES ADICIONALES:</h3>
                                 <textarea
-                                    className="w-full text-sm resize-none outline-none bg-transparent text-gray-700 leading-snug"
+                                    className="w-full text-xs resize-none outline-none bg-transparent text-gray-700 leading-tight"
                                     rows={2}
                                     value={editableIndicaciones}
                                     onChange={(e) => setEditableIndicaciones(e.target.value)}
@@ -195,24 +202,34 @@ const PrescriptionModal = ({
                                 />
                             </div>
 
-                            {/* Sello y Firma */}
-                            <div className="w-40 h-16 border-2 border-gray-300 rounded-lg flex flex-col items-center justify-end pb-1 bg-gray-50/50">
-                                <div className="w-24 border-t border-gray-400 mb-0.5"></div>
-                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wide">Sello y Firma</span>
+                            {/* Firma Digital */}
+                            <div className="w-40 flex flex-col items-center justify-end">
+                                {doctorInfo.firma ? (
+                                    <img
+                                        src={doctorInfo.firma}
+                                        alt="Firma del Doctor"
+                                        className="h-14 object-contain"
+                                    />
+                                ) : (
+                                    <div className="w-full h-12 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
+                                        <div className="w-24 border-t border-gray-400 mb-0.5"></div>
+                                        <span className="text-[8px] text-gray-500 font-bold uppercase">Sello y Firma</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Control sugerido */}
                         <div className="mt-1 pt-1 border-t border-gray-200 flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-700">📅 Se sugiere control en</span>
+                            <span className="text-xs font-semibold text-gray-700">📅 Se sugiere control en</span>
                             <input
                                 type="text"
                                 value={controlDias}
                                 onChange={(e) => setControlDias(e.target.value)}
-                                className="w-12 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-lg"
+                                className="w-10 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-sm"
                             />
-                            <span className="text-sm font-semibold text-gray-700">días</span>
-                            <span className="text-xs text-gray-400 ml-2">(o según evolución)</span>
+                            <span className="text-xs font-semibold text-gray-700">días</span>
+                            <span className="text-[10px] text-gray-400 ml-1">(o según evolución)</span>
                         </div>
                     </div>
                 </div>
