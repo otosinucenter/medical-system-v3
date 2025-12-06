@@ -36,10 +36,10 @@ const PrescriptionModal = ({
 
     if (!isOpen || !patient) return null;
 
-    // Calcular tamaño de fuente basado en cantidad de medicamentos
+    // Calcular tamaño de fuente - UN POCO MÁS GRANDE para espacio de escritura
     const count = editableReceta.length;
-    const tableFontSize = count > 8 ? '11px' : count > 6 ? '12px' : '13px';
-    const tableRowHeight = count > 8 ? '20px' : count > 6 ? '24px' : '28px';
+    const tableFontSize = count > 8 ? '12px' : count > 6 ? '13px' : '14px';
+    const tableRowHeight = count > 8 ? '26px' : count > 6 ? '30px' : '34px';
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
@@ -66,7 +66,7 @@ const PrescriptionModal = ({
                     </div>
                 </div>
 
-                {/* Contenido A5 - Optimizado para impresión */}
+                {/* Contenido A5 */}
                 <div
                     id="printable-area"
                     className="bg-white text-black relative mx-auto flex flex-col"
@@ -129,52 +129,52 @@ const PrescriptionModal = ({
                         </div>
                     </div>
 
-                    {/* Tabla Receta */}
+                    {/* Tabla Receta - MÁS ESPACIO */}
                     <div className="flex-1 overflow-hidden mb-1">
                         <table className="w-full border-collapse table-fixed" style={{ fontSize: tableFontSize }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #1e40af', background: '#f8fafc' }}>
-                                    <th className="text-left py-0.5 px-1 font-bold text-blue-900 w-[27%] uppercase text-[10px]">Medicamento</th>
-                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[7%] uppercase text-[10px]">Cant.</th>
-                                    <th className="text-left py-0.5 px-1 font-bold text-blue-900 w-[46%] uppercase text-[10px]">Indicaciones</th>
-                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[8%] uppercase text-[10px]">Vía</th>
-                                    <th className="text-center py-0.5 font-bold text-blue-900 w-[12%] uppercase text-[10px]">Días</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[27%] uppercase text-[11px]">Medicamento</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[7%] uppercase text-[11px]">Cant.</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[46%] uppercase text-[11px]">Indicaciones</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[8%] uppercase text-[11px]">Vía</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[12%] uppercase text-[11px]">Días</th>
                                 </tr>
                             </thead>
                             <tbody className="align-top">
                                 {editableReceta.map((item, idx) => (
-                                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', height: tableRowHeight }}>
-                                        <td className="py-0 px-1">
+                                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1', height: tableRowHeight }}>
+                                        <td className="py-0.5 px-2">
                                             <textarea
-                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
+                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-snug"
                                                 rows={1}
                                                 value={item.med}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0 text-center align-middle">
+                                        <td className="py-0.5 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.cant}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0 px-1">
+                                        <td className="py-0.5 px-2">
                                             <textarea
-                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
+                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-snug text-gray-700"
                                                 rows={1}
                                                 value={item.ind}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0 text-center align-middle">
+                                        <td className="py-0.5 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.via}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0 text-center align-middle">
+                                        <td className="py-0.5 text-center align-middle">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700 font-medium"
                                                 value={item.dur}
@@ -187,14 +187,14 @@ const PrescriptionModal = ({
                         </table>
                     </div>
 
-                    {/* Footer */}
-                    <div className="mt-auto pt-1 border-t-2 border-dashed border-gray-300">
-                        {/* Indicaciones + Firma */}
-                        <div className="flex gap-3">
+                    {/* Footer - MÁS ORDENADO */}
+                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-2">
+                        {/* Fila 1: Indicaciones + Firma */}
+                        <div className="flex gap-4 items-start">
                             <div className="flex-1">
-                                <h3 className="font-bold text-[10px] uppercase text-blue-900 tracking-wide">INDICACIONES ADICIONALES:</h3>
+                                <h3 className="font-bold text-xs uppercase text-blue-900 tracking-wide mb-0.5">INDICACIONES ADICIONALES:</h3>
                                 <textarea
-                                    className="w-full text-xs resize-none outline-none bg-transparent text-gray-700 leading-tight"
+                                    className="w-full text-sm resize-none outline-none bg-transparent text-gray-700 leading-snug"
                                     rows={2}
                                     value={editableIndicaciones}
                                     onChange={(e) => setEditableIndicaciones(e.target.value)}
@@ -202,34 +202,34 @@ const PrescriptionModal = ({
                                 />
                             </div>
 
-                            {/* Firma Digital */}
-                            <div className="w-40 flex flex-col items-center justify-end">
+                            {/* Firma Digital - MÁS GRANDE */}
+                            <div className="w-44 flex flex-col items-center justify-center">
                                 {doctorInfo.firma ? (
                                     <img
                                         src={doctorInfo.firma}
                                         alt="Firma del Doctor"
-                                        className="h-14 object-contain"
+                                        className="h-20 object-contain"
                                     />
                                 ) : (
-                                    <div className="w-full h-12 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
-                                        <div className="w-24 border-t border-gray-400 mb-0.5"></div>
-                                        <span className="text-[8px] text-gray-500 font-bold uppercase">Sello y Firma</span>
+                                    <div className="w-full h-16 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
+                                        <div className="w-28 border-t border-gray-400 mb-0.5"></div>
+                                        <span className="text-[9px] text-gray-500 font-bold uppercase">Sello y Firma</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Control sugerido */}
-                        <div className="mt-1 pt-1 border-t border-gray-200 flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-700">📅 Se sugiere control en</span>
+                        {/* Fila 2: Control sugerido - CENTRADO y ORDENADO */}
+                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-center gap-3">
+                            <span className="text-sm font-semibold text-gray-600">📅 Se sugiere control en</span>
                             <input
                                 type="text"
                                 value={controlDias}
                                 onChange={(e) => setControlDias(e.target.value)}
-                                className="w-10 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-sm"
+                                className="w-14 text-center font-bold text-blue-700 border-2 border-blue-400 bg-blue-50 outline-none text-xl rounded py-0.5"
                             />
-                            <span className="text-xs font-semibold text-gray-700">días</span>
-                            <span className="text-[10px] text-gray-400 ml-1">(o según evolución)</span>
+                            <span className="text-sm font-semibold text-gray-600">días</span>
+                            <span className="text-xs text-gray-400">(o según evolución)</span>
                         </div>
                     </div>
                 </div>
