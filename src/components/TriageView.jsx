@@ -322,22 +322,49 @@ const TriageView = ({
                                                         </span>
                                                     </div>
 
-                                                    {/* Add payment button */}
+                                                    {/* Quick Payment Actions */}
                                                     {onAddPayment && (p.total_paid || 0) < (p.total_to_charge || 0) && (
-                                                        <button
-                                                            onClick={() => {
-                                                                const metodo = prompt('Método de pago:\n1. Efectivo\n2. Yape\n3. Plin\n4. Transferencia\n5. Tarjeta\n\nEscribe el número o nombre:');
-                                                                if (!metodo) return;
-                                                                const metodoMap = { '1': 'efectivo', '2': 'yape', '3': 'plin', '4': 'transferencia', '5': 'tarjeta' };
-                                                                const metodoId = metodoMap[metodo] || metodo.toLowerCase();
-                                                                const monto = parseFloat(prompt('Monto pagado (S/):'));
-                                                                if (!monto || isNaN(monto)) return;
-                                                                onAddPayment(p.id, metodoId, monto);
-                                                            }}
-                                                            className="w-full mt-2 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-200 transition-colors flex items-center justify-center gap-1"
-                                                        >
-                                                            <Plus className="w-3 h-3" /> Registrar Pago
-                                                        </button>
+                                                        <div className="mt-2 pt-2 border-t border-emerald-200">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <span className="text-[10px] uppercase font-bold text-emerald-600">Pagar Restante (S/ {(p.total_to_charge || 0) - (p.total_paid || 0)}) con:</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-3 gap-1">
+                                                                {metodosPago.map((m) => (
+                                                                    <button
+                                                                        key={m.id}
+                                                                        onClick={() => {
+                                                                            const restante = (p.total_to_charge || 0) - (p.total_paid || 0);
+                                                                            if (confirm(`¿Confirmar pago de S/ ${restante} con ${m.nombre}?`)) {
+                                                                                onAddPayment(p.id, m.id, restante);
+                                                                            }
+                                                                        }}
+                                                                        className="flex flex-col items-center justify-center p-1.5 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition-all shadow-sm"
+                                                                        title={`Pagar todo con ${m.nombre}`}
+                                                                    >
+                                                                        <span className="text-lg leading-none mb-0.5">{m.icon}</span>
+                                                                        <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-tight">{m.nombre}</span>
+                                                                    </button>
+                                                                ))}
+                                                                {/* Manual Option */}
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const restante = (p.total_to_charge || 0) - (p.total_paid || 0);
+                                                                        const monto = parseFloat(prompt('Monto a pagar (S/):', restante));
+                                                                        if (!monto || isNaN(monto)) return;
+
+                                                                        const metodo = prompt('Método (1:Efectivo, 2:Yape, 3:Plin, 4:Transf, 5:Tarjeta):');
+                                                                        const metodoMap = { '1': 'efectivo', '2': 'yape', '3': 'plin', '4': 'transferencia', '5': 'tarjeta' };
+                                                                        const metodoId = metodoMap[metodo] || (metodo ? metodo.toLowerCase() : 'efectivo');
+
+                                                                        onAddPayment(p.id, metodoId, monto);
+                                                                    }}
+                                                                    className="flex flex-col items-center justify-center p-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-all"
+                                                                >
+                                                                    <span className="text-lg leading-none mb-0.5">📝</span>
+                                                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tight">Otro</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             ) : (
