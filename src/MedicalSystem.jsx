@@ -1612,14 +1612,17 @@ export default function MedicalSystem({ user, onLogout }) {
         .from('patients')
         .upsert(payload);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving patient:", error);
+        throw new Error(`Error guardando paciente: ${error.message}`);
+      }
 
       // Record attention end time if we have an active appointment
       if (currentAppointmentId) {
         // Calculate total from services
         const totalToCharge = selectedServices.reduce((sum, s) => sum + (s.precioAcordado || 0), 0);
 
-        await supabase
+        const { error: aptError } = await supabase
           .from('appointments')
           .update({
             triage_status: 'attended',
@@ -1628,6 +1631,11 @@ export default function MedicalSystem({ user, onLogout }) {
             total_to_charge: totalToCharge
           })
           .eq('id', currentAppointmentId);
+
+        if (aptError) {
+          console.error("Error updating appointment:", aptError);
+          // Don't throw, just log - patient is already saved
+        }
 
         // Clear the current appointment ID and services
         setCurrentAppointmentId(null);
@@ -1643,7 +1651,7 @@ export default function MedicalSystem({ user, onLogout }) {
     } catch (error) {
       logger.error("Error al guardar en Supabase:", error);
       // Show error but continue to print flow
-      alert("Error al guardar en la nube. Los datos están en local.");
+      alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
     }
 
     // SIEMPRE preguntar si desea imprimir (incluso si falló la nube)
@@ -2617,10 +2625,10 @@ margin: 0;
                                           ));
                                         }}
                                         className={`w-16 text-center text-sm border rounded px-2 py-1 ${isSelected
-                                            ? selectedService?.precioAcordado === 0
-                                              ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
-                                              : 'bg-white border-emerald-300 text-emerald-800 font-semibold'
-                                            : 'bg-gray-100 border-gray-200 text-gray-300'
+                                          ? selectedService?.precioAcordado === 0
+                                            ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                                            : 'bg-white border-emerald-300 text-emerald-800 font-semibold'
+                                          : 'bg-gray-100 border-gray-200 text-gray-300'
                                           }`}
                                       />
                                       {isSelected && selectedService?.precioAcordado === 0 && (
