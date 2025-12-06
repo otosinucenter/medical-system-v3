@@ -1662,26 +1662,24 @@ export default function MedicalSystem({ user, onLogout }) {
       alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
     }
 
-    // SIEMPRE preguntar si desea imprimir (incluso si falló la nube)
+    // Abrir receta automáticamente si hay medicamentos
     if (formData.receta.length > 0) {
-      if (confirm("¿Desea imprimir la receta ahora?")) {
-        // Necesitamos establecer el paciente seleccionado para que el modal funcione
-        setSelectedPatient(patientToSave);
-        // Y la consulta seleccionada (la última, que acabamos de agregar)
-        if (patientToSave.consultas && patientToSave.consultas.length > 0) {
-          if (editingConsultationIndex !== null) {
-            setSelectedConsultationIndex(editingConsultationIndex);
-          } else {
-            setSelectedConsultationIndex(0); // La más reciente
-          }
+      // Establecer el paciente seleccionado para que el modal funcione
+      setSelectedPatient(patientToSave);
+      // Y la consulta seleccionada (la última, que acabamos de agregar)
+      if (patientToSave.consultas && patientToSave.consultas.length > 0) {
+        if (editingConsultationIndex !== null) {
+          setSelectedConsultationIndex(editingConsultationIndex);
+        } else {
+          setSelectedConsultationIndex(0); // La más reciente
         }
-        setIsPrescriptionOpen(true);
-        // No cambiamos a 'list' todavía para permitir imprimir
-        return;
       }
+      setIsPrescriptionOpen(true);
+      // No cambiamos de vista todavía para permitir imprimir
+      return;
     }
 
-    // Si no imprime, volvemos a triage si venimos de ahí, o a lista
+    // Si no hay receta, volvemos a triage
     navigate('triage');
   };
   const openPrescriptionModal = () => {
