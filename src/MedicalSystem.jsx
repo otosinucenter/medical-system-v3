@@ -532,21 +532,29 @@ export default function MedicalSystem({ user, onLogout }) {
 
   const handleConvertToPatient = async (apt) => {
     // 0. Record attention start time and change status to 'in_attention'
-    setCurrentAppointmentId(apt.id); // Save appointment ID for later use when saving consultation
-
+    setCurrentAppointmentId(apt.id); // Save appointment ID for later    // Record attention start and initial services
+    const initialServices = [{ id: 'consulta', nombre: 'Consulta', precioAcordado: 200 }];
     try {
       await supabase
         .from('appointments')
         .update({
           triage_status: 'in_attention',
-          attention_start_time: new Date().toISOString()
+          attention_start_time: new Date().toISOString(),
+          services_selected: initialServices,
+          total_to_charge: 200
         })
         .eq('id', apt.id);
 
       // Update local state
       setDailyList(prev => prev.map(p =>
         p.id === apt.id
-          ? { ...p, triage_status: 'in_attention', attention_start_time: new Date().toISOString() }
+          ? {
+            ...p,
+            triage_status: 'in_attention',
+            attention_start_time: new Date().toISOString(),
+            services_selected: initialServices,
+            total_to_charge: 200
+          }
           : p
       ));
     } catch (error) {
@@ -880,6 +888,32 @@ export default function MedicalSystem({ user, onLogout }) {
     } catch (error) {
       logger.error('Error adding payment:', error);
       fetchDailyAppointments(); // Revert
+    }
+  };
+
+  // Update services in real-time for the current appointment
+  const updateAppointmentServices = async (services) => {
+    if (!currentAppointmentId) return;
+
+    const totalToCharge = services.reduce((sum, s) => sum + (s.precioAcordado || 0), 0);
+
+    try {
+      await supabase
+        .from('appointments')
+        .update({
+          services_selected: services,
+          total_to_charge: totalToCharge
+        })
+        .eq('id', currentAppointmentId);
+
+      // Also update local dailyList for immediate feedback
+      setDailyList(prev => prev.map(p =>
+        p.id === currentAppointmentId
+          ? { ...p, services_selected: services, total_to_charge: totalToCharge }
+          : p
+      ));
+    } catch (error) {
+      logger.error('Error updating services:', error);
     }
   };
 
@@ -2527,15 +2561,18 @@ margin: 0;
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={(e) => {
+                                  let newServices;
                                   if (e.target.checked) {
-                                    setSelectedServices(prev => [...prev, {
+                                    newServices = [...selectedServices, {
                                       id: servicio.id,
                                       nombre: servicio.nombre,
                                       precioAcordado: servicio.precioBase
-                                    }]);
+                                    }];
                                   } else {
-                                    setSelectedServices(prev => prev.filter(s => s.id !== servicio.id));
+                                    newServices = selectedServices.filter(s => s.id !== servicio.id);
                                   }
+                                  setSelectedServices(newServices);
+                                  updateAppointmentServices(newServices);
                                 }}
                                 className="w-4 h-4 text-emerald-600 rounded"
                               />
@@ -2550,6 +2587,14 @@ margin: 0;
                                   step="10"
                                   value={isSelected ? selectedService?.precioAcordado || 0 : servicio.precioBase}
                                   disabled={!isSelected}
+                                  onBlur={(e) => {
+                                    const newPrecio = parseFloat(e.target.value) || 0;
+                                    const newServices = selectedServices.map(s =>
+                                      s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                    );
+                                    setSelectedServices(newServices);
+                                    updateAppointmentServices(newServices);
+                                  }}
                                   onChange={(e) => {
                                     const newPrecio = parseFloat(e.target.value) || 0;
                                     setSelectedServices(prev => prev.map(s =>
