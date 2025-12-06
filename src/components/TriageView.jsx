@@ -1,5 +1,5 @@
-import React from 'react';
-import { Clipboard, Trash2, RefreshCw, Calendar, CheckCircle2, X, Edit3, Phone, Info, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clipboard, Trash2, RefreshCw, Calendar, CheckCircle2, X, Edit3, Phone, Info, ArrowRight, DollarSign, Plus } from 'lucide-react';
 
 const TriageView = ({
     user,
@@ -16,7 +16,9 @@ const TriageView = ({
     onSaveTime,
     onUpdateAppointmentField,
     onUpdateTriageStatus,
-    onConvertToPatient
+    onConvertToPatient,
+    onAddPayment,
+    metodosPago
 }) => {
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-20">
@@ -263,22 +265,86 @@ const TriageView = ({
 
                                         {/* Management & Notes */}
                                         <div className="space-y-3">
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${p.payment_status === 'paid' ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'}`}>
-                                                        {p.payment_status === 'paid' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                            {/* SERVICIOS Y PAGOS */}
+                                            {p.services_selected && p.services_selected.length > 0 ? (
+                                                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                                                            <DollarSign className="w-3 h-3" /> COBRAR
+                                                        </span>
+                                                        <span className="text-lg font-bold text-emerald-800">
+                                                            S/ {p.total_to_charge || 0}
+                                                        </span>
                                                     </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={p.payment_status === 'paid'}
-                                                        onChange={(e) => onUpdateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
-                                                        className="hidden"
-                                                    />
-                                                    <span className={`text-sm font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-slate-500'}`}>
-                                                        {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente de Pago'}
-                                                    </span>
-                                                </label>
-                                            </div>
+                                                    <div className="space-y-1 text-xs text-emerald-700">
+                                                        {p.services_selected.map((s, i) => (
+                                                            <div key={i} className="flex justify-between">
+                                                                <span>{s.nombre}</span>
+                                                                <span className={s.precioAcordado === 0 ? 'text-emerald-500 font-bold' : ''}>
+                                                                    {s.precioAcordado === 0 ? 'GRATIS' : `S/ ${s.precioAcordado}`}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Payments registered */}
+                                                    {p.payments && p.payments.length > 0 && (
+                                                        <div className="mt-2 pt-2 border-t border-emerald-200">
+                                                            {p.payments.map((pay, i) => (
+                                                                <div key={i} className="flex justify-between text-xs text-emerald-600">
+                                                                    <span>{metodosPago?.find(m => m.id === pay.metodo)?.icon || '💰'} {metodosPago?.find(m => m.id === pay.metodo)?.nombre || pay.metodo}</span>
+                                                                    <span>S/ {pay.monto}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Payment status */}
+                                                    <div className="mt-2 pt-2 border-t border-emerald-200 flex justify-between items-center">
+                                                        <span className="text-xs font-medium text-emerald-700">Pagado:</span>
+                                                        <span className={`text-sm font-bold ${(p.total_paid || 0) >= (p.total_to_charge || 0) ? 'text-green-600' : 'text-orange-600'}`}>
+                                                            S/ {p.total_paid || 0}
+                                                            {(p.total_paid || 0) >= (p.total_to_charge || 0) && <span className="ml-1">✅</span>}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Add payment button */}
+                                                    {onAddPayment && (p.total_paid || 0) < (p.total_to_charge || 0) && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const metodo = prompt('Método de pago:\n1. Efectivo\n2. Yape\n3. Plin\n4. Transferencia\n5. Tarjeta\n\nEscribe el número o nombre:');
+                                                                if (!metodo) return;
+                                                                const metodoMap = { '1': 'efectivo', '2': 'yape', '3': 'plin', '4': 'transferencia', '5': 'tarjeta' };
+                                                                const metodoId = metodoMap[metodo] || metodo.toLowerCase();
+                                                                const monto = parseFloat(prompt('Monto pagado (S/):'));
+                                                                if (!monto || isNaN(monto)) return;
+                                                                onAddPayment(p.id, metodoId, monto);
+                                                            }}
+                                                            className="w-full mt-2 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-200 transition-colors flex items-center justify-center gap-1"
+                                                        >
+                                                            <Plus className="w-3 h-3" /> Registrar Pago
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                /* Old payment toggle for appointments without services */
+                                                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${p.payment_status === 'paid' ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'}`}>
+                                                            {p.payment_status === 'paid' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={p.payment_status === 'paid'}
+                                                            onChange={(e) => onUpdateAppointmentField(p.id, 'payment_status', e.target.checked ? 'paid' : 'pending')}
+                                                            className="hidden"
+                                                        />
+                                                        <span className={`text-sm font-bold ${p.payment_status === 'paid' ? 'text-green-700' : 'text-slate-500'}`}>
+                                                            {p.payment_status === 'paid' ? 'PAGADO' : 'Pendiente de Pago'}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            )}
 
                                             <input
                                                 type="text"

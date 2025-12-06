@@ -25,7 +25,7 @@ import DataManagementModal from './components/DataManagementModal';
 import SidebarNav from './components/SidebarNav';
 import TeamModal from './components/TeamModal';
 import AgendaImportModal from './components/AgendaImportModal';
-import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO } from './data/constants';
+import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO, SERVICIOS_MEDICOS, METODOS_PAGO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
   logger.log("MedicalSystem user prop:", user);
@@ -53,6 +53,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [selectedTriageItems, setSelectedTriageItems] = useState([]); // For bulk delete in Triage
   const [selectedTrashItems, setSelectedTrashItems] = useState([]); // For bulk actions in Trash
   const [currentAppointmentId, setCurrentAppointmentId] = useState(null); // Track current appointment being attended
+  const [selectedServices, setSelectedServices] = useState([{ id: 'consulta', nombre: 'Consulta', precioAcordado: 200 }]); // Services for current appointment
 
   // --- PERSISTENCIA EN CARPETA LOCAL (FILE SYSTEM ACCESS API) ---
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -627,6 +628,9 @@ export default function MedicalSystem({ user, onLogout }) {
     // CLEAR DRAFT to ensure we start fresh with this patient
     clearDraft();
 
+    // Reset services to default (just consultation)
+    setSelectedServices([{ id: 'consulta', nombre: 'Consulta', precioAcordado: 200 }]);
+
     navigate('form');
   };
 
@@ -838,6 +842,44 @@ export default function MedicalSystem({ user, onLogout }) {
     } catch (error) {
       logger.error(`Error updating ${field}:`, error);
       fetchDailyAppointments(); // Revert on error
+    }
+  };
+
+  // Add payment to an appointment
+  const addPayment = async (aptId, metodo, monto) => {
+    const apt = dailyList.find(p => p.id === aptId);
+    if (!apt) return;
+
+    const newPayment = {
+      metodo,
+      monto,
+      fecha: new Date().toISOString()
+    };
+
+    const updatedPayments = [...(apt.payments || []), newPayment];
+    const newTotalPaid = updatedPayments.reduce((sum, p) => sum + (p.monto || 0), 0);
+
+    // Optimistic update
+    setDailyList(prev => prev.map(p =>
+      p.id === aptId
+        ? { ...p, payments: updatedPayments, total_paid: newTotalPaid }
+        : p
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          payments: updatedPayments,
+          total_paid: newTotalPaid,
+          payment_status: newTotalPaid >= (apt.total_to_charge || 0) ? 'paid' : 'partial'
+        })
+        .eq('id', aptId);
+
+      if (error) throw error;
+    } catch (error) {
+      logger.error('Error adding payment:', error);
+      fetchDailyAppointments(); // Revert
     }
   };
 
@@ -1540,16 +1582,22 @@ export default function MedicalSystem({ user, onLogout }) {
 
       // Record attention end time if we have an active appointment
       if (currentAppointmentId) {
+        // Calculate total from services
+        const totalToCharge = selectedServices.reduce((sum, s) => sum + (s.precioAcordado || 0), 0);
+
         await supabase
           .from('appointments')
           .update({
             triage_status: 'attended',
-            attention_end_time: new Date().toISOString()
+            attention_end_time: new Date().toISOString(),
+            services_selected: selectedServices,
+            total_to_charge: totalToCharge
           })
           .eq('id', currentAppointmentId);
 
-        // Clear the current appointment ID
+        // Clear the current appointment ID and services
         setCurrentAppointmentId(null);
+        setSelectedServices([{ id: 'consulta', nombre: 'Consulta', precioAcordado: 200 }]);
 
         // Refresh triage list
         fetchDailyAppointments();
@@ -2071,6 +2119,8 @@ margin: 0;
               onUpdateAppointmentField={updateAppointmentField}
               onUpdateTriageStatus={updateTriageStatus}
               onConvertToPatient={handleConvertToPatient}
+              onAddPayment={addPayment}
+              metodosPago={METODOS_PAGO}
             />
           )}
 
@@ -2459,6 +2509,75 @@ margin: 0;
                       </div>
                     </div>
                   </>)}
+
+                  {/* SECCIÓN DE SERVICIOS Y COBROS */}
+                  {(user.role === 'doctor' || user.role === 'admin') && (
+                    <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mt-4">
+                      <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center">
+                        💰 Servicios a Cobrar
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {SERVICIOS_MEDICOS.map(servicio => {
+                          const isSelected = selectedServices.some(s => s.id === servicio.id);
+                          const selectedService = selectedServices.find(s => s.id === servicio.id);
+
+                          return (
+                            <div key={servicio.id} className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${isSelected ? 'bg-white border-emerald-300 shadow-sm' : 'bg-emerald-50/50 border-emerald-100'}`}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedServices(prev => [...prev, {
+                                      id: servicio.id,
+                                      nombre: servicio.nombre,
+                                      precioAcordado: servicio.precioBase
+                                    }]);
+                                  } else {
+                                    setSelectedServices(prev => prev.filter(s => s.id !== servicio.id));
+                                  }
+                                }}
+                                className="w-4 h-4 text-emerald-600 rounded"
+                              />
+                              <span className="flex-1 text-sm font-medium text-gray-700">
+                                {servicio.icon} {servicio.nombre}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-400">S/</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="10"
+                                  value={isSelected ? selectedService?.precioAcordado || 0 : servicio.precioBase}
+                                  disabled={!isSelected}
+                                  onChange={(e) => {
+                                    const newPrecio = parseFloat(e.target.value) || 0;
+                                    setSelectedServices(prev => prev.map(s =>
+                                      s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                    ));
+                                  }}
+                                  className={`w-16 text-right text-sm border rounded px-2 py-1 ${isSelected ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200 text-gray-400'}`}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Total */}
+                      <div className="mt-3 pt-3 border-t border-emerald-200 flex justify-between items-center">
+                        <span className="text-sm font-medium text-emerald-700">Total a cobrar:</span>
+                        <span className="text-xl font-bold text-emerald-800">
+                          S/ {selectedServices.reduce((sum, s) => sum + (s.precioAcordado || 0), 0)}
+                        </span>
+                      </div>
+
+                      {/* Note for assistant */}
+                      <p className="text-xs text-emerald-600 mt-2 italic">
+                        * Este monto aparecerá en la tarjeta de Triaje para que la asistente registre el cobro
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-3 pt-4 border-t">
                     <button type="button" onClick={() => navigate('list')} className="px-4 py-2 border rounded text-gray-600">Cancelar</button>

@@ -5,6 +5,27 @@ export const DOCTOR_INFO = {
     contacto: "wflorez16@gmail.com - 955449503"
 };
 
+// Catálogo de Servicios Médicos con precios base
+export const SERVICIOS_MEDICOS = [
+    { id: 'consulta', nombre: 'Consulta', precioBase: 200, icon: '🩺' },
+    { id: 'audiometria', nombre: 'Audiometría', precioBase: 100, icon: '🔊' },
+    { id: 'timpanometria', nombre: 'Timpanometría', precioBase: 100, icon: '📊' },
+    { id: 'nasolaringoscopia', nombre: 'Nasolaringoscopía', precioBase: 250, icon: '🔬' },
+    { id: 'reflejos', nombre: 'Reflejos Acústicos', precioBase: 100, icon: '📈' },
+    { id: 'lavado', nombre: 'Lavado de Oído', precioBase: 50, icon: '💧' },
+    { id: 'microaspiracion', nombre: 'Microaspiración de Oído', precioBase: 250, icon: '🔧' },
+];
+
+// Métodos de pago disponibles
+export const METODOS_PAGO = [
+    { id: 'efectivo', nombre: 'Efectivo', icon: '💵' },
+    { id: 'yape', nombre: 'Yape', icon: '📱' },
+    { id: 'plin', nombre: 'Plin', icon: '📲' },
+    { id: 'transferencia', nombre: 'Transferencia', icon: '🏦' },
+    { id: 'tarjeta', nombre: 'Tarjeta', icon: '💳' },
+];
+
+
 export const VADEMECUM_TABULAR = {
     "OÍDO": [
         { name: "Ciriax Otic", med: "Ciprofloxacino 0,2% + Hidrocortisona 1% (Ciriax otic)", cant: "1 Got", ind: "3 gotas c/8h (en oido   ) 5 minutos y luego dejar que salga", via: "TOP", dur: "10 dias" },
