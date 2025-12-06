@@ -1640,44 +1640,33 @@ export default function MedicalSystem({ user, onLogout }) {
       // Opcional: mostrar toast de éxito
       setIsPrescriptionOpen(false); // Close modal if open
 
-      // Preguntar si desea imprimir DESPUÉS de guardar
-      if (formData.receta.length > 0) {
-        if (confirm("Consulta guardada correctamente. ¿Desea imprimir la receta ahora?")) {
-          // Necesitamos establecer el paciente seleccionado para que el modal funcione
-          setSelectedPatient(patientToSave);
-          // Y la consulta seleccionada (la última, que acabamos de agregar)
-          if (patientToSave.consultas && patientToSave.consultas.length > 0) {
-            // Si es nuevo o editado, suele ser la primera en la lista si ordenamos por fecha, 
-            // pero en el array 'consultas' que acabamos de guardar:
-            // Si es nuevo: consultas[0]
-            // Si editamos: consultas[editingIndex]
-            // Para simplificar, usamos la lógica de visualización que usa 'getDisplayConsultation'
-            // pero necesitamos asegurarnos que 'selectedConsultationIndex' apunte a la correcta.
-
-            // Si es nuevo paciente o nueva consulta, la agregamos al inicio en 'updatedPatientsList' logic?
-            // Revisemos save logic:
-            // if (isNewPatient) ... consultas: [current] ...
-            // else ... newConsultations = [current, ...prev] OR update index
-
-            if (editingConsultationIndex !== null) {
-              setSelectedConsultationIndex(editingConsultationIndex);
-            } else {
-              setSelectedConsultationIndex(0); // La más reciente
-            }
-          }
-          setIsPrescriptionOpen(true);
-          // No cambiamos a 'list' todavía para permitir imprimir
-          return;
-        }
-      }
-
-      // Si no imprime, volvemos a la lista
-      navigate('list');
-
     } catch (error) {
       logger.error("Error al guardar en Supabase:", error);
-      alert("Error al guardar en la nube. Los datos están en local pero podrían perderse si recargas.");
+      // Show error but continue to print flow
+      alert("Error al guardar en la nube. Los datos están en local.");
     }
+
+    // SIEMPRE preguntar si desea imprimir (incluso si falló la nube)
+    if (formData.receta.length > 0) {
+      if (confirm("¿Desea imprimir la receta ahora?")) {
+        // Necesitamos establecer el paciente seleccionado para que el modal funcione
+        setSelectedPatient(patientToSave);
+        // Y la consulta seleccionada (la última, que acabamos de agregar)
+        if (patientToSave.consultas && patientToSave.consultas.length > 0) {
+          if (editingConsultationIndex !== null) {
+            setSelectedConsultationIndex(editingConsultationIndex);
+          } else {
+            setSelectedConsultationIndex(0); // La más reciente
+          }
+        }
+        setIsPrescriptionOpen(true);
+        // No cambiamos a 'list' todavía para permitir imprimir
+        return;
+      }
+    }
+
+    // Si no imprime, volvemos a triage si venimos de ahí, o a lista
+    navigate('triage');
   };
   const openPrescriptionModal = () => {
     setIsPrescriptionOpen(true);
@@ -2544,83 +2533,119 @@ margin: 0;
                     </div>
                   </>)}
 
-                  {/* SECCIÓN DE SERVICIOS Y COBROS */}
+                  {/* SECCIÓN DE SERVICIOS Y COBROS - DISEÑO MEJORADO */}
                   {(user.role === 'doctor' || user.role === 'admin') && (
-                    <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mt-4">
-                      <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center">
-                        💰 Servicios a Cobrar
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {SERVICIOS_MEDICOS.map(servicio => {
-                          const isSelected = selectedServices.some(s => s.id === servicio.id);
-                          const selectedService = selectedServices.find(s => s.id === servicio.id);
-
-                          return (
-                            <div key={servicio.id} className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${isSelected ? 'bg-white border-emerald-300 shadow-sm' : 'bg-emerald-50/50 border-emerald-100'}`}>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  let newServices;
-                                  if (e.target.checked) {
-                                    newServices = [...selectedServices, {
-                                      id: servicio.id,
-                                      nombre: servicio.nombre,
-                                      precioAcordado: servicio.precioBase
-                                    }];
-                                  } else {
-                                    newServices = selectedServices.filter(s => s.id !== servicio.id);
-                                  }
-                                  setSelectedServices(newServices);
-                                  updateAppointmentServices(newServices);
-                                }}
-                                className="w-4 h-4 text-emerald-600 rounded"
-                              />
-                              <span className="flex-1 text-sm font-medium text-gray-700">
-                                {servicio.icon} {servicio.nombre}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-400">S/</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="10"
-                                  value={isSelected ? selectedService?.precioAcordado || 0 : servicio.precioBase}
-                                  disabled={!isSelected}
-                                  onBlur={(e) => {
-                                    const newPrecio = parseFloat(e.target.value) || 0;
-                                    const newServices = selectedServices.map(s =>
-                                      s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
-                                    );
-                                    setSelectedServices(newServices);
-                                    updateAppointmentServices(newServices);
-                                  }}
-                                  onChange={(e) => {
-                                    const newPrecio = parseFloat(e.target.value) || 0;
-                                    setSelectedServices(prev => prev.map(s =>
-                                      s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
-                                    ));
-                                  }}
-                                  className={`w-16 text-right text-sm border rounded px-2 py-1 ${isSelected ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200 text-gray-400'}`}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Total */}
-                      <div className="mt-3 pt-3 border-t border-emerald-200 flex justify-between items-center">
-                        <span className="text-sm font-medium text-emerald-700">Total a cobrar:</span>
-                        <span className="text-xl font-bold text-emerald-800">
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-xl border border-emerald-200 mt-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-base font-bold text-emerald-800 flex items-center gap-2">
+                          💰 Servicios a Cobrar
+                        </h4>
+                        <div className="text-2xl font-black text-emerald-700 bg-white px-4 py-1 rounded-lg border border-emerald-200 shadow-sm">
                           S/ {selectedServices.reduce((sum, s) => sum + (s.precioAcordado || 0), 0)}
-                        </span>
+                        </div>
                       </div>
 
-                      {/* Note for assistant */}
-                      <p className="text-xs text-emerald-600 mt-2 italic">
-                        * Este monto aparecerá en la tarjeta de Triaje para que la asistente registre el cobro
-                      </p>
+                      {/* Tabla de servicios */}
+                      <div className="bg-white rounded-lg border border-emerald-100 overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-emerald-100/50">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-semibold text-emerald-700">Servicio</th>
+                              <th className="text-center px-3 py-2 font-semibold text-emerald-700 w-20">Base</th>
+                              <th className="text-center px-3 py-2 font-semibold text-emerald-700 w-28">Acordado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {SERVICIOS_MEDICOS.map(servicio => {
+                              const isSelected = selectedServices.some(s => s.id === servicio.id);
+                              const selectedService = selectedServices.find(s => s.id === servicio.id);
+
+                              return (
+                                <tr key={servicio.id} className={`border-t border-emerald-50 transition-colors ${isSelected ? 'bg-emerald-50/50' : 'hover:bg-gray-50'}`}>
+                                  <td className="px-3 py-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                          let newServices;
+                                          if (e.target.checked) {
+                                            newServices = [...selectedServices, {
+                                              id: servicio.id,
+                                              nombre: servicio.nombre,
+                                              precioAcordado: servicio.precioBase
+                                            }];
+                                          } else {
+                                            newServices = selectedServices.filter(s => s.id !== servicio.id);
+                                          }
+                                          setSelectedServices(newServices);
+                                          updateAppointmentServices(newServices);
+                                        }}
+                                        className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                                      />
+                                      <span className={`font-medium ${isSelected ? 'text-emerald-800' : 'text-gray-600'}`}>
+                                        {servicio.icon} {servicio.nombre}
+                                      </span>
+                                    </label>
+                                  </td>
+                                  <td className="px-3 py-2 text-center text-gray-400 text-xs">
+                                    S/ {servicio.precioBase}
+                                  </td>
+                                  <td className="px-3 py-2 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <span className="text-xs text-gray-400">S/</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="10"
+                                        value={isSelected ? selectedService?.precioAcordado || 0 : ''}
+                                        placeholder="—"
+                                        disabled={!isSelected}
+                                        onBlur={(e) => {
+                                          if (!isSelected) return;
+                                          const newPrecio = parseFloat(e.target.value) || 0;
+                                          const newServices = selectedServices.map(s =>
+                                            s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                          );
+                                          setSelectedServices(newServices);
+                                          updateAppointmentServices(newServices);
+                                        }}
+                                        onChange={(e) => {
+                                          const newPrecio = parseFloat(e.target.value) || 0;
+                                          setSelectedServices(prev => prev.map(s =>
+                                            s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                          ));
+                                        }}
+                                        className={`w-16 text-center text-sm border rounded px-2 py-1 ${isSelected
+                                            ? selectedService?.precioAcordado === 0
+                                              ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                                              : 'bg-white border-emerald-300 text-emerald-800 font-semibold'
+                                            : 'bg-gray-100 border-gray-200 text-gray-300'
+                                          }`}
+                                      />
+                                      {isSelected && selectedService?.precioAcordado === 0 && (
+                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Gratis</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Footer con instrucciones */}
+                      <div className="mt-3 flex items-center justify-between text-xs">
+                        <p className="text-emerald-600 italic">
+                          ℹ️ Los servicios se actualizan en tiempo real y aparecen automáticamente en Triaje
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
+                            Precio 0 = GRATIS
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   )}
 
