@@ -52,6 +52,7 @@ export default function MedicalSystem({ user, onLogout }) {
   const [selectedAppointments, setSelectedAppointments] = useState([]); // For bulk delete in Agenda
   const [selectedTriageItems, setSelectedTriageItems] = useState([]); // For bulk delete in Triage
   const [selectedTrashItems, setSelectedTrashItems] = useState([]); // For bulk actions in Trash
+  const [currentAppointmentId, setCurrentAppointmentId] = useState(null); // Track current appointment being attended
 
   // --- PERSISTENCIA EN CARPETA LOCAL (FILE SYSTEM ACCESS API) ---
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -529,6 +530,28 @@ export default function MedicalSystem({ user, onLogout }) {
   }, [view]);
 
   const handleConvertToPatient = async (apt) => {
+    // 0. Record attention start time and change status to 'in_attention'
+    setCurrentAppointmentId(apt.id); // Save appointment ID for later use when saving consultation
+
+    try {
+      await supabase
+        .from('appointments')
+        .update({
+          triage_status: 'in_attention',
+          attention_start_time: new Date().toISOString()
+        })
+        .eq('id', apt.id);
+
+      // Update local state
+      setDailyList(prev => prev.map(p =>
+        p.id === apt.id
+          ? { ...p, triage_status: 'in_attention', attention_start_time: new Date().toISOString() }
+          : p
+      ));
+    } catch (error) {
+      logger.error('Error setting attention start:', error);
+    }
+
     // 1. Check if patient already exists (even in trash) to avoid overwriting history
     let existingPatient = null;
     if (apt.patient_dni) {
@@ -1514,6 +1537,24 @@ export default function MedicalSystem({ user, onLogout }) {
         .upsert(payload);
 
       if (error) throw error;
+
+      // Record attention end time if we have an active appointment
+      if (currentAppointmentId) {
+        await supabase
+          .from('appointments')
+          .update({
+            triage_status: 'attended',
+            attention_end_time: new Date().toISOString()
+          })
+          .eq('id', currentAppointmentId);
+
+        // Clear the current appointment ID
+        setCurrentAppointmentId(null);
+
+        // Refresh triage list
+        fetchDailyAppointments();
+      }
+
       // Opcional: mostrar toast de éxito
       setIsPrescriptionOpen(false); // Close modal if open
 
