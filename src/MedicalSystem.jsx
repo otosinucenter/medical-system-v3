@@ -1549,8 +1549,10 @@ export default function MedicalSystem({ user, onLogout }) {
       updatedPatientsList = [patientToSave, ...patients];
     } else {
       // Buscar y actualizar en la lista local primero (optimistic update)
+      let foundPatient = false;
       updatedPatientsList = patients.map(p => {
         if (p.id === docId) {
+          foundPatient = true;
           const previousConsultations = p.consultas || [];
           let newConsultations;
 
@@ -1565,6 +1567,12 @@ export default function MedicalSystem({ user, onLogout }) {
         }
         return p;
       });
+
+      // Si no encontramos el paciente en la lista (viene de Triaje directo), crearlo como nuevo
+      if (!foundPatient) {
+        patientToSave = { ...formData, consultas: [currentConsultationData] };
+        updatedPatientsList = [patientToSave, ...patients];
+      }
     }
 
     // 2. Actualizar estado local
