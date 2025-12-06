@@ -133,9 +133,9 @@ const PrescriptionModal = ({
                         <table className="w-full border-collapse table-fixed" style={{ fontSize: tableFontSize }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #1e40af', background: '#f8fafc' }}>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[25%] uppercase text-[10px]">Medicamento</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[28%] uppercase text-[10px]">Medicamento</th>
                                     <th className="text-center py-1 font-bold text-blue-900 w-[7%] uppercase text-[10px]">Cant.</th>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[48%] uppercase text-[10px]">Indicaciones</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[45%] uppercase text-[10px]">Indicaciones</th>
                                     <th className="text-center py-1 font-bold text-blue-900 w-[8%] uppercase text-[10px]">Vía</th>
                                     <th className="text-center py-1 font-bold text-blue-900 w-[12%] uppercase text-[10px]">Días</th>
                                 </tr>
@@ -147,7 +147,7 @@ const PrescriptionModal = ({
                                             <textarea
                                                 className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
                                                 style={{ minHeight: '1.2em' }}
-                                                rows={Math.ceil(item.med.length / 20) || 1}
+                                                rows={Math.max(1, Math.ceil(item.med.length / 25))}
                                                 value={item.med}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
                                             />
@@ -163,7 +163,7 @@ const PrescriptionModal = ({
                                             <textarea
                                                 className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
                                                 style={{ minHeight: '1.2em' }}
-                                                rows={Math.ceil(item.ind.length / 45) || 1}
+                                                rows={Math.max(1, Math.ceil(item.ind.length / 50))}
                                                 value={item.ind}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
                                             />
