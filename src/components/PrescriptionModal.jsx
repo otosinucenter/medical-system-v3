@@ -36,7 +36,7 @@ const PrescriptionModal = ({
 
     if (!isOpen || !patient) return null;
 
-    // Calcular tamaño de fuente - UN POCO MÁS GRANDE para espacio de escritura
+    // Calcular tamaño según cantidad de medicamentos
     const count = editableReceta.length;
     const tableFontSize = count > 8 ? '12px' : count > 6 ? '13px' : '14px';
     const tableRowHeight = count > 8 ? '26px' : count > 6 ? '30px' : '34px';
@@ -129,8 +129,8 @@ const PrescriptionModal = ({
                         </div>
                     </div>
 
-                    {/* Tabla Receta - MÁS ESPACIO */}
-                    <div className="flex-1 overflow-hidden mb-1">
+                    {/* Tabla Receta - Centrada cuando pocos medicamentos */}
+                    <div className={`overflow-hidden ${count <= 4 ? 'mb-auto' : 'mb-1 flex-1'}`}>
                         <table className="w-full border-collapse table-fixed" style={{ fontSize: tableFontSize }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #1e40af', background: '#f8fafc' }}>
@@ -187,9 +187,9 @@ const PrescriptionModal = ({
                         </table>
                     </div>
 
-                    {/* Footer - MÁS ORDENADO */}
-                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-2">
-                        {/* Fila 1: Indicaciones + Firma */}
+                    {/* Footer - SIEMPRE EN LA PARTE INFERIOR */}
+                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-3">
+                        {/* Indicaciones + Firma */}
                         <div className="flex gap-4 items-start">
                             <div className="flex-1">
                                 <h3 className="font-bold text-xs uppercase text-blue-900 tracking-wide mb-0.5">INDICACIONES ADICIONALES:</h3>
@@ -200,9 +200,20 @@ const PrescriptionModal = ({
                                     onChange={(e) => setEditableIndicaciones(e.target.value)}
                                     placeholder="• Evitar..."
                                 />
+                                {/* Control - PEQUEÑO, EN LA ESQUINA INFERIOR IZQUIERDA */}
+                                <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-500">
+                                    <span>📅 Control en</span>
+                                    <input
+                                        type="text"
+                                        value={controlDias}
+                                        onChange={(e) => setControlDias(e.target.value)}
+                                        className="w-6 text-center font-bold text-blue-600 border-b border-blue-300 bg-transparent outline-none text-[10px]"
+                                    />
+                                    <span>días (o según evolución)</span>
+                                </div>
                             </div>
 
-                            {/* Firma Digital - MÁS GRANDE */}
+                            {/* Firma Digital */}
                             <div className="w-44 flex flex-col items-center justify-center">
                                 {doctorInfo.firma ? (
                                     <img
@@ -217,19 +228,6 @@ const PrescriptionModal = ({
                                     </div>
                                 )}
                             </div>
-                        </div>
-
-                        {/* Fila 2: Control sugerido - IZQUIERDA EN UNA LÍNEA */}
-                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-600">📅 Se sugiere control en</span>
-                            <input
-                                type="text"
-                                value={controlDias}
-                                onChange={(e) => setControlDias(e.target.value)}
-                                className="w-10 text-center font-bold text-blue-700 border-2 border-blue-400 bg-blue-50 outline-none text-base rounded"
-                            />
-                            <span className="text-sm font-semibold text-gray-600">días</span>
-                            <span className="text-xs text-gray-400">(o según evolución)</span>
                         </div>
                     </div>
                 </div>
