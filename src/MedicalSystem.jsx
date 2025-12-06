@@ -25,7 +25,6 @@ import DataManagementModal from './components/DataManagementModal';
 import SidebarNav from './components/SidebarNav';
 import TeamModal from './components/TeamModal';
 import AgendaImportModal from './components/AgendaImportModal';
-import ConsultationFormV2 from './components/ConsultationFormV2';
 import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO, SERVICIOS_MEDICOS, METODOS_PAGO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
@@ -2360,412 +2359,804 @@ margin: 0;
           )}
 
           {/* VISTA FORMULARIO */}
-          {/* VISTA FORMULARIO - v2 REDISEÑADA */}
           {view === 'form' && (
-            <ConsultationFormV2
-              formData={formData}
-              handleChange={handleChange}
-              handleSubmit={onFormSubmit}
-              isNewPatient={isNewPatient}
-              user={user}
-              autoResize={(target) => { target.style.height = 'auto'; target.style.height = target.scrollHeight + 'px'; }}
-              // Props lógica
-              addExamTemplate={addExamTemplate}
-              EXAM_TEMPLATES={EXAM_TEMPLATES}
-              DIAGNOSTICOS_COMUNES={DIAGNOSTICOS_COMUNES}
-              CATALOGO_MEDICO={CATALOGO_MEDICO}
-              selectCommonDiagnosis={selectCommonDiagnosis}
-              selectProtocol={selectProtocol}
-              diagInput={diagInput}
-              setDiagInput={setDiagInput}
-              addManualDiagnosis={addManualDiagnosis}
-              removeDiagnosis={removeDiagnosis}
-              getFilteredVademecum={getFilteredVademecum}
-              addMedicationRow={addMedicationRow}
-              updateMedicationRow={updateMedicationRow}
-              removeMedicationRow={removeMedicationRow}
-              // Servicios
-              selectedServices={selectedServices}
-              setSelectedServices={setSelectedServices}
-              updateAppointmentServices={updateAppointmentServices}
-              SERVICIOS_MEDICOS={SERVICIOS_MEDICOS}
-              // Acciones
-              onSave={onFormSubmit}
-              onSaveAndFinish={saveConsultation}
-              onBack={() => {
-                if (window.confirm("¿Estás seguro de salir? Se perderán los cambios no guardados.")) {
-                  setView('triage');
-                }
-              }}
+            <div className="max-w-7xl mx-auto flex flex-col gap-6">
+              <div className="flex-1 space-y-6">
+                {isNewPatient && (
+                  <div className="bg-blue-50/50 border border-blue-200 p-2 rounded-lg flex items-center gap-3 no-print transition-all hover:shadow-sm">
+                    <div className="bg-blue-100 p-1.5 rounded-md text-blue-600">
+                      <Clipboard className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        className="w-full text-xs border border-blue-200 p-2 rounded bg-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder:text-blue-300/70 transition-all font-mono"
+                        value={importText}
+                        onChange={handleImport}
+                        placeholder="Clic aquí y presiona Ctrl + V para importar desde Excel..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={onFormSubmit} className="space-y-6">
+                  <div className={`transition-opacity duration-200 ${!isNewPatient ? "opacity-90" : ""}`}>
+                    {/* SECCIÓN 1: DATOS PERSONALES */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <User className="w-4 h-4 mr-2 text-blue-600" /> 1. Filiación y Contacto
+                        </h3>
+                        {!isNewPatient && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">MODO EDICIÓN</span>}
+                      </div>
+
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                          {/* Datos Principales */}
+                          <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="sm:col-span-2">
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">Nombre Completo</label>
+                              <input required name="nombre" value={formData.nombre} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all" readOnly={!isNewPatient} placeholder="Apellidos y Nombres" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">DNI / Documento</label>
+                              <input name="id" value={formData.id} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all" readOnly={!isNewPatient} placeholder="00000000" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">Celular / Teléfono</label>
+                              <input name="celular" value={formData.celular} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all" placeholder="999..." />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">Edad</label>
+                              <input name="edad" type="text" value={formData.edad} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all" placeholder="Ej: 25 Años" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">Sexo</label>
+                              <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                                <option value="Mujer">Mujer</option>
+                                <option value="Hombre">Hombre</option>
+                                <option value="Otro">Otro</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Columna Derecha / Datos Secundarios */}
+                          <div className="md:col-span-4 space-y-4 border-l border-slate-50 pl-0 md:pl-6">
+                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                              <label className="text-[10px] font-bold text-yellow-700 uppercase mb-1 block">Fecha de Cita</label>
+                              <input type="datetime-local" name="fechaCita" value={formData.fechaCita} onChange={handleChange} className="w-full bg-white border-yellow-200 p-2 rounded text-sm font-bold text-slate-700 focus:ring-2 focus:ring-yellow-200 outline-none" />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 mb-1 block">Fecha Nacimiento</label>
+                              <input name="fechaNacimiento" type="date" value={formData.fechaNacimiento} onChange={handleChange} className="w-full border-slate-200 p-2 rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none" />
+                            </div>
+
+                            {formData.sexo === 'Mujer' && (
+                              <div className="animate-fadeIn">
+                                <label className="text-xs font-bold text-pink-500 mb-1 block">F.U.R (Última Regla)</label>
+                                <input type="date" name="fur" value={formData.fur} onChange={handleChange} className="w-full border-pink-200 p-2 rounded-lg text-sm bg-pink-50/30 text-pink-700 focus:ring-2 focus:ring-pink-100 focus:border-pink-300 outline-none" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Fila Inferior Completa */}
+                          <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+                            <div><label className="text-xs font-bold text-slate-500 mb-1 block">Ocupación</label><input name="ocupacion" value={formData.ocupacion} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none" /></div>
+                            <div><label className="text-xs font-bold text-slate-500 mb-1 block">Procedencia</label><input name="procedencia" value={formData.procedencia} onChange={handleChange} className="w-full border-slate-200 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none" /></div>
+                            <div className="sm:col-span-2 relative">
+                              <label className="text-xs font-bold text-blue-600 mb-1 block">Referencia / ¿Cómo nos encontró?</label>
+                              <input name="referencia" value={formData.referencia} onChange={handleChange} className="w-full border-blue-100 bg-blue-50/30 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none" placeholder="..." />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {(user.role === 'doctor' || user.role === 'admin') && (<>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <History className="w-4 h-4 mr-2 text-rose-500" /> 2. Antecedentes Médicos
+                        </h3>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-red-50/50 p-4 rounded-xl border border-red-100">
+                            <label className="text-xs font-bold text-red-600 mb-2 flex items-center uppercase tracking-wide">
+                              <AlertTriangle className="w-3 h-3 mr-1" /> Alergias
+                            </label>
+                            <textarea
+                              name="alergias"
+                              value={formData.alergias}
+                              onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                              rows={1}
+                              className="w-full bg-white border border-red-200 p-3 rounded-lg text-sm text-gray-800 auto-resize overflow-hidden resize-none focus:ring-2 focus:ring-red-100 outline-none"
+                              placeholder="Ninguna conocida"
+                            />
+                          </div>
+
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label className="text-xs font-bold text-slate-600 mb-2 block uppercase tracking-wide">Enfermedades / Crónicos</label>
+                            <textarea
+                              name="enfermedades"
+                              value={formData.enfermedades}
+                              onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                              rows={1}
+                              className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-gray-800 auto-resize overflow-hidden resize-none focus:ring-2 focus:ring-blue-100 outline-none"
+                              placeholder="Ninguna"
+                            />
+                          </div>
+
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label className="text-xs font-bold text-slate-600 mb-2 block uppercase tracking-wide">Medicamentos Habituales</label>
+                            <textarea
+                              name="medicamentos"
+                              value={formData.medicamentos}
+                              onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                              rows={1}
+                              className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-gray-800 auto-resize overflow-hidden resize-none focus:ring-2 focus:ring-blue-100 outline-none"
+                              placeholder="Ninguno"
+                            />
+                          </div>
+
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label className="text-xs font-bold text-slate-600 mb-2 block uppercase tracking-wide">Cirugías Previas</label>
+                            <textarea
+                              name="cirugias"
+                              value={formData.cirugias}
+                              onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                              rows={1}
+                              className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-gray-800 auto-resize overflow-hidden resize-none focus:ring-2 focus:ring-blue-100 outline-none"
+                              placeholder="Ninguna"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECCIÓN 3: MOTIVO */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                        <label className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <Clipboard className="w-4 h-4 mr-2 text-indigo-600" /> 3. Motivo de Consulta
+                        </label>
+                      </div>
+                      <div className="p-6">
+                        <textarea
+                          name="resumen"
+                          value={formData.resumen}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full bg-slate-50 border border-slate-300 p-4 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400"
+                          placeholder="Describa el motivo de la consulta..."
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    {/* SECCIÓN 4: EXAMEN FÍSICO */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <Stethoscope className="w-4 h-4 mr-2 text-teal-600" /> 4. Examen Físico
+                        </h3>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {['oido', 'nariz', 'garganta'].map(part => (
+                            <div key={part} className="bg-slate-50 p-4 rounded-xl border border-slate-200 transition-all hover:border-teal-200 hover:shadow-sm">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-xs font-bold uppercase text-slate-700 tracking-wider border-b-2 border-teal-500 pb-0.5">{part}</span>
+                                <div className="flex gap-1 flex-wrap justify-end">
+                                  {EXAM_TEMPLATES[part].map((t, i) => (
+                                    <button type="button" key={i} onClick={() => addExamTemplate('examen' + part.charAt(0).toUpperCase() + part.slice(1), t.text)} className="px-2 py-1 bg-white border border-slate-200 text-[10px] font-medium text-slate-600 rounded-md hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors">
+                                      {t.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <textarea
+                                name={'examen' + part.charAt(0).toUpperCase() + part.slice(1)}
+                                value={formData['examen' + part.charAt(0).toUpperCase() + part.slice(1)]}
+                                onChange={handleChange}
+                                rows={3}
+                                className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-100 focus:border-teal-400 outline-none resize-none"
+                                placeholder={`Hallazgos en ${part}...`}
+                              ></textarea>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECCIÓN 5: DIAGNÓSTICO */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <ListPlus className="w-4 h-4 mr-2 text-violet-600" /> 5. Diagnóstico
+                        </h3>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <select onChange={selectCommonDiagnosis} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white focus:ring-2 focus:ring-violet-100 focus:border-violet-400 outline-none">
+                            <option value="">-- Seleccionar Diagnóstico Frecuente --</option>
+                            {Object.entries(DIAGNOSTICOS_COMUNES).map(([categoria, items]) => (
+                              <optgroup key={categoria} label={categoria}>
+                                {items.map((d, i) => <option key={i} value={d.label}>{d.label}</option>)}
+                              </optgroup>
+                            ))}
+                          </select>
+
+                          <select onChange={selectProtocol} className="w-full p-2.5 border-2 border-violet-100 rounded-lg text-sm font-bold text-violet-700 bg-violet-50/30 focus:ring-2 focus:ring-violet-200 focus:border-violet-400 outline-none">
+                            <option value="">⚡ Cargar Protocolo Rápido</option>
+                            {Object.entries(CATALOGO_MEDICO).map(([categoria, items]) => (
+                              <optgroup key={categoria} label={categoria}>
+                                {items.map((p, i) => <option key={i} value={p.label}>{p.label}</option>)}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex gap-3 mb-4 items-center bg-slate-50 p-3 rounded-lg border border-slate-200">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Nuevo:</span>
+                          <input placeholder="CIE10" value={diagInput.code} onChange={e => setDiagInput({ ...diagInput, code: e.target.value.toUpperCase() })} className="w-24 border border-slate-300 p-2 rounded-md text-sm font-mono uppercase focus:border-violet-400 outline-none" />
+                          <input placeholder="Escribir diagnóstico manual..." value={diagInput.desc} onChange={e => setDiagInput({ ...diagInput, desc: e.target.value })} className="flex-1 border border-slate-300 p-2 rounded-md text-sm focus:border-violet-400 outline-none" />
+                          <button type="button" onClick={addManualDiagnosis} className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors flex items-center shadow-sm">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {formData.diagnosticos.map((d, i) => (
+                            <div key={i} className="flex justify-between items-center bg-violet-50 border border-violet-100 p-3 rounded-lg text-sm group hover:border-violet-200 transition-all">
+                              <div className="flex items-center">
+                                <span className="font-mono font-bold text-violet-700 bg-white border border-violet-200 px-2 py-0.5 rounded text-xs mr-3">{d.code}</span>
+                                <span className="font-medium text-slate-700">{d.desc}</span>
+                              </div>
+                              <button type="button" onClick={() => removeDiagnosis(i)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {formData.diagnosticos.length === 0 && <p className="text-center text-slate-400 text-xs italic py-2">No hay diagnósticos registrados</p>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECCIÓN 6: TRATAMIENTO */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center uppercase tracking-wide">
+                          <Pill className="w-4 h-4 mr-2 text-emerald-600" /> 6. Tratamiento (Receta)
+                        </h3>
+                      </div>
+                      <div className="p-6">
+
+                        <datalist id="meds-list">
+                          {getFilteredVademecum().map((m, i) => <option key={i} value={m.med} />)}
+                        </datalist>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm border border-gray-200 mb-2">
+                            <thead className="bg-gray-100">
+                              <tr>
+                                <th className="text-left p-2 w-1/3">Medicamento</th>
+                                <th className="text-left p-2 w-16">Cant.</th>
+                                <th className="text-left p-2">Indicaciones</th>
+                                <th className="text-left p-2 w-16">Vía</th>
+                                <th className="text-left p-2 w-20">Duración</th>
+                                <th className="w-8"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {formData.receta.map((row, idx) => (
+                                <tr key={idx} className="border-b">
+                                  <td className="p-1"><input list="meds-list" className="w-full border p-1" value={row.med} onChange={(e) => updateMedicationRow(idx, 'med', e.target.value)} /></td>
+                                  <td className="p-1"><input className="w-full border p-1" value={row.cant} onChange={(e) => updateMedicationRow(idx, 'cant', e.target.value)} /></td>
+                                  <td className="p-1"><input className="w-full border p-1" value={row.ind} onChange={(e) => updateMedicationRow(idx, 'ind', e.target.value)} /></td>
+                                  <td className="p-1"><input className="w-full border p-1" value={row.via} onChange={(e) => updateMedicationRow(idx, 'via', e.target.value)} /></td>
+                                  <td className="p-1"><input className="w-full border p-1" value={row.dur} onChange={(e) => updateMedicationRow(idx, 'dur', e.target.value)} /></td>
+                                  <td className="p-1 text-center"><button type="button" onClick={() => removeMedicationRow(idx)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button></td>
+                                </tr>
+                              ))}
+                              {formData.receta.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-400 italic">Use el Vademécum lateral para agregar medicamentos</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Vademécum Sugerido (Chips) */}
+                        <div className="mt-2 mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                          <label className="text-xs font-bold text-blue-700 mb-2 block flex items-center"><Pill className="w-3 h-3 mr-1" /> Vademécum Sugerido (Click para agregar)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {getFilteredVademecum().map((m, i) => (
+                              <button key={i} type="button" onClick={() => addMedicationRow(m)} className="text-xs bg-white text-gray-700 px-2 py-1 rounded border border-gray-200 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300 transition-colors shadow-sm">
+                                {m.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <label className="text-xs font-bold text-gray-600">Indicaciones Adicionales</label>
+                          <textarea name="indicaciones" value={formData.indicaciones} onChange={handleChange} rows={2} className="w-full border p-2 rounded text-sm"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </>)}
+
+                  {/* SECCIÓN DE SERVICIOS Y COBROS - DISEÑO MEJORADO */}
+                  {(user.role === 'doctor' || user.role === 'admin') && (
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-xl border border-emerald-200 mt-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-base font-bold text-emerald-800 flex items-center gap-2">
+                          💰 Servicios a Cobrar
+                        </h4>
+                        <div className="text-2xl font-black text-emerald-700 bg-white px-4 py-1 rounded-lg border border-emerald-200 shadow-sm">
+                          S/ {selectedServices.reduce((sum, s) => sum + (s.precioAcordado || 0), 0)}
+                        </div>
+                      </div>
+
+                      {/* Tabla de servicios */}
+                      <div className="bg-white rounded-lg border border-emerald-100 overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-emerald-100/50">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-semibold text-emerald-700">Servicio</th>
+                              <th className="text-center px-3 py-2 font-semibold text-emerald-700 w-20">Base</th>
+                              <th className="text-center px-3 py-2 font-semibold text-emerald-700 w-28">Acordado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {SERVICIOS_MEDICOS.map(servicio => {
+                              const isSelected = selectedServices.some(s => s.id === servicio.id);
+                              const selectedService = selectedServices.find(s => s.id === servicio.id);
+
+                              return (
+                                <tr key={servicio.id} className={`border-t border-emerald-50 transition-colors ${isSelected ? 'bg-emerald-50/50' : 'hover:bg-gray-50'}`}>
+                                  <td className="px-3 py-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                          let newServices;
+                                          if (e.target.checked) {
+                                            newServices = [...selectedServices, {
+                                              id: servicio.id,
+                                              nombre: servicio.nombre,
+                                              precioAcordado: servicio.precioBase
+                                            }];
+                                          } else {
+                                            newServices = selectedServices.filter(s => s.id !== servicio.id);
+                                          }
+                                          setSelectedServices(newServices);
+                                          updateAppointmentServices(newServices);
+                                        }}
+                                        className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                                      />
+                                      <span className={`font-medium ${isSelected ? 'text-emerald-800' : 'text-gray-600'}`}>
+                                        {servicio.icon} {servicio.nombre}
+                                      </span>
+                                    </label>
+                                  </td>
+                                  <td className="px-3 py-2 text-center text-gray-400 text-xs">
+                                    S/ {servicio.precioBase}
+                                  </td>
+                                  <td className="px-3 py-2 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <span className="text-xs text-gray-400">S/</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="10"
+                                        value={isSelected ? selectedService?.precioAcordado || 0 : ''}
+                                        placeholder="—"
+                                        disabled={!isSelected}
+                                        onBlur={(e) => {
+                                          if (!isSelected) return;
+                                          const newPrecio = parseFloat(e.target.value) || 0;
+                                          const newServices = selectedServices.map(s =>
+                                            s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                          );
+                                          setSelectedServices(newServices);
+                                          updateAppointmentServices(newServices);
+                                        }}
+                                        onChange={(e) => {
+                                          const newPrecio = parseFloat(e.target.value) || 0;
+                                          setSelectedServices(prev => prev.map(s =>
+                                            s.id === servicio.id ? { ...s, precioAcordado: newPrecio } : s
+                                          ));
+                                        }}
+                                        className={`w-16 text-center text-sm border rounded px-2 py-1 ${isSelected
+                                          ? selectedService?.precioAcordado === 0
+                                            ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                                            : 'bg-white border-emerald-300 text-emerald-800 font-semibold'
+                                          : 'bg-gray-100 border-gray-200 text-gray-300'
+                                          }`}
+                                      />
+                                      {isSelected && selectedService?.precioAcordado === 0 && (
+                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Gratis</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Footer con instrucciones */}
+                      <div className="mt-3 flex items-center justify-between text-xs">
+                        <p className="text-emerald-600 italic">
+                          ℹ️ Los servicios se actualizan en tiempo real y aparecen automáticamente en Triaje
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
+                            Precio 0 = GRATIS
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onClick={() => navigate('list')} className="px-4 py-2 border rounded text-gray-600">Cancelar</button>
+                    <button type="submit" className="px-6 py-2 bg-blue-700 text-white rounded shadow font-bold hover:bg-blue-800">GUARDAR CONSULTA</button>
+                  </div>
+                </form>
+              </div>
+
+
+            </div>
+          )}
+
+          {/* VISTA DETALLE (HISTORIAL) */}
+          {view === 'detail' && selectedPatient && (
+            <PatientHistoryView
+              patient={selectedPatient}
+              selectedConsultationIndex={selectedConsultationIndex}
+              onSelectConsultation={setSelectedConsultationIndex}
+              onNewConsultation={prepareFormForNewConsultation}
+              onBack={() => navigate('list')}
+              onOpenPrescription={openPrescriptionModal}
+              onEditConsultation={handleEditConsultation}
             />
           )}
-          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
-            Precio 0 = GRATIS
-          </span>
-        </div>
-    </div>
-    </div >
-  )
-}
 
-<div className="flex justify-end gap-3 pt-4 border-t">
-  <button type="button" onClick={() => navigate('list')} className="px-4 py-2 border rounded text-gray-600">Cancelar</button>
-  <button type="submit" className="px-6 py-2 bg-blue-700 text-white rounded shadow font-bold hover:bg-blue-800">GUARDAR CONSULTA</button>
-</div>
-                </form >
-              </div >
+          {/* MODAL RECETA A5 (EDITABLE Y PARA IMPRIMIR) */}
+          <PrescriptionModal
+            isOpen={isPrescriptionOpen}
+            onClose={() => setIsPrescriptionOpen(false)}
+            patient={selectedPatient}
+            consultation={getDisplayConsultation()}
+            doctorInfo={DOCTOR_INFO}
+            onSave={handleUpdatePrescription}
+            onSaveAndFinish={saveConsultation}
+          />
 
+          {
+            isPasteModalOpen && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+                <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Importación Masiva (Copiar y Pegar)</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    1. Abra su Excel.<br />
+                    2. Seleccione las filas que desea importar <strong>incluyendo los encabezados</strong>.<br />
+                    3. Copie (Ctrl+C) y pegue (Ctrl+V) en el cuadro de abajo.
+                  </p>
+                  <textarea
+                    className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Pegue aquí los datos de Excel..."
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
+                  ></textarea>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setIsPasteModalOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+                    <button onClick={handleBulkPaste} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Procesar Importación</button>
+                  </div>
+                </div>
+              </div>
+            )
+          }
 
-            </div >
-          )}
-
-{/* VISTA DETALLE (HISTORIAL) */ }
-{
-  view === 'detail' && selectedPatient && (
-    <PatientHistoryView
-      patient={selectedPatient}
-      selectedConsultationIndex={selectedConsultationIndex}
-      onSelectConsultation={setSelectedConsultationIndex}
-      onNewConsultation={prepareFormForNewConsultation}
-      onBack={() => navigate('list')}
-      onOpenPrescription={openPrescriptionModal}
-      onEditConsultation={handleEditConsultation}
-    />
-  )
-}
-
-{/* MODAL RECETA A5 (EDITABLE Y PARA IMPRIMIR) */ }
-<PrescriptionModal
-  isOpen={isPrescriptionOpen}
-  onClose={() => setIsPrescriptionOpen(false)}
-  patient={selectedPatient}
-  consultation={getDisplayConsultation()}
-  doctorInfo={DOCTOR_INFO}
-  onSave={handleUpdatePrescription}
-  onSaveAndFinish={saveConsultation}
-/>
-
-{
-  isPasteModalOpen && (
-    <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
-      <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Importación Masiva (Copiar y Pegar)</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          1. Abra su Excel.<br />
-          2. Seleccione las filas que desea importar <strong>incluyendo los encabezados</strong>.<br />
-          3. Copie (Ctrl+C) y pegue (Ctrl+V) en el cuadro de abajo.
-        </p>
-        <textarea
-          className="w-full h-64 border p-2 rounded text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-blue-500"
-          placeholder="Pegue aquí los datos de Excel..."
-          value={pasteText}
-          onChange={(e) => setPasteText(e.target.value)}
-        ></textarea>
-        <div className="flex justify-end gap-3 mt-4">
-          <button onClick={() => setIsPasteModalOpen(false)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
-          <button onClick={handleBulkPaste} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Procesar Importación</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-{/* MODAL GESTIÓN DE DATOS */ }
-<DataManagementModal
-  isOpen={isDataModalOpen}
-  onClose={() => navigate(view, { modal: null })}
-  user={user}
-  onExportJSON={exportToJSON}
-  onSaveToFolder={saveToFolder}
-  onConnectFolder={handleConnectFolder}
-  directoryHandle={directoryHandle}
-  importMode={importMode}
-  onSetImportMode={setImportMode}
-  onRestoreBackup={handleRestoreBackupFile}
-  importPreview={importPreview}
-  onSetImportPreview={setImportPreview}
-  onPreviewExcel={handlePreviewExcel}
-  onProcessImport={processImport}
-  onOpenPasteModal={() => { navigate(view, { modal: null }); setIsPasteModalOpen(true); }}
-/>
-{/* VISTA AGENDA */ }
-{
-  view === 'agenda' && (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Solicitud de Citas</h2>
-          <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              const link = `${window.location.origin}/citas/${user.clinicId}`;
-              navigator.clipboard.writeText(link);
-              alert("Link de citas copiado al portapapeles");
-            }}
-            className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
-          >
-            <Link className="w-4 h-4" />
-            Copiar Link Público
-          </button>
-          <button
-            onClick={() => setIsAgendaImportOpen(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-          >
-            <Clipboard className="w-4 h-4" />
-            Importar (Pegar)
-          </button>
-          <button
-            onClick={() => setShowConfirmed(!showConfirmed)}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors border ${showConfirmed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200'}`}
-          >
-            {showConfirmed ? 'Ocultar Confirmados' : 'Ver Confirmados'}
-          </button>
-          <button
-            onClick={fetchAppointments}
-            className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          {selectedAppointments.length > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300"
-            >
-              <Trash2 className="w-4 h-4" />
-              Eliminar ({selectedAppointments.length})
-            </button>
-          )}
-        </div>
-      </div>
-
-      {loadingAppointments ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-500">Cargando agenda...</p>
-        </div>
-      ) : appointments.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CalendarDays className="w-8 h-8 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
-          <p className="text-slate-500 mb-6 max-w-md mx-auto">
-            Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="p-4 w-10">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
-                    checked={
-                      appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 &&
-                      appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').every(a => selectedAppointments.includes(a.id))
-                    }
-                  />
-                </th>
-                <th className="p-4 w-48">Fecha / Hora</th>
-                <th className="p-4">Paciente</th>
-                <th className="p-4">Motivo / Antecedentes</th>
-                <th className="p-4 w-32 text-center">Estado</th>
-                <th className="p-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
-                <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''} ${selectedAppointments.includes(apt.id) ? 'bg-blue-50' : ''}`}>
-                  <td className="p-4 align-top">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 cursor-pointer"
-                      checked={selectedAppointments.includes(apt.id)}
-                      onChange={() => handleSelectAppointment(apt.id)}
-                    />
-                  </td>
-                  {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
-                  <td className="p-4 align-top">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        key={`date-${apt.id}-${apt.appointment_date}`}
-                        type="date"
-                        className="text-xs font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none"
-                        defaultValue={new Date(apt.appointment_date).toISOString().split('T')[0]}
-                        onBlur={(e) => {
-                          const newDate = e.target.value;
-                          if (newDate && newDate !== new Date(apt.appointment_date).toISOString().split('T')[0]) {
-                            const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
-
-                            // Optimistic update
-                            setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
-
-                            supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                              if (error) { logger.error(error); fetchAppointments(); }
-                            });
-                          }
-                        }}
-                      />
-                      <input
-                        key={`time-${apt.id}-${apt.appointment_date}`}
-                        type="time"
-                        className="text-lg font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none text-slate-800"
-                        defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
-                        onBlur={(e) => {
-                          const newTime = e.target.value;
-                          const currentDate = new Date(apt.appointment_date).toISOString().split('T')[0];
-                          const currentTime = new Date(apt.appointment_date).toTimeString().slice(0, 5);
-
-                          if (newTime && newTime !== currentTime) {
-                            const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
-
-                            // Optimistic update
-                            setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
-
-                            supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
-                              if (error) { logger.error(error); fetchAppointments(); }
-                            });
-                          }
-                        }}
-                        step="300"
-                      />
-                    </div>
-                  </td>
-
-                  {/* DATOS PACIENTE */}
-                  <td className="p-4 align-top">
-                    <div className="font-bold text-slate-800 text-sm">{apt.patient_name}</div>
-                    <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-500">
-                      {apt.patient_phone && (
-                        <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
-                          <Phone className="w-3 h-3" /> {apt.patient_phone}
-                        </span>
-                      )}
-                      {apt.patient_age && (
-                        <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
-                          <User className="w-3 h-3" /> {apt.patient_age}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* MOTIVO */}
-                  <td className="p-4 align-top">
-                    {apt.symptoms ? (
-                      <div className="text-sm text-slate-600 italic bg-yellow-50/50 p-2 rounded border border-yellow-100/50 max-w-xs">
-                        "{apt.symptoms}"
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-300 italic">Sin motivo especificado</span>
-                    )}
-                    {(apt.chronic_illnesses || apt.medications) && (
-                      <div className="text-[10px] text-slate-400 mt-1 max-w-xs truncate">
-                        Ant: {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
-                      </div>
-                    )}
-                  </td>
-
-                  {/* ESTADO */}
-                  <td className="p-4 align-top text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {apt.status === 'confirmed' ? 'Confirmado' : 'Pendiente'}
-                    </span>
-                  </td>
-
-                  {/* ACCIONES */}
-                  <td className="p-4 align-top text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      {apt.status !== 'confirmed' && (
-                        <button
-                          onClick={() => confirmAppointment(apt)}
-                          className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                          title="Confirmar y Mover a Triaje"
-                        >
-                          <CheckCircle2 className="w-5 h-5" />
-                        </button>
-                      )}
-
-                      <a
-                        href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(apt.appointment_date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${new Date(apt.appointment_date).toTimeString().slice(0, 5)}. ¿Confirma?`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                        title="Enviar propuesta por WhatsApp (con fecha/hora actual)"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                      </a>
-
+          {/* MODAL GESTIÓN DE DATOS */}
+          <DataManagementModal
+            isOpen={isDataModalOpen}
+            onClose={() => navigate(view, { modal: null })}
+            user={user}
+            onExportJSON={exportToJSON}
+            onSaveToFolder={saveToFolder}
+            onConnectFolder={handleConnectFolder}
+            directoryHandle={directoryHandle}
+            importMode={importMode}
+            onSetImportMode={setImportMode}
+            onRestoreBackup={handleRestoreBackupFile}
+            importPreview={importPreview}
+            onSetImportPreview={setImportPreview}
+            onPreviewExcel={handlePreviewExcel}
+            onProcessImport={processImport}
+            onOpenPasteModal={() => { navigate(view, { modal: null }); setIsPasteModalOpen(true); }}
+          />
+          {/* VISTA AGENDA */}
+          {
+            view === 'agenda' && (
+              <div className="p-4 md:p-8 max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800">Solicitud de Citas</h2>
+                    <p className="text-slate-500 text-sm">Solicitudes recibidas desde tu formulario público.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const link = `${window.location.origin}/citas/${user.clinicId}`;
+                        navigator.clipboard.writeText(link);
+                        alert("Link de citas copiado al portapapeles");
+                      }}
+                      className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center gap-2"
+                    >
+                      <Link className="w-4 h-4" />
+                      Copiar Link Público
+                    </button>
+                    <button
+                      onClick={() => setIsAgendaImportOpen(true)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <Clipboard className="w-4 h-4" />
+                      Importar (Pegar)
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmed(!showConfirmed)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors border ${showConfirmed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200'}`}
+                    >
+                      {showConfirmed ? 'Ocultar Confirmados' : 'Ver Confirmados'}
+                    </button>
+                    <button
+                      onClick={fetchAppointments}
+                      className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                    {selectedAppointments.length > 0 && (
                       <button
-                        onClick={() => deleteAppointment(apt.id)}
-                        className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
-                        title="Eliminar Solicitud"
+                        onClick={handleBulkDelete}
+                        className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar ({selectedAppointments.length})
                       </button>
+                    )}
+                  </div>
+                </div>
+
+                {loadingAppointments ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-slate-500">Cargando agenda...</p>
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-slate-100">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CalendarDays className="w-8 h-8 text-slate-400" />
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">No hay citas pendientes</h3>
+                    <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                      Comparte tu link público para que tus pacientes puedan solicitar citas directamente.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <tr>
+                          <th className="p-4 w-10">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              onChange={(e) => handleSelectAll(e, appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed'))}
+                              checked={
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').length > 0 &&
+                                appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').every(a => selectedAppointments.includes(a.id))
+                              }
+                            />
+                          </th>
+                          <th className="p-4 w-48">Fecha / Hora</th>
+                          <th className="p-4">Paciente</th>
+                          <th className="p-4">Motivo / Antecedentes</th>
+                          <th className="p-4 w-32 text-center">Estado</th>
+                          <th className="p-4 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {appointments.filter(a => showConfirmed ? true : a.status !== 'confirmed').map((apt) => (
+                          <tr key={apt.id} className={`hover:bg-blue-50/50 transition-colors group ${apt.status === 'confirmed' ? 'bg-green-50/50' : ''} ${selectedAppointments.includes(apt.id) ? 'bg-blue-50' : ''}`}>
+                            <td className="p-4 align-top">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 cursor-pointer"
+                                checked={selectedAppointments.includes(apt.id)}
+                                onChange={() => handleSelectAppointment(apt.id)}
+                              />
+                            </td>
+                            {/* FECHA Y HORA EDITABLE (AUTO-SAVE) */}
+                            <td className="p-4 align-top">
+                              <div className="flex flex-col gap-2">
+                                <input
+                                  key={`date-${apt.id}-${apt.appointment_date}`}
+                                  type="date"
+                                  className="text-xs font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none"
+                                  defaultValue={new Date(apt.appointment_date).toISOString().split('T')[0]}
+                                  onBlur={(e) => {
+                                    const newDate = e.target.value;
+                                    if (newDate && newDate !== new Date(apt.appointment_date).toISOString().split('T')[0]) {
+                                      const newDateTime = new Date(`${newDate}T${new Date(apt.appointment_date).toTimeString().slice(0, 5)}`).toISOString();
+
+                                      // Optimistic update
+                                      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+
+                                      supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                        if (error) { logger.error(error); fetchAppointments(); }
+                                      });
+                                    }
+                                  }}
+                                />
+                                <input
+                                  key={`time-${apt.id}-${apt.appointment_date}`}
+                                  type="time"
+                                  className="text-lg font-bold border border-transparent hover:border-blue-200 focus:border-blue-500 rounded p-1 w-full bg-transparent focus:bg-white transition-all outline-none text-slate-800"
+                                  defaultValue={new Date(apt.appointment_date).toTimeString().slice(0, 5)}
+                                  onBlur={(e) => {
+                                    const newTime = e.target.value;
+                                    const currentDate = new Date(apt.appointment_date).toISOString().split('T')[0];
+                                    const currentTime = new Date(apt.appointment_date).toTimeString().slice(0, 5);
+
+                                    if (newTime && newTime !== currentTime) {
+                                      const newDateTime = new Date(`${currentDate}T${newTime}:00`).toISOString();
+
+                                      // Optimistic update
+                                      setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, appointment_date: newDateTime } : a).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date)));
+
+                                      supabase.from('appointments').update({ appointment_date: newDateTime }).eq('id', apt.id).then(({ error }) => {
+                                        if (error) { logger.error(error); fetchAppointments(); }
+                                      });
+                                    }
+                                  }}
+                                  step="300"
+                                />
+                              </div>
+                            </td>
+
+                            {/* DATOS PACIENTE */}
+                            <td className="p-4 align-top">
+                              <div className="font-bold text-slate-800 text-sm">{apt.patient_name}</div>
+                              <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-500">
+                                {apt.patient_phone && (
+                                  <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                    <Phone className="w-3 h-3" /> {apt.patient_phone}
+                                  </span>
+                                )}
+                                {apt.patient_age && (
+                                  <span className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
+                                    <User className="w-3 h-3" /> {apt.patient_age}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* MOTIVO */}
+                            <td className="p-4 align-top">
+                              {apt.symptoms ? (
+                                <div className="text-sm text-slate-600 italic bg-yellow-50/50 p-2 rounded border border-yellow-100/50 max-w-xs">
+                                  "{apt.symptoms}"
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-300 italic">Sin motivo especificado</span>
+                              )}
+                              {(apt.chronic_illnesses || apt.medications) && (
+                                <div className="text-[10px] text-slate-400 mt-1 max-w-xs truncate">
+                                  Ant: {[apt.chronic_illnesses, apt.medications].filter(Boolean).join(', ')}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* ESTADO */}
+                            <td className="p-4 align-top text-center">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {apt.status === 'confirmed' ? 'Confirmado' : 'Pendiente'}
+                              </span>
+                            </td>
+
+                            {/* ACCIONES */}
+                            <td className="p-4 align-top text-right">
+                              <div className="flex justify-end items-center gap-2">
+                                {apt.status !== 'confirmed' && (
+                                  <button
+                                    onClick={() => confirmAppointment(apt)}
+                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                    title="Confirmar y Mover a Triaje"
+                                  >
+                                    <CheckCircle2 className="w-5 h-5" />
+                                  </button>
+                                )}
+
+                                <a
+                                  href={`https://wa.me/${apt.patient_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${apt.patient_name}, le saludamos del Consultorio Dr. Walter Florez. Le proponemos su cita para el ${new Date(apt.appointment_date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${new Date(apt.appointment_date).toTimeString().slice(0, 5)}. ¿Confirma?`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                                  title="Enviar propuesta por WhatsApp (con fecha/hora actual)"
+                                >
+                                  <MessageCircle className="w-5 h-5" />
+                                </a>
+
+                                <button
+                                  onClick={() => deleteAppointment(apt.id)}
+                                  className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                  title="Eliminar Solicitud"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          {/* VISTA AGENDA V2 (BETA) */}
+          {
+            view === 'agenda-v2' && (
+              <AgendaView
+                user={user}
+                appointments={appointments}
+                setAppointments={setAppointments}
+                selectedAppointments={selectedAppointments}
+                showConfirmed={showConfirmed}
+                showAgendaImportModal={showAgendaImportModal}
+                setShowAgendaImportModal={setShowAgendaImportModal}
+                agendaImportText={agendaImportText}
+                setAgendaImportText={setAgendaImportText}
+                fetchAppointments={fetchAppointments}
+                handleBulkDelete={handleBulkDelete}
+                handleSelectAll={handleSelectAll}
+                handleSelectAppointment={handleSelectAppointment}
+                confirmAppointment={confirmAppointment}
+                deleteAppointment={deleteAppointment}
+                handleAgendaImport={handleAgendaImport}
+                supabase={supabase}
+                logger={logger}
+              />
+            )
+          }
+
+          {/* MODAL EQUIPO */}
+          <TeamModal
+            isOpen={isTeamModalOpen}
+            onClose={() => navigate(view, { modal: null })}
+            newMember={newMember}
+            onNewMemberChange={setNewMember}
+            onSubmit={handleCreateTeamMember}
+            isLoading={teamLoading}
+          />
+
+          {/* MODAL IMPORTACIÓN AGENDA */}
+          <AgendaImportModal
+            isOpen={isAgendaImportOpen}
+            onClose={() => setIsAgendaImportOpen(false)}
+            pasteText={agendaPasteText}
+            onPasteTextChange={setAgendaPasteText}
+            onImport={handleAgendaImport}
+          />
         </div>
-      )}
+      </main>
+
     </div>
-  )
-}
-
-{/* VISTA AGENDA V2 (BETA) */ }
-{
-  view === 'agenda-v2' && (
-    <AgendaView
-      user={user}
-      appointments={appointments}
-      setAppointments={setAppointments}
-      selectedAppointments={selectedAppointments}
-      showConfirmed={showConfirmed}
-      showAgendaImportModal={showAgendaImportModal}
-      setShowAgendaImportModal={setShowAgendaImportModal}
-      agendaImportText={agendaImportText}
-      setAgendaImportText={setAgendaImportText}
-      fetchAppointments={fetchAppointments}
-      handleBulkDelete={handleBulkDelete}
-      handleSelectAll={handleSelectAll}
-      handleSelectAppointment={handleSelectAppointment}
-      confirmAppointment={confirmAppointment}
-      deleteAppointment={deleteAppointment}
-      handleAgendaImport={handleAgendaImport}
-      supabase={supabase}
-      logger={logger}
-    />
-  )
-}
-
-{/* MODAL EQUIPO */ }
-<TeamModal
-  isOpen={isTeamModalOpen}
-  onClose={() => navigate(view, { modal: null })}
-  newMember={newMember}
-  onNewMemberChange={setNewMember}
-  onSubmit={handleCreateTeamMember}
-  isLoading={teamLoading}
-/>
-
-{/* MODAL IMPORTACIÓN AGENDA */ }
-<AgendaImportModal
-  isOpen={isAgendaImportOpen}
-  onClose={() => setIsAgendaImportOpen(false)}
-  pasteText={agendaPasteText}
-  onPasteTextChange={setAgendaPasteText}
-  onImport={handleAgendaImport}
-/>
-        </div >
-      </main >
-
-    </div >
   );
 }
