@@ -190,52 +190,50 @@ const PrescriptionModal = ({
                         </table>
                     </div>
 
-                    {/* Footer */}
-                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-2">
+                    {/* Footer - COMPACTO */}
+                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-1">
                         {/* Fila 1: Indicaciones + Firma */}
-                        <div className="flex gap-4 items-start mb-2">
-                            {/* Indicaciones - MÁS ESPACIO */}
+                        <div className="flex gap-3 items-start mb-1">
+                            {/* Indicaciones - REDUCIDO */}
                             <div className="flex-1">
-                                <h3 className="font-bold text-[10px] uppercase text-blue-900 tracking-wide mb-1">INDICACIONES ADICIONALES:</h3>
-                                <div className="min-h-[50px] border-b border-dotted border-gray-300 pb-1">
-                                    <textarea
-                                        className="w-full text-[10px] resize-none outline-none bg-transparent text-gray-600 leading-relaxed"
-                                        rows={3}
-                                        value={editableIndicaciones}
-                                        onChange={(e) => setEditableIndicaciones(e.target.value)}
-                                        placeholder="• Evitar..."
-                                    />
-                                </div>
+                                <h3 className="font-bold text-[9px] uppercase text-blue-900 tracking-wide">INDICACIONES ADICIONALES:</h3>
+                                <textarea
+                                    className="w-full text-[9px] resize-none outline-none bg-transparent text-gray-600 leading-tight"
+                                    rows={2}
+                                    value={editableIndicaciones}
+                                    onChange={(e) => setEditableIndicaciones(e.target.value)}
+                                    placeholder="• Evitar..."
+                                />
                             </div>
 
                             {/* Firma Digital */}
-                            <div className="w-40 flex flex-col items-center justify-center">
+                            <div className="w-36 flex flex-col items-center justify-center">
                                 {doctorInfo.firma ? (
                                     <img
                                         src={doctorInfo.firma}
                                         alt="Firma del Doctor"
-                                        className="h-16 object-contain"
+                                        className="h-14 object-contain"
                                     />
                                 ) : (
-                                    <div className="w-full h-14 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
-                                        <div className="w-24 border-t border-gray-400 mb-0.5"></div>
-                                        <span className="text-[8px] text-gray-500 font-bold uppercase">Sello y Firma</span>
+                                    <div className="w-full h-12 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
+                                        <div className="w-20 border-t border-gray-400 mb-0.5"></div>
+                                        <span className="text-[7px] text-gray-500 font-bold uppercase">Sello y Firma</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Fila 2: Control sugerido - TODO EN UNA LÍNEA */}
-                        <div className="pt-1 border-t border-gray-200 flex items-center gap-2 whitespace-nowrap">
-                            <span className="text-xs font-semibold text-gray-600">📅 Se sugiere control en</span>
+                        {/* Fila 2: Control sugerido - JUNTO A LA IZQUIERDA */}
+                        <div className="pt-0.5 border-t border-gray-200 flex items-center gap-1">
+                            <span className="text-[10px] font-semibold text-gray-600">📅 Se sugiere control en</span>
                             <input
                                 type="text"
                                 value={controlDias}
                                 onChange={(e) => setControlDias(e.target.value)}
-                                className="w-10 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-base"
+                                className="w-8 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-sm"
                             />
-                            <span className="text-xs font-semibold text-gray-600">días</span>
-                            <span className="text-[10px] text-gray-400">(o según evolución)</span>
+                            <span className="text-[10px] font-semibold text-gray-600">días</span>
+                            <span className="text-[9px] text-gray-400">(o según evolución)</span>
                         </div>
                     </div>
                 </div>
