@@ -62,6 +62,26 @@ const EXAM_ATTRIBUTES = {
   }
 };
 
+const EXAM_PRESETS = {
+  oido: [
+    { label: "Todo Normal", color: "green", values: { CAE: "Permeable", MT: "Integra", Cerumen: "No", Retracción: "No", Secreción: "No", Perforación: "No" } },
+    { label: "OMA (Media Aguda)", color: "red", values: { CAE: "Permeable", MT: "Abombada", Cerumen: "No", Retracción: "No", Secreción: "Purulenta", Perforación: "No" } },
+    { label: "OME (Efusión)", color: "yellow", values: { CAE: "Permeable", MT: "Opaca", Cerumen: "No", Retracción: "Sí", Secreción: "Serosa", Perforación: "No" } },
+    { label: "Tapón Cerumen", color: "orange", values: { CAE: "Obstruido", MT: "Integra", Cerumen: "Bilateral", Retracción: "No", Secreción: "No", Perforación: "No" } }
+  ],
+  nariz: [
+    { label: "Todo Normal", color: "green", values: { "Fosas Nasales": "Permeables", Cornetes: "Eutróficos", Septum: "Central", Desviación: "Anterior", Mucosa: "Rosada", Rinorrea: "Ausente", "Varices Septales": "No" } },
+    { label: "Rinitis Alérgica", color: "blue", values: { "Fosas Nasales": "Permeables", Cornetes: "Hipertrofia Moderada", Septum: "Central", Desviación: "Anterior", Mucosa: "Pálida", Rinorrea: "Hialina (Transparente)", "Varices Septales": "No" } },
+    { label: "Rinosinusitis", color: "red", values: { "Fosas Nasales": "Obstrucción Bilateral", Cornetes: "Congestivos", Septum: "Central", Desviación: "Anterior", Mucosa: "Congestiva", Rinorrea: "Verdosa", "Varices Septales": "No" } },
+    { label: "Desviación Septal", color: "orange", values: { "Fosas Nasales": "Obstrucción Derecha", Cornetes: "Hipertrofia Leve", Septum: "Desviación Derecha", Desviación: "Anterior", Mucosa: "Rosada", Rinorrea: "Ausente", "Varices Septales": "No" } }
+  ],
+  garganta: [
+    { label: "Todo Normal", color: "green", values: { Mucosa: "Rosada/Húmeda", Amígdalas: "Eutróficas (Grado 0)", Úvula: "Central", Pilares: "Normales", "Parrilla Costal": "Movilidad Normal" } },
+    { label: "Faringitis Aguda", color: "red", values: { Mucosa: "Congestiva/Eritematosa", Amígdalas: "Hipertrofia Grado 1+", Úvula: "Edematosa", Pilares: "Congestivos", "Parrilla Costal": "Movilidad Normal" } },
+    { label: "Amigdalitis", color: "red", values: { Mucosa: "Congestiva/Eritematosa", Amígdalas: "Hipertrofia Grado 3+", Úvula: "Edematosa", Pilares: "Congestivos", "Parrilla Costal": "Movilidad Normal" } }
+  ]
+};
+
 import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO, SERVICIOS_MEDICOS, METODOS_PAGO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
@@ -1346,41 +1366,46 @@ export default function MedicalSystem({ user, onLogout }) {
       const newState = { ...prev, [part]: { ...prev[part], [field]: value } };
 
       // Auto-generate text
-      const attributes = EXAM_ATTRIBUTES[part].fields;
-      const lines = [];
-      attributes.forEach(attr => {
-        const val = newState[part][attr.label];
-        if (val && val !== 'No' && val !== 'Ausente' && val !== 'Normales' && val !== 'Central') {
-          if (attr.label === 'Perforación' && val === 'Sí (Central)' || val === 'Sí (Marginal)') {
-            // Special handling for mixed input if needed, for now just basic
-          }
-          lines.push(`${attr.label}: ${val}`);
-        } else if (val) {
-          // For "negative" values like "No", "Ausente" we might want to skip or just show if critical
-          // User wants practical filling. Let's include everything that is explicitly selected?
-          // Let's include everything for completeness if selected, or filter "No"?
-          // User prompt: "CAE permeable, MT integra..." -> implied positive statements.
-          lines.push(`${attr.label}: ${val}`);
-        }
-      });
-
-      const generatedText = lines.join(', ');
-
-      // Update main formData
-      const fieldName = 'examen' + part.charAt(0).toUpperCase() + part.slice(1);
-      setFormData(prevForm => ({
-        ...prevForm,
-        [fieldName]: generatedText
-      }));
-
-      // Trigger auto-resize for the textarea
-      setTimeout(() => {
-        const el = document.querySelector(`textarea[name="${fieldName}"]`);
-        if (el) autoResize(el);
-      }, 0);
+      generateExamText(part, newState);
 
       return newState;
     });
+  };
+
+  const applyExamPreset = (part, presetValues) => {
+    setBuilderState(prev => {
+      const newState = { ...prev, [part]: { ...presetValues } };
+      generateExamText(part, newState);
+      return newState;
+    });
+  };
+
+  const generateExamText = (part, state) => {
+    const attributes = EXAM_ATTRIBUTES[part].fields;
+    const lines = [];
+    attributes.forEach(attr => {
+      const val = state[part][attr.label];
+      if (val && val !== 'No' && val !== 'Ausente' && val !== 'Normales' && val !== 'Central') {
+        if (attr.label === 'Perforación' && val === 'No') return;
+        lines.push(`${attr.label}: ${val}`);
+      } else if (val && (val === 'Permeable' || val === 'Integra' || val === 'Eutróficos' || val === 'Rosada' || val === 'Central')) {
+        // Include crucial normals
+        lines.push(`${attr.label}: ${val}`);
+      }
+    });
+
+    const generatedText = lines.join(', ');
+
+    const fieldName = 'examen' + part.charAt(0).toUpperCase() + part.slice(1);
+    setFormData(prevForm => ({
+      ...prevForm,
+      [fieldName]: generatedText
+    }));
+
+    setTimeout(() => {
+      const el = document.querySelector(`textarea[name="${fieldName}"]`);
+      if (el) autoResize(el);
+    }, 0);
   };
 
   // Helper for auto-resizing textareas
@@ -2638,62 +2663,90 @@ margin: 0;
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {Object.keys(EXAM_ATTRIBUTES).map(part => (
                             <div key={part} className="bg-slate-50 p-4 rounded-xl border border-slate-200 transition-all hover:border-teal-200 hover:shadow-sm">
-                              <div className="flex justify-between items-center mb-3">
-                                <span className="text-xs font-bold uppercase text-slate-700 tracking-wider border-b-2 border-teal-500 pb-0.5">{EXAM_ATTRIBUTES[part].label}</span>
+                              <div className="flex flex-col gap-2 mb-3">
+                                <span className="text-xs font-bold uppercase text-slate-700 tracking-wider border-b-2 border-teal-500 pb-0.5 w-fit">{EXAM_ATTRIBUTES[part].label}</span>
+
+                                {/* Smart Presets */}
+                                <div className="flex flex-wrap gap-1.5">
+                                  {EXAM_PRESETS[part].map((preset, i) => (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => applyExamPreset(part, preset.values)}
+                                      className={`px-2 py-0.5 text-[10px] uppercase font-bold tracking-wide rounded border shadow-sm transition-all
+                                              ${preset.color === 'green' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}
+                                              ${preset.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200' : ''}
+                                              ${preset.color === 'red' ? 'bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200' : ''}
+                                              ${preset.color === 'yellow' ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200' : ''}
+                                              ${preset.color === 'orange' ? 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200' : ''}
+                                            `}
+                                    >
+                                      {preset.color === 'green' ? '✨ ' : ''}{preset.label}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
 
                               {/* Builder Controls */}
-                              <div className="mb-3 space-y-2 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                {EXAM_ATTRIBUTES[part].fields.map((field, idx) => (
-                                  <div key={idx} className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">{field.label}</label>
+                              <div className="mb-3 space-y-2 bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                                <details>
+                                  <summary className="text-[10px] font-bold text-slate-400 uppercase list-none cursor-pointer hover:text-teal-600 transition-colors flex items-center justify-center gap-1">
+                                    <span>Ver Detalles / Editar Manualmente</span>
+                                    <span className="text-lg leading-none">▾</span>
+                                  </summary>
+                                  <div className="mt-3 text-left">
+                                    {EXAM_ATTRIBUTES[part].fields.map((field, idx) => (
+                                      <div key={idx} className="flex flex-col gap-1 mb-2 last:mb-0">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">{field.label}</label>
 
-                                    {field.type === 'select' && (
-                                      <select
-                                        className="w-full text-xs p-1.5 border border-slate-200 rounded text-slate-700 outline-none focus:border-teal-400"
-                                        value={builderState[part][field.label] || ""}
-                                        onChange={(e) => updateExamBuilder(part, field.label, e.target.value)}
-                                      >
-                                        <option value="">-- Seleccionar --</option>
-                                        {field.options.map((opt, i) => (
-                                          <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                      </select>
-                                    )}
-
-                                    {field.type === 'chips' && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {field.options.map((opt, i) => (
-                                          <button
-                                            type="button"
-                                            key={i}
-                                            onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
-                                            className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                        {field.type === 'select' && (
+                                          <select
+                                            className="w-full text-xs p-1.5 border border-slate-200 rounded text-slate-700 outline-none focus:border-teal-400"
+                                            value={builderState[part][field.label] || ""}
+                                            onChange={(e) => updateExamBuilder(part, field.label, e.target.value)}
                                           >
-                                            {opt}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
+                                            <option value="">-- Seleccionar --</option>
+                                            {field.options.map((opt, i) => (
+                                              <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                          </select>
+                                        )}
 
-                                    {field.type === 'mixed' && (
-                                      <div className="flex flex-col gap-1">
-                                        <div className="flex flex-wrap gap-1">
-                                          {field.options.map((opt, i) => (
-                                            <button
-                                              type="button"
-                                              key={i}
-                                              onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
-                                              className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                                            >
-                                              {opt}
-                                            </button>
-                                          ))}
-                                        </div>
+                                        {field.type === 'chips' && (
+                                          <div className="flex flex-wrap gap-1">
+                                            {field.options.map((opt, i) => (
+                                              <button
+                                                type="button"
+                                                key={i}
+                                                onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
+                                                className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                              >
+                                                {opt}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+
+                                        {field.type === 'mixed' && (
+                                          <div className="flex flex-col gap-1">
+                                            <div className="flex flex-wrap gap-1">
+                                              {field.options.map((opt, i) => (
+                                                <button
+                                                  type="button"
+                                                  key={i}
+                                                  onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
+                                                  className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                                >
+                                                  {opt}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
+                                    ))}
                                   </div>
-                                ))}
+                                </details>
                               </div>
 
                               <textarea
