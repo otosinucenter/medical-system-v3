@@ -123,7 +123,7 @@ const SidebarNav = ({
                     Cerrar Sesión
                 </button>
                 <div className="text-center">
-                    <span className="text-[10px] text-slate-600 font-medium">V 1.0 (stable)</span>
+                    <span className="text-[10px] text-slate-600 font-medium">V 2.0 (stable)</span>
                 </div>
             </div>
         </aside>
