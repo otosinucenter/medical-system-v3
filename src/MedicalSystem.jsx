@@ -25,6 +25,43 @@ import DataManagementModal from './components/DataManagementModal';
 import SidebarNav from './components/SidebarNav';
 import TeamModal from './components/TeamModal';
 import AgendaImportModal from './components/AgendaImportModal';
+// --- CONSTANTES ---
+const EXAM_ATTRIBUTES = {
+  oido: {
+    label: "OÍDO",
+    fields: [
+      { label: "CAE", type: "select", options: ["Permeable", "Estrecho", "Obstruido", "Congestivo", "Edematoso"] },
+      { label: "MT", type: "select", options: ["Integra", "Perforada", "Opaca", "Retraída", "Abombada", "Con Placas"] },
+      { label: "Cerumen", type: "chips", options: ["No", "Derecho", "Izquierdo", "Bilateral"] },
+      { label: "Retracción", type: "chips", options: ["No", "Sí"] },
+      { label: "Secreción", type: "chips", options: ["No", "Serosa", "Purulenta", "Mucoide"] },
+      { label: "Perforación", type: "mixed", options: ["No", "Sí (Central)", "Sí (Marginal)"], hasInput: true, inputLabel: "%" }
+    ]
+  },
+  nariz: {
+    label: "NARIZ",
+    fields: [
+      { label: "Fosas Nasales", type: "select", options: ["Permeables", "Obstrucción Derecha", "Obstrucción Izquierda", "Obstrucción Bilateral"] },
+      { label: "Cornetes", type: "select", options: ["Eutróficos", "Hipertrofia Leve", "Hipertrofia Moderada", "Hipertrofia Severa", "Pálidos", "Congestivos"] },
+      { label: "Septum", type: "select", options: ["Central", "Desviación Derecha", "Desviación Izquierda", "Espolón Derecho", "Espolón Izquierdo"] },
+      { label: "Desviación", type: "select", options: ["Anterior", "Media", "Posterior", "En 'S'"] },
+      { label: "Mucosa", type: "chips", options: ["Rosada", "Pálida", "Congestiva"] },
+      { label: "Rinorrea", type: "select", options: ["Ausente", "Hialina (Transparente)", "Amarillenta", "Verdosa", "Costrosa/Seca"] },
+      { label: "Varices Septales", type: "chips", options: ["No", "Derecha", "Izquierda"] }
+    ]
+  },
+  garganta: {
+    label: "OROFARINGE",
+    fields: [
+      { label: "Mucosa", type: "select", options: ["Rosada/Húmeda", "Congestiva/Eritematosa", "Seca", "Con Exudado"] },
+      { label: "Amígdalas", type: "select", options: ["Eutróficas (Grado 0)", "Hipertrofia Grado 1+", "Hipertrofia Grado 2+", "Hipertrofia Grado 3+", "Hipertrofia Grado 4+", "Atróficas"] },
+      { label: "Úvula", type: "chips", options: ["Central", "Desviada", "Bífida", "Edematosa", "Alargada"] },
+      { label: "Pilares", type: "chips", options: ["Normales", "Congestivos"] },
+      { label: "Parrilla Costal", type: "chips", options: ["Movilidad Normal", "Tiraje"] } // Extra generic
+    ]
+  }
+};
+
 import { DOCTOR_INFO, VADEMECUM_TABULAR, DIAGNOSTICOS_COMUNES, EXAM_TEMPLATES, CATALOGO_MEDICO, SERVICIOS_MEDICOS, METODOS_PAGO } from './data/constants';
 
 export default function MedicalSystem({ user, onLogout }) {
@@ -1297,6 +1334,55 @@ export default function MedicalSystem({ user, onLogout }) {
     indicaciones: ''
   });
 
+  // --- PHYSICAL EXAM BUILDER LOGIC ---
+  const [builderState, setBuilderState] = useState({
+    oido: {},
+    nariz: {},
+    garganta: {}
+  });
+
+  const updateExamBuilder = (part, field, value) => {
+    setBuilderState(prev => {
+      const newState = { ...prev, [part]: { ...prev[part], [field]: value } };
+
+      // Auto-generate text
+      const attributes = EXAM_ATTRIBUTES[part].fields;
+      const lines = [];
+      attributes.forEach(attr => {
+        const val = newState[part][attr.label];
+        if (val && val !== 'No' && val !== 'Ausente' && val !== 'Normales' && val !== 'Central') {
+          if (attr.label === 'Perforación' && val === 'Sí (Central)' || val === 'Sí (Marginal)') {
+            // Special handling for mixed input if needed, for now just basic
+          }
+          lines.push(`${attr.label}: ${val}`);
+        } else if (val) {
+          // For "negative" values like "No", "Ausente" we might want to skip or just show if critical
+          // User wants practical filling. Let's include everything that is explicitly selected?
+          // Let's include everything for completeness if selected, or filter "No"?
+          // User prompt: "CAE permeable, MT integra..." -> implied positive statements.
+          lines.push(`${attr.label}: ${val}`);
+        }
+      });
+
+      const generatedText = lines.join(', ');
+
+      // Update main formData
+      const fieldName = 'examen' + part.charAt(0).toUpperCase() + part.slice(1);
+      setFormData(prevForm => ({
+        ...prevForm,
+        [fieldName]: generatedText
+      }));
+
+      // Trigger auto-resize for the textarea
+      setTimeout(() => {
+        const el = document.querySelector(`textarea[name="${fieldName}"]`);
+        if (el) autoResize(el);
+      }, 0);
+
+      return newState;
+    });
+  };
+
   // Helper for auto-resizing textareas
   const autoResize = (el) => {
     if (!el) return;
@@ -1311,6 +1397,11 @@ export default function MedicalSystem({ user, onLogout }) {
       setTimeout(() => {
         const textareas = document.querySelectorAll('textarea.auto-resize');
         textareas.forEach(el => autoResize(el));
+        // Also resize specific named fields that might not have class yet if triggered by update
+        ['resumen', 'examenOido', 'examenNariz', 'examenGarganta'].forEach(name => {
+          const el = document.querySelector(`textarea[name="${name}"]`);
+          if (el) autoResize(el);
+        });
       }, 100);
     }
   }, [formData, view]);
@@ -2528,9 +2619,9 @@ margin: 0;
                         <textarea
                           name="resumen"
                           value={formData.resumen}
-                          onChange={handleChange}
+                          onChange={(e) => { handleChange(e); autoResize(e.target); }}
                           rows={3}
-                          className="w-full bg-slate-50 border border-slate-300 p-4 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400"
+                          className="w-full bg-slate-50 border border-slate-300 p-4 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 overflow-hidden resize-none auto-resize"
                           placeholder="Describa el motivo de la consulta..."
                         ></textarea>
                       </div>
@@ -2545,25 +2636,73 @@ margin: 0;
                       </div>
                       <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {['oido', 'nariz', 'garganta'].map(part => (
+                          {Object.keys(EXAM_ATTRIBUTES).map(part => (
                             <div key={part} className="bg-slate-50 p-4 rounded-xl border border-slate-200 transition-all hover:border-teal-200 hover:shadow-sm">
                               <div className="flex justify-between items-center mb-3">
-                                <span className="text-xs font-bold uppercase text-slate-700 tracking-wider border-b-2 border-teal-500 pb-0.5">{part}</span>
-                                <div className="flex gap-1 flex-wrap justify-end">
-                                  {EXAM_TEMPLATES[part].map((t, i) => (
-                                    <button type="button" key={i} onClick={() => addExamTemplate('examen' + part.charAt(0).toUpperCase() + part.slice(1), t.text)} className="px-2 py-1 bg-white border border-slate-200 text-[10px] font-medium text-slate-600 rounded-md hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors">
-                                      {t.label}
-                                    </button>
-                                  ))}
-                                </div>
+                                <span className="text-xs font-bold uppercase text-slate-700 tracking-wider border-b-2 border-teal-500 pb-0.5">{EXAM_ATTRIBUTES[part].label}</span>
                               </div>
+
+                              {/* Builder Controls */}
+                              <div className="mb-3 space-y-2 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                                {EXAM_ATTRIBUTES[part].fields.map((field, idx) => (
+                                  <div key={idx} className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">{field.label}</label>
+
+                                    {field.type === 'select' && (
+                                      <select
+                                        className="w-full text-xs p-1.5 border border-slate-200 rounded text-slate-700 outline-none focus:border-teal-400"
+                                        value={builderState[part][field.label] || ""}
+                                        onChange={(e) => updateExamBuilder(part, field.label, e.target.value)}
+                                      >
+                                        <option value="">-- Seleccionar --</option>
+                                        {field.options.map((opt, i) => (
+                                          <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                      </select>
+                                    )}
+
+                                    {field.type === 'chips' && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {field.options.map((opt, i) => (
+                                          <button
+                                            type="button"
+                                            key={i}
+                                            onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
+                                            className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                          >
+                                            {opt}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {field.type === 'mixed' && (
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex flex-wrap gap-1">
+                                          {field.options.map((opt, i) => (
+                                            <button
+                                              type="button"
+                                              key={i}
+                                              onClick={() => updateExamBuilder(part, field.label, builderState[part][field.label] === opt ? "" : opt)}
+                                              className={`px-2 py-1 text-[10px] rounded border transition-colors ${builderState[part][field.label] === opt ? 'bg-teal-100 border-teal-300 text-teal-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                            >
+                                              {opt}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
                               <textarea
                                 name={'examen' + part.charAt(0).toUpperCase() + part.slice(1)}
                                 value={formData['examen' + part.charAt(0).toUpperCase() + part.slice(1)]}
-                                onChange={handleChange}
-                                rows={3}
-                                className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-100 focus:border-teal-400 outline-none resize-none"
-                                placeholder={`Hallazgos en ${part}...`}
+                                onChange={(e) => { handleChange(e); autoResize(e.target); }}
+                                rows={2}
+                                className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-100 focus:border-teal-400 outline-none resize-none overflow-hidden auto-resize"
+                                placeholder={`Redacción del examen...`}
                               ></textarea>
                             </div>
                           ))}
