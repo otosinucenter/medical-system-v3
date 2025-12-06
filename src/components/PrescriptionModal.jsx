@@ -99,7 +99,7 @@ const PrescriptionModal = ({
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] text-blue-600 font-semibold">{doctorInfo.contacto}</p>
-                            <div className="font-bold text-lg text-gray-800 mt-0.5">
+                            <div className="font-bold text-sm text-gray-800 mt-0.5">
                                 {new Date(consultation.fechaCita).toLocaleDateString('es-PE')}
                             </div>
                         </div>
@@ -219,14 +219,14 @@ const PrescriptionModal = ({
                             </div>
                         </div>
 
-                        {/* Fila 2: Control sugerido - CENTRADO y ORDENADO */}
-                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-center gap-3">
+                        {/* Fila 2: Control sugerido - IZQUIERDA EN UNA LÍNEA */}
+                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2">
                             <span className="text-sm font-semibold text-gray-600">📅 Se sugiere control en</span>
                             <input
                                 type="text"
                                 value={controlDias}
                                 onChange={(e) => setControlDias(e.target.value)}
-                                className="w-14 text-center font-bold text-blue-700 border-2 border-blue-400 bg-blue-50 outline-none text-xl rounded py-0.5"
+                                className="w-10 text-center font-bold text-blue-700 border-2 border-blue-400 bg-blue-50 outline-none text-base rounded"
                             />
                             <span className="text-sm font-semibold text-gray-600">días</span>
                             <span className="text-xs text-gray-400">(o según evolución)</span>
