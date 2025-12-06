@@ -18,6 +18,7 @@ const TriageView = ({
     onUpdateTriageStatus,
     onConvertToPatient,
     onAddPayment,
+    onDeletePayment,
     metodosPago
 }) => {
     return (
@@ -291,9 +292,22 @@ const TriageView = ({
                                                     {p.payments && p.payments.length > 0 && (
                                                         <div className="mt-2 pt-2 border-t border-emerald-200">
                                                             {p.payments.map((pay, i) => (
-                                                                <div key={i} className="flex justify-between text-xs text-emerald-600">
-                                                                    <span>{metodosPago?.find(m => m.id === pay.metodo)?.icon || '💰'} {metodosPago?.find(m => m.id === pay.metodo)?.nombre || pay.metodo}</span>
-                                                                    <span>S/ {pay.monto}</span>
+                                                                <div key={i} className="flex justify-between items-center text-xs text-emerald-600 mb-1 last:mb-0 group/pay">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span>{metodosPago?.find(m => m.id === pay.metodo)?.icon || '💰'} {metodosPago?.find(m => m.id === pay.metodo)?.nombre || pay.metodo}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span>S/ {pay.monto}</span>
+                                                                        {onDeletePayment && (
+                                                                            <button
+                                                                                onClick={() => onDeletePayment(p.id, i)}
+                                                                                className="text-red-400 hover:text-red-600 opacity-0 group-hover/pay:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-50"
+                                                                                title="Eliminar pago"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>

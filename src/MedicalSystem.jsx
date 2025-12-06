@@ -862,7 +862,6 @@ export default function MedicalSystem({ user, onLogout }) {
     }
   };
 
-
   // Re-fetch when selectedDate changes
   useEffect(() => {
     if (view === 'triage') {
@@ -944,6 +943,36 @@ export default function MedicalSystem({ user, onLogout }) {
       if (error) throw error;
     } catch (error) {
       logger.error('Error adding payment:', error);
+      fetchDailyAppointments(); // Revert
+    }
+  };
+
+  const deletePayment = async (aptId, paymentIndex) => {
+    if (!confirm("¿Eliminar este pago?")) return;
+
+    const apt = dailyList.find(p => p.id === aptId);
+    if (!apt) return;
+
+    const currentPayments = apt.payments || [];
+    const updatedPayments = currentPayments.filter((_, i) => i !== paymentIndex);
+    const newTotalPaid = updatedPayments.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
+
+    // Optimistic
+    setDailyList(prev => prev.map(p => p.id === aptId ? { ...p, payments: updatedPayments, total_paid: newTotalPaid } : p));
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          payments: updatedPayments,
+          total_paid: newTotalPaid,
+          payment_status: newTotalPaid >= (apt.total_to_charge || 0) ? 'paid' : newTotalPaid > 0 ? 'partial' : 'pending'
+        })
+        .eq('id', aptId);
+
+      if (error) throw error;
+    } catch (error) {
+      logger.error('Error deleting payment:', error);
       fetchDailyAppointments(); // Revert
     }
   };
@@ -2272,7 +2301,10 @@ margin: 0;
               onUpdateAppointmentField={updateAppointmentField}
               onUpdateTriageStatus={updateTriageStatus}
               onConvertToPatient={handleConvertToPatient}
+              onDelete={permanentDeleteAppointment}
+              onMoveOrder={_handleMoveOrder}
               onAddPayment={addPayment}
+              onDeletePayment={deletePayment}
               metodosPago={METODOS_PAGO}
             />
           )}
