@@ -36,10 +36,9 @@ const PrescriptionModal = ({
 
     if (!isOpen || !patient) return null;
 
-    // Calcular tamaño según cantidad de medicamentos
+    // Calcular tamaño de fuente adaptativo
     const count = editableReceta.length;
-    const tableFontSize = count > 8 ? '12px' : count > 6 ? '13px' : '14px';
-    const tableRowHeight = count > 8 ? '26px' : count > 6 ? '30px' : '34px';
+    const tableFontSize = count > 10 ? '10px' : count > 8 ? '11px' : count > 6 ? '12px' : '13px';
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center overflow-y-auto p-4">
@@ -99,7 +98,7 @@ const PrescriptionModal = ({
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] text-blue-600 font-semibold">{doctorInfo.contacto}</p>
-                            <div className="font-bold text-sm text-gray-800 mt-0.5">
+                            <div className="font-bold text-lg text-gray-800 mt-0.5">
                                 {new Date(consultation.fechaCita).toLocaleDateString('es-PE')}
                             </div>
                         </div>
@@ -129,52 +128,54 @@ const PrescriptionModal = ({
                         </div>
                     </div>
 
-                    {/* Tabla Receta - Centrada cuando pocos medicamentos */}
-                    <div className={`overflow-hidden ${count <= 4 ? 'mb-auto' : 'mb-1 flex-1'}`}>
+                    {/* Tabla Receta - TEXTO COMPLETO SIN CORTAR */}
+                    <div className="flex-1 overflow-hidden mb-1">
                         <table className="w-full border-collapse table-fixed" style={{ fontSize: tableFontSize }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #1e40af', background: '#f8fafc' }}>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[27%] uppercase text-[11px]">Medicamento</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[7%] uppercase text-[11px]">Cant.</th>
-                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[46%] uppercase text-[11px]">Indicaciones</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[8%] uppercase text-[11px]">Vía</th>
-                                    <th className="text-center py-1 font-bold text-blue-900 w-[12%] uppercase text-[11px]">Días</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[25%] uppercase text-[10px]">Medicamento</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[7%] uppercase text-[10px]">Cant.</th>
+                                    <th className="text-left py-1 px-2 font-bold text-blue-900 w-[48%] uppercase text-[10px]">Indicaciones</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[8%] uppercase text-[10px]">Vía</th>
+                                    <th className="text-center py-1 font-bold text-blue-900 w-[12%] uppercase text-[10px]">Días</th>
                                 </tr>
                             </thead>
                             <tbody className="align-top">
                                 {editableReceta.map((item, idx) => (
-                                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1', height: tableRowHeight }}>
-                                        <td className="py-0.5 px-2">
+                                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
+                                        <td className="py-1 px-2">
                                             <textarea
-                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-snug"
-                                                rows={1}
+                                                className="w-full bg-transparent font-semibold text-gray-900 outline-none resize-none overflow-hidden leading-tight"
+                                                style={{ minHeight: '1.2em' }}
+                                                rows={Math.ceil(item.med.length / 20) || 1}
                                                 value={item.med}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].med = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-1 text-center align-top">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.cant}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].cant = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 px-2">
+                                        <td className="py-1 px-2">
                                             <textarea
-                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-snug text-gray-700"
-                                                rows={1}
+                                                className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight text-gray-700"
+                                                style={{ minHeight: '1.2em' }}
+                                                rows={Math.ceil(item.ind.length / 45) || 1}
                                                 value={item.ind}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].ind = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-1 text-center align-top">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700"
                                                 value={item.via}
                                                 onChange={(e) => { const n = [...editableReceta]; n[idx].via = e.target.value; setEditableReceta(n); }}
                                             />
                                         </td>
-                                        <td className="py-0.5 text-center align-middle">
+                                        <td className="py-1 text-center align-top">
                                             <input
                                                 className="w-full bg-transparent text-center outline-none text-gray-700 font-medium"
                                                 value={item.dur}
@@ -187,47 +188,52 @@ const PrescriptionModal = ({
                         </table>
                     </div>
 
-                    {/* Footer - SIEMPRE EN LA PARTE INFERIOR */}
-                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-3">
-                        {/* Indicaciones + Firma */}
-                        <div className="flex gap-4 items-start">
+                    {/* Footer */}
+                    <div className="mt-auto border-t-2 border-dashed border-gray-300 pt-2">
+                        {/* Fila 1: Indicaciones + Firma */}
+                        <div className="flex gap-4 items-start mb-2">
+                            {/* Indicaciones - MÁS ESPACIO */}
                             <div className="flex-1">
-                                <h3 className="font-bold text-xs uppercase text-blue-900 tracking-wide mb-0.5">INDICACIONES ADICIONALES:</h3>
-                                <textarea
-                                    className="w-full text-sm resize-none outline-none bg-transparent text-gray-700 leading-snug"
-                                    rows={2}
-                                    value={editableIndicaciones}
-                                    onChange={(e) => setEditableIndicaciones(e.target.value)}
-                                    placeholder="• Evitar..."
-                                />
-                                {/* Control - PEQUEÑO, EN LA ESQUINA INFERIOR IZQUIERDA */}
-                                <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-500">
-                                    <span>📅 Control en</span>
-                                    <input
-                                        type="text"
-                                        value={controlDias}
-                                        onChange={(e) => setControlDias(e.target.value)}
-                                        className="w-6 text-center font-bold text-blue-600 border-b border-blue-300 bg-transparent outline-none text-[10px]"
+                                <h3 className="font-bold text-[10px] uppercase text-blue-900 tracking-wide mb-1">INDICACIONES ADICIONALES:</h3>
+                                <div className="min-h-[50px] border-b border-dotted border-gray-300 pb-1">
+                                    <textarea
+                                        className="w-full text-[10px] resize-none outline-none bg-transparent text-gray-600 leading-relaxed"
+                                        rows={3}
+                                        value={editableIndicaciones}
+                                        onChange={(e) => setEditableIndicaciones(e.target.value)}
+                                        placeholder="• Evitar..."
                                     />
-                                    <span>días (o según evolución)</span>
                                 </div>
                             </div>
 
                             {/* Firma Digital */}
-                            <div className="w-44 flex flex-col items-center justify-center">
+                            <div className="w-40 flex flex-col items-center justify-center">
                                 {doctorInfo.firma ? (
                                     <img
                                         src={doctorInfo.firma}
                                         alt="Firma del Doctor"
-                                        className="h-20 object-contain"
+                                        className="h-16 object-contain"
                                     />
                                 ) : (
-                                    <div className="w-full h-16 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
-                                        <div className="w-28 border-t border-gray-400 mb-0.5"></div>
-                                        <span className="text-[9px] text-gray-500 font-bold uppercase">Sello y Firma</span>
+                                    <div className="w-full h-14 border border-gray-300 rounded flex flex-col items-center justify-end pb-1 bg-gray-50/50">
+                                        <div className="w-24 border-t border-gray-400 mb-0.5"></div>
+                                        <span className="text-[8px] text-gray-500 font-bold uppercase">Sello y Firma</span>
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Fila 2: Control sugerido - TODO EN UNA LÍNEA */}
+                        <div className="pt-1 border-t border-gray-200 flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-gray-600">📅 Se sugiere control en</span>
+                            <input
+                                type="text"
+                                value={controlDias}
+                                onChange={(e) => setControlDias(e.target.value)}
+                                className="w-10 text-center font-bold text-blue-700 border-b-2 border-blue-400 bg-blue-50 outline-none text-base"
+                            />
+                            <span className="text-xs font-semibold text-gray-600">días</span>
+                            <span className="text-[10px] text-gray-400">(o según evolución)</span>
                         </div>
                     </div>
                 </div>
